@@ -2,8 +2,8 @@ CC = gcc
 CXX = g++
 
 # Use -g for debugging information and -Wall for compiler warnings
-CFLAGS = -g -O2 -Wall
-CXXFLAGS = -g -O2 -Wall
+CFLAGS = -g2 -Wall
+CXXFLAGS = -g2 -Wall
 
 all: io.o
 
@@ -11,11 +11,16 @@ all: io.o
 io.o:
 	$(CC) $(CFLAGS) -c io.c
 
-clean:
-	rm -f io.o
+test_io.out: io.o
+	$(CC) $(CFLAGS) test_io.c io.o -o test_io.out
+
+clean_io:
+	rm -f io.o test_io.out
+
+clean: clean_io
 
 check: all 
-	rm -f io.o
+	rm -f io.o test_io.out
 
 
-.PHONY: all clean check
+.PHONY: all clean check clean_io

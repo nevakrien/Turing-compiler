@@ -84,6 +84,16 @@ static void unpack_bits(const uint8_t *source, Bit *dest, int count) {
     }
 }
 
+
+typedef struct {
+    int cur_index;
+    int left_index;
+    int right_index;
+    int length;
+} MetaData;
+
+
+
 void __attribute__((sysv_abi)) DumpTape(Tape* tape, int out_fd) {
     if (!tape || !tape->base) {
         fprintf(stderr, "Invalid tape or base pointer\n");
@@ -92,6 +102,13 @@ void __attribute__((sysv_abi)) DumpTape(Tape* tape, int out_fd) {
 
     int index = tape->cur - tape->base;
     int length = tape->right_init - tape->left_init + 1;
+
+    MetaData metadata;
+
+	metadata.cur_index=index;
+	metadata.left_index= tape->left_init;
+	metadata.right_index= tape->right_init;
+	metadata.length=length;
 
     // Allocate and zero-initialize the buffer for writing
     uint8_t *buffer = calloc((length + 7) / 8, sizeof(uint8_t));
@@ -103,12 +120,12 @@ void __attribute__((sysv_abi)) DumpTape(Tape* tape, int out_fd) {
 
 #ifdef _WIN32
     DWORD written;
-    if (!WriteFile((HANDLE)_get_osfhandle(out_fd), &index, sizeof(index), &written, NULL) ||
-        written != sizeof(index) ||
+    if (!WriteFile((HANDLE)_get_osfhandle(out_fd), &metadata, sizeof(metadata), &written, NULL) ||
+        written != sizeof(metadata) ||
         !WriteFile((HANDLE)_get_osfhandle(out_fd), buffer, (length + 7) / 8, &written, NULL) ||
         written != (DWORD)((length + 7) / 8)) 
 #else
-    if (write(out_fd, &index, sizeof(index)) != sizeof(index) ||
+    if (write(out_fd, &metadata, sizeof(metadata)) != sizeof(metadata) ||
         write(out_fd, buffer, (length + 7) / 8) != (length + 7) / 8) 
 #endif
     {
@@ -122,19 +139,13 @@ void __attribute__((sysv_abi)) DumpTape(Tape* tape, int out_fd) {
 
 
 
-
 Tape __attribute__((sysv_abi)) ReadTape(int in_fd) {
     // Initialize Tape struct
     Tape tape;
     memset(&tape, 0, sizeof(tape));
 
-    // Read the metadata
-    struct {
-        int cur_index;
-        int left_index;
-        int right_index;
-        int length;
-    } metadata;
+    MetaData metadata;
+// Read the metadata
 
 #ifdef _WIN32
     DWORD read_bytes;
@@ -149,9 +160,10 @@ Tape __attribute__((sysv_abi)) ReadTape(int in_fd) {
     }
 
     // Allocate memory for the tape array based on the metadata
-    Bit *buffer = calloc(metadata.length, sizeof(Bit));
+    uint8_t *buffer = calloc(metadata.length, sizeof(uint8_t));
     if (!buffer) {
         perror("Failed to allocate memory for tape data");
+        printf("tried alocating %d\n",metadata.length);
         exit(EXIT_FAILURE);
     }
 

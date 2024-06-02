@@ -34,8 +34,8 @@ typedef struct TuringMachine{
 }TuringMachine;
 
 typedef struct Tape{
-	State* cur;
-	State* base;//base-min=the actual base pointer to free
+	Bit* cur;
+	Bit* base;//base-min=the actual base pointer to free
 	int max;
 	int min;
 	int left_init;
