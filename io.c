@@ -25,7 +25,8 @@ void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
 	    if (memory == MAP_FAILED) 
 	#endif
     {
-        perror("Memory allocation failed\n");
+        perror("Memory allocation failed [allocate_all_tape]\n");
+        printf("size=%ld\n",size);
         exit(EXIT_FAILURE);
     }
     return memory;
@@ -90,113 +91,135 @@ typedef struct {
     int left_index;
     int right_index;
     int length;
+
+    int left_limit;
+    int right_limit;
 } MetaData;
 
+//#define HACKY_TEST
+#ifdef HACKY_TEST
+MetaData m;
+static void DEBUG_METADATA_WRITE(MetaData x){
+	m=x;
+}
+static void DEBUG_METADATA_READ(MetaData x){
+	assert(memcmp(&x, &m, sizeof(MetaData)) == 0);
+}
+#else
+#define DEBUG_METADATA_READ(m)
+#define DEBUG_METADATA_WRITE(m)
+#endif
 
-
-void __attribute__((sysv_abi)) DumpTape(Tape* tape, int out_fd) {
+void __attribute__((sysv_abi)) DumpTape(Tape* tape, const char *out_filename) {
     if (!tape || !tape->base) {
         fprintf(stderr, "Invalid tape or base pointer\n");
         exit(EXIT_FAILURE);
     }
 
     int index = tape->cur - tape->base;
-    int length = tape->right_init - tape->left_init + 1;
+    int length = tape->right_init - tape->left_init+ 1;
+    MetaData metadata = {index, tape->left_init, tape->right_init, length,
+    tape->left_limit,tape->right_limit};
 
-    MetaData metadata;
+    DEBUG_METADATA_WRITE(metadata);
 
-	metadata.cur_index=index;
-	metadata.left_index= tape->left_init;
-	metadata.right_index= tape->right_init;
-	metadata.length=length;
 
-    // Allocate and zero-initialize the buffer for writing
     uint8_t *buffer = calloc((length + 7) / 8, sizeof(uint8_t));
     if (!buffer) {
-        perror("Allocation failed");
+        perror("Allocation failed [DumpTape]");
         exit(EXIT_FAILURE);
     }
     pack_bits(buffer, &tape->base[tape->left_init], length);
 
-#ifdef _WIN32
-    DWORD written;
-    if (!WriteFile((HANDLE)_get_osfhandle(out_fd), &metadata, sizeof(metadata), &written, NULL) ||
-        written != sizeof(metadata) ||
-        !WriteFile((HANDLE)_get_osfhandle(out_fd), buffer, (length + 7) / 8, &written, NULL) ||
-        written != (DWORD)((length + 7) / 8)) 
-#else
-    if (write(out_fd, &metadata, sizeof(metadata)) != sizeof(metadata) ||
-        write(out_fd, buffer, (length + 7) / 8) != (length + 7) / 8) 
-#endif
-    {
-        perror("Failed to write to file");
+    FILE *out_file = fopen(out_filename, "wb");
+    if (!out_file) {
+        perror("Failed to open output file");
         free(buffer);
         exit(EXIT_FAILURE);
     }
 
+    if (fwrite(&metadata, sizeof(metadata), 1, out_file) != 1 ||
+        fwrite(buffer, (length + 7) / 8, 1, out_file) != 1) {
+        perror("Failed to write to file");
+        fclose(out_file);
+        free(buffer);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(out_file);
     free(buffer);
 }
 
-
-
-Tape __attribute__((sysv_abi)) ReadTape(int in_fd) {
-    // Initialize Tape struct
+Tape __attribute__((sysv_abi)) ReadTape(const char *in_filename) {
     Tape tape;
     memset(&tape, 0, sizeof(tape));
-
     MetaData metadata;
-// Read the metadata
 
-#ifdef _WIN32
-    DWORD read_bytes;
-    ReadFile((HANDLE)_get_osfhandle(in_fd), &metadata, sizeof(metadata), &read_bytes, NULL);
-    if (read_bytes != sizeof(metadata))
-#else
-    if (read(in_fd, &metadata, sizeof(metadata)) != sizeof(metadata))
-#endif
-    {
-        fprintf(stderr, "Failed to read full metadata\n");
+    FILE *in_file = fopen(in_filename, "rb");
+    if (!in_file) {
+        fprintf(stderr, "Failed to open input file\n");
         exit(EXIT_FAILURE);
     }
 
-    // Allocate memory for the tape array based on the metadata
-    uint8_t *buffer = calloc(metadata.length, sizeof(uint8_t));
+    if (fread(&metadata, sizeof(metadata), 1, in_file) != 1) {
+        fprintf(stderr, "Failed to read full metadata\n");
+        fclose(in_file);
+        exit(EXIT_FAILURE);
+    }
+
+    DEBUG_METADATA_READ(metadata);
+
+
+    uint8_t *buffer = calloc((metadata.length + 7) / 8, sizeof(uint8_t));
     if (!buffer) {
         perror("Failed to allocate memory for tape data");
-        printf("tried alocating %d\n",metadata.length);
+        fclose(in_file);
         exit(EXIT_FAILURE);
     }
 
-    // Read the packed bit data
-#ifdef _WIN32
-    ReadFile((HANDLE)_get_osfhandle(in_fd), buffer, (metadata.length + 7) / 8, &read_bytes, NULL);
-    if (read_bytes != (DWORD)((metadata.length + 7) / 8))
-#else
-    if (read(in_fd, buffer, (metadata.length + 7) / 8) != (metadata.length + 7) / 8)
-#endif
-    {
+    if (fread(buffer, (metadata.length + 7) / 8, 1, in_file) != 1) {
         fprintf(stderr, "Failed to read full tape data\n");
         free(buffer);
+        fclose(in_file);
         exit(EXIT_FAILURE);
     }
 
-    // Unpack the bit data into the tape array
-    Bit *tape_data = calloc(metadata.length, sizeof(Bit));
-    if (!tape_data) {
-        perror("Failed to allocate memory for unpacked tape data");
-        free(buffer);
-        exit(EXIT_FAILURE);
+    fclose(in_file);
+
+    int total_tape_length=metadata.right_limit-metadata.left_limit+1;
+
+    Bit *start=allocate_all_tape(sizeof(Bit)*total_tape_length);
+    Bit *base=start-metadata.left_limit;
+    Bit *tape_data=&base[metadata.left_index];
+    
+    if(&base[metadata.right_index]-&base[metadata.left_index]+1!=metadata.length){
+    	UNREACHABLE();
     }
-    unpack_bits(buffer, tape_data, metadata.length);
+
+    memset(tape_data, 0, metadata.length); // Initialize the relevant section of the tape
+	unpack_bits(buffer, tape_data, metadata.length); // Unpack the buffer into the initialized section
+
+    
+
+    // Bit *tape_data = calloc(metadata.length, sizeof(Bit));
+    // if (!tape_data) {
+    //     perror("Failed to allocate memory for unpacked tape data");
+    //     free(buffer);
+    //     exit(EXIT_FAILURE);
+    // }
+
+    //unpack_bits(buffer, tape_data, total_tape_length);
     free(buffer);
 
-    // Set the remaining tape properties
-    tape.base = tape_data;
+    tape.base = base;
     tape.cur = tape.base + metadata.cur_index;
     tape.left_init = metadata.left_index;
     tape.right_init = metadata.right_index;
-    tape.min = metadata.left_index;  // Assuming min is the same as left_init
-    tape.max = metadata.right_index; // Assuming max is the same as right_init
+    
+    // tape.left_limit = metadata.left_index;
+    // tape.right_limit = metadata.right_index	;
+    tape.left_limit = metadata.left_limit;
+    tape.right_limit = metadata.right_limit;
 
     return tape;
 }

@@ -11,6 +11,8 @@ all: io.o
 io.o:
 	$(CC) $(CFLAGS) -c io.c
 
+test_io: test_io.out
+
 test_io.out: io.o
 	$(CC) $(CFLAGS) test_io.c io.o -o test_io.out
 
@@ -23,4 +25,4 @@ check: all
 	rm -f io.o test_io.out
 
 
-.PHONY: all clean check clean_io
+.PHONY: all clean check clean_io test_io

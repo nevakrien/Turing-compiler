@@ -12,6 +12,7 @@ def call_make(target):
 def run_test_io():
     call_make('clean_io')
     call_make('test_io.out')
+    print("ReCompilation Done")
     
 
     # Create a temporary file to use for output
@@ -25,7 +26,7 @@ def run_test_io():
     if test_proc.returncode == 0:
         print("IO Test Passed: Tape data validated successfully.")
     else:
-        print(f"IO Test Failed with exit code {test_proc.returncode}: {test_proc.stderr}")
+        print(f"IO Test Failed with exit code {test_proc.returncode}:  {test_proc.stdout} sterr:{test_proc.stderr}")
 
     # Clean up the temporary file
     os.unlink(output_filename)

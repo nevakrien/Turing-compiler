@@ -36,8 +36,10 @@ typedef struct TuringMachine{
 typedef struct Tape{
 	Bit* cur;
 	Bit* base;//base-min=the actual base pointer to free
-	int max;
-	int min;
+	
+	int left_limit;
+	int right_limit;
+
 	int left_init;
 	int right_init;
 } Tape;
@@ -45,11 +47,11 @@ typedef struct Tape{
 typedef struct TuringResult{
 	TuringDone code;
 	int steps;
-	Tape* tape;
+	//Tape* tape;
 }TuringResult;
 
 
 
-TuringResult run_turing(Tape* tape,int max_steps);
+TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps);
 
 #endif //TURING_H
