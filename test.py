@@ -41,12 +41,12 @@ def run_test_turing():
     
     # Check results
     if test_proc.returncode == 0:
-        print("IO Test Passed: Tape data validated successfully.")
+        print("Turing Test Passed: Tape data validated successfully.")
     else:
-        print(f"IO Test Failed with exit code {test_proc.returncode}:\n  {test_proc.stdout} sterr:{test_proc.stderr}")
+        print(f"Turing Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}")
 
     print("")
-    
+
 
 if __name__ == '__main__':
     run_test_io()
