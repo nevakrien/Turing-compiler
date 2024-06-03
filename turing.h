@@ -4,7 +4,8 @@
 #include <stdio.h>
 
 typedef enum TuringDone{	
-	HAULT,
+	HAULT=0,
+	TIME_OUT,
 	OUT_OF_TAPE,
 }TuringDone;
 
@@ -19,24 +20,29 @@ typedef enum  Dir{
 	Right=1,
 } Dir;
 
-typedef struct TRANSITION TRANSITION;
+//typedef struct TRANSITION TRANSITION;
+typedef struct State State;
+
 typedef struct TRANSITION{
 	Bit write;
 	Dir move;
-	TRANSITION* NextTRANSITION;
+	State* NextState;
 }TRANSITION;
 
-typedef  TRANSITION State[2];
+typedef struct State {
+    TRANSITION transitions[2];
+} State;
 
 typedef struct TuringMachine{
 	int size;
-	State states[];
+	State* states;
 }TuringMachine;
 
 typedef struct Tape{
 	Bit* cur;
-	Bit* base;//base-min=the actual base pointer to free
+	Bit* base;//base[min] =the actual base pointer to free
 	
+	//all indecies here are allways inclusive  base[right_limit] should not segfault
 	int left_limit;
 	int right_limit;
 
@@ -47,6 +53,7 @@ typedef struct Tape{
 typedef struct TuringResult{
 	TuringDone code;
 	int steps;
+	int state_id;
 	//Tape* tape;
 }TuringResult;
 

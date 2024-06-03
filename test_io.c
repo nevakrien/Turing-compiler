@@ -17,19 +17,23 @@ int main(int argc, char *argv[]) {
     const char *output_filename = argv[1];
 
     // Create and initialize a Tape
-    Tape tape;
-    tape.base = (Bit *)allocate_all_tape(TestTapeBitCount * sizeof(Bit)); // Assuming allocate_all_tape handles memory allocation
+    Bit *start=(Bit *)allocate_all_tape(TestTapeBitCount * sizeof(Bit));
+    
 
     // Initialize the tape with some data
     for (int i = 0; i < TestTapeBitCount; i++) {
-        tape.base[i] = (i % 2 == 0) ? Bit_0 : Bit_1;
+        start[i] = (i % 2 == 0) ? Bit_0 : Bit_1;
     }
-    tape.cur = tape.base + (TestTapeBitCount / 2); // Set current position to the middle
-    tape.left_init = 0;
-    tape.right_init = TestTapeBitCount - 1;
 
-    tape.left_limit = 0;
-    tape.right_limit = TestTapeBitCount - 1;
+    Tape tape;
+    tape.cur = start + (TestTapeBitCount / 2); // Set current position to the middle
+    tape.base=tape.cur;
+
+    tape.left_init = -TestTapeBitCount / 2;
+    tape.right_init = +(TestTapeBitCount /2 -1);
+
+    tape.left_limit = tape.left_init;
+    tape.right_limit = tape.right_init;
 
     // Dump tape to file
     DumpTape(&tape, output_filename);
