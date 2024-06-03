@@ -47,7 +47,20 @@ def run_test_turing():
 
     print("")
 
+def run_test_parser():
+    call_make('bin/test_parser')
+
+    test_proc = subprocess.run(['./bin/test_parser'], text=True, capture_output=True)
+
+    # Check results
+    if test_proc.returncode == 0:
+        print(f"PRINT TEST:\n{test_proc.stdout}")
+    else:
+        print(f"Parser Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}")
+
+    print("")
 
 if __name__ == '__main__':
     run_test_io()
     run_test_turing()
+    run_test_parser()

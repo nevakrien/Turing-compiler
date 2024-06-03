@@ -10,48 +10,46 @@ CFLAGS = -g2 -Wall -Iinclude
 #tests
 #bin
 
-#Object files
-IO_OBJ = bin/io.o
-TURING_OBJ = bin/turing.o
-
-# Test executables
-TEST_IO = bin/test_io
-TEST_TURING = bin/test_turing
-
 # Default target
-all: $(TEST_IO) $(TEST_TURING)
+all: bin/test_io bin/test_turing bin/parser.o
 
 # Compile source files to object files
-$(IO_OBJ): src/io.c
+bin/io.o: src/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TURING_OBJ): src/turing.c
+bin/turing.o: src/turing.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Build test executables
-$(TEST_IO): tests/test_io.c $(IO_OBJ)
+bin/test_io: tests/test_io.c bin/io.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(TEST_TURING): tests/test_turing.c $(TURING_OBJ)
+bin/test_turing: tests/test_turing.c bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
 
+bin/parser.o: src/parser.c #bin/turing.o
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+bin/test_parser: tests/test_parser.c bin/parser.o
+	$(CC) $(CFLAGS) $^ -o $@
 # Cleanup
 clean:
-	rm -rf bin
+	rm -rf bin/*
+
 
 clean_io:
-	rm -f $(IO_OBJ) $(TEST_IO)
+	rm -f bin/io.o bin/test_io
 
 clean_turing:
-	rm -f $(TURING_OBJ) $(TEST_TURING)
+	rm -f bin/turing.o bin/test_turing
 
 # Check
 check: all
-	rm -rf bin
+	rm -rf bin/*
 test: clean
 	python3 test.py
-	rm -rf bin
+	rm -rf bin/*
 
 .PHONY: all clean clean_io clean_turing test check
