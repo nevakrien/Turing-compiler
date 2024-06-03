@@ -11,7 +11,7 @@ def call_make(target):
 
 def run_test_io():
     call_make('clean_io')
-    call_make('test_io.out')
+    call_make('bin/test_io')
     print("test_io ReCompilation Done")
     
 
@@ -20,7 +20,7 @@ def run_test_io():
         output_filename = tmp_out.name
     
     # Run the compiled program with the temporary file
-    test_proc = subprocess.run(['./test_io.out', output_filename], text=True, capture_output=True)
+    test_proc = subprocess.run(['./bin/test_io', output_filename], text=True, capture_output=True)
     
     # Check results
     if test_proc.returncode == 0:
@@ -34,10 +34,10 @@ def run_test_io():
 
 def run_test_turing():
     call_make('clean_turing')
-    call_make('test_turing.out')
+    call_make('bin/test_turing')
     print("test_turing ReCompilation Done")
 
-    test_proc = subprocess.run(['./test_turing.out'], text=True, capture_output=True)
+    test_proc = subprocess.run(['./bin/test_turing'], text=True, capture_output=True)
     
     # Check results
     if test_proc.returncode == 0:

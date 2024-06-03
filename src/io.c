@@ -46,7 +46,10 @@ void __attribute__((sysv_abi)) exit_turing(TuringDone code,int current_step){
 		case OUT_OF_TAPE:
 			printf("  ERROR: out of tape");
 			break;
-		
+		case TIME_OUT:
+			printf("  ERROR: out of tape");
+			break;
+			
 		default:
 			printf(" unknowen error code: %d!!!",code);
 			break;

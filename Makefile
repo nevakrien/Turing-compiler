@@ -1,44 +1,57 @@
 CC = gcc
 CXX = g++
 
-# Use -g for debugging information and -Wall for compiler warnings
-CFLAGS = -g2 -Wall
-CXXFLAGS = -g2 -Wall
+# Compiler flags
+CFLAGS = -g2 -Wall -Iinclude
 
-all: io.o turing.o
+##dirs:
+#include
+#src
+#tests
+#bin
 
+#Object files
+IO_OBJ = bin/io.o
+TURING_OBJ = bin/turing.o
 
-#IO
-io.o:
-	$(CC) $(CFLAGS) -c io.c
+# Test executables
+TEST_IO = bin/test_io
+TEST_TURING = bin/test_turing
 
-test_io: test_io.out
+# Default target
+all: $(TEST_IO) $(TEST_TURING)
 
-test_io.out: io.o
-	$(CC) $(CFLAGS) test_io.c io.o -o test_io.out
+# Compile source files to object files
+$(IO_OBJ): src/io.c
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TURING_OBJ): src/turing.c
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build test executables
+$(TEST_IO): tests/test_io.c $(IO_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(TEST_TURING): tests/test_turing.c $(TURING_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@
+
+# Cleanup
+clean:
+	rm -rf bin
 
 clean_io:
-	rm -f io.o test_io.out
+	rm -f $(IO_OBJ) $(TEST_IO)
 
-#turing
-turing.o:
-	$(CC) $(CFLAGS) -c turing.c
+clean_turing:
+	rm -f $(TURING_OBJ) $(TEST_TURING)
 
-test_turing: test_turing.out
+# Check
+check: all
+	rm -rf bin
+test: clean
+	python3 test.py
+	rm -rf bin
 
-
-test_turing.out: turing.o
-	$(CC) $(CFLAGS) test_turing.c turing.o -o test_turing.out
-
-
-clean_turing: 
-	rm -rf turing.o test_turing.out
-
-#clean
-clean: clean_io clean_turing
-
-check: all 
-	rm -f io.o test_io.out
-
-
-.PHONY: all clean check clean_io test_io test_turing clean_turing
+.PHONY: all clean clean_io clean_turing test check
