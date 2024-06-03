@@ -85,12 +85,12 @@ static void unpack_bits(const uint8_t *source, Bit *dest, int count) {
     }
 }
 
-
-typedef struct {
+//this can be implemented the same everywhere regardless of compiler packing
+typedef struct  __attribute__((packed)) {
     int cur_index;
     int left_index;
     int right_index;
-    int length;
+    //int length;
 
     int left_limit;
     int right_limit;
@@ -118,7 +118,7 @@ void __attribute__((sysv_abi)) DumpTape(Tape* tape, const char *out_filename) {
 
     int index = tape->cur - tape->base;
     int length = tape->right_init - tape->left_init+ 1;
-    MetaData metadata = {index, tape->left_init, tape->right_init, length,
+    MetaData metadata = {index, tape->left_init, tape->right_init,// length,
     tape->left_limit,tape->right_limit};
 
     DEBUG_METADATA_WRITE(metadata);
@@ -168,16 +168,17 @@ Tape __attribute__((sysv_abi)) ReadTape(const char *in_filename) {
     }
 
     DEBUG_METADATA_READ(metadata);
+    int length=metadata.right_index-metadata.left_index+1;
 
 
-    uint8_t *buffer = calloc((metadata.length + 7) / 8, sizeof(uint8_t));
+    uint8_t *buffer = calloc((length + 7) / 8, sizeof(uint8_t));
     if (!buffer) {
         perror("Failed to allocate memory for tape data");
         fclose(in_file);
         exit(EXIT_FAILURE);
     }
 
-    if (fread(buffer, (metadata.length + 7) / 8, 1, in_file) != 1) {
+    if (fread(buffer, (length + 7) / 8, 1, in_file) != 1) {
         fprintf(stderr, "Failed to read full tape data\n");
         free(buffer);
         fclose(in_file);
@@ -187,17 +188,17 @@ Tape __attribute__((sysv_abi)) ReadTape(const char *in_filename) {
     fclose(in_file);
 
     int total_tape_length=metadata.right_limit-metadata.left_limit+1;
-
+    
     Bit *start=allocate_all_tape(sizeof(Bit)*total_tape_length);
     Bit *base=start-metadata.left_limit;
     Bit *tape_data=&base[metadata.left_index];
     
-    if(&base[metadata.right_index]-&base[metadata.left_index]+1!=metadata.length){
+    if(&base[metadata.right_index]-&base[metadata.left_index]+1!=length){
     	UNREACHABLE();
     }
 
-    memset(tape_data, 0, metadata.length); // Initialize the relevant section of the tape
-	unpack_bits(buffer, tape_data, metadata.length); // Unpack the buffer into the initialized section
+    memset(tape_data, 0,length); // Initialize the relevant section of the tape
+	unpack_bits(buffer, tape_data, length); // Unpack the buffer into the initialized section
 
     
 

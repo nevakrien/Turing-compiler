@@ -13,14 +13,15 @@ void test_infinite_right_flip() {
         exit(1);
     }
 
-    const int offset=10;
+    //const int offset=10;
+    const int offset=0;
     Tape tape;
     tape.base = tape_memory;
     tape.cur = tape_memory + (test_tape_size / 2)-offset; // Start in the middle of the tape
     tape.left_limit = 0;
     tape.right_limit = test_tape_size - 1;
     tape.left_init = tape.left_limit + (test_tape_size / 2)-offset; // Initialize left half
-    tape.right_init = tape.right_limit - (test_tape_size / 2); // Initialize right half
+    tape.right_init = tape.cur-tape.base; // Initialize right part
 
     int start_id=tape.cur-tape.base;
 

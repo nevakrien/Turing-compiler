@@ -15,7 +15,7 @@ static inline void expand_tape_right(Tape* tape){
 	int expand_length=expand_size;
 
 	if(new_init>tape->right_limit){
-		printf("reached the very end on the last valid byte\n");
+		//printf("reached the very end on the last valid byte\n");
 		new_init=tape->right_limit;
 		expand_length=new_init-tape->right_init;
 	}
@@ -41,6 +41,9 @@ static inline void expand_tape_left(Tape* tape){
 }
 
 TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
+	if(tape->cur-tape->base > tape->right_init) {UNREACHABLE();}
+	if(tape->cur-tape->base < tape->left_init) {UNREACHABLE();}
+
 	const State* state=&machine.states[0];
 	
 	//c++ style iterator
@@ -70,28 +73,31 @@ TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
 		
 		//printf("current dist from right_end:%d\n",end_right-tape->cur);
 		//bounds checks
-		if(tape->cur==end_right+1){
-			printf("\ncurrent dist from end_max:%d\n",end_max-tape->cur);
+		if(tape->cur>end_right){
+			//printf("\ncurrent dist from end_max:%d\n",end_max-tape->cur);
 			if(tape->cur==end_max+1){
 				return (TuringResult){OUT_OF_TAPE,i+1,get_state_id(machine,trans.NextState)};
 			}
 
 			expand_tape_right(tape);
 			end_right=tape->base+tape->right_init;
-			printf("new end%d\n\n",tape->right_init);
-
+			
 			if(end_right>end_max){
 				UNREACHABLE();
 			}
 		}
 
-		else if(tape->cur==end_left-1){
+		else if(tape->cur<end_left){
 			if(tape->cur==end_min-1	){
 				return (TuringResult){OUT_OF_TAPE,i+1,get_state_id(machine,trans.NextState)};
 			}
 
 			expand_tape_left(tape);
 			end_left=tape->base-tape->left_init;
+
+			if(end_left<end_min){
+				UNREACHABLE();
+			}
 		}
 
 		if(trans.NextState==NULL){
