@@ -4,7 +4,23 @@
 #include "turing.h"
 #include <stdlib.h>
 
+//syntax specific definitions
 static const char comment_char='#';
+static const char sep_char=':';
+
+#define COMP_SEPS(cur, comp, ag) \
+    ( ((cur) comp '\t') ag \
+      ((cur) comp ' ') ag \
+      ((cur) comp '(') ag \
+      ((cur) comp ')') ag \
+      ((cur) comp '[') ag \
+      ((cur) comp ']') ag \
+      ((cur) comp '{') ag \
+      ((cur) comp '}') ag \
+      ((cur) comp '\"') ag \
+      ((cur) comp '\'') ag \
+      ((cur) comp ';') ag \
+      ((cur) comp ',') )
 
 // const char* right_chars={'r','R'};
 // const char* left_chars={'l','L'};
@@ -39,7 +55,7 @@ typedef struct{
 typedef struct{
 	Bit write;
 	Dir move;
-	int NextStateID;
+	Token NextStateTok;
 } TransitionEncoding;
 
 typedef struct{
@@ -47,7 +63,7 @@ typedef struct{
 }StateEncoding;
 
 CodeLines tokenize_text(const char* raw_text);
-
+TransitionEncoding parse_trans(TokenNode* line,const char**error);
 
 void print_trans(TuringMachine machine,Transition trans, int indent);
 void print_state(TuringMachine machine,State s, int indent);

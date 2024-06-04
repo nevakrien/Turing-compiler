@@ -84,7 +84,7 @@ void test_multiple_lines() {
 }
 
 void test_lines_with_only_whitespace() {
-    CodeLines result = tokenize_text(" \n\t\n\n   \n");
+    CodeLines result = tokenize_text(" \n\t\n\n  ; '\n");
     assert(result.len == 0);
     printf("Test Lines With Only Whitespace: Passed\n");
 }

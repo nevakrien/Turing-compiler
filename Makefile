@@ -46,11 +46,12 @@ clean_turing:
 	rm -f bin/turing.o bin/test_turing
 
 # Check
-check: all
-	rm -rf bin/*
+check: clean
+	make all
+	#rm -rf bin/*
 
 test: clean
 	python3 test.py
-	rm -rf bin/*
+	#rm -rf bin/*
 
 .PHONY: all clean clean_io clean_turing test check

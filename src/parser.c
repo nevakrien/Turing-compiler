@@ -2,8 +2,7 @@
 #include "turing.h"
 #include "utils.h"
 
-#include <errno.h>
-#include <errno.h>
+//#include <string.h>
 
 // Function to print the details of a Transition with specified indentation
 void print_trans(TuringMachine machine,Transition trans, int indent) {
@@ -61,19 +60,20 @@ void print_machine(TuringMachine machine, int indent) {
 
 
 static inline const char* get_token_end(const char* cur){
-	while(*cur!='\0'&&*cur!='\t'&&*cur!=' '&&*cur!='\n'){
+	while(*cur!='\0'&&*cur!='\n'&&COMP_SEPS(*cur,!=,&&)){
 		cur++;
 	}
 
 	return cur;
 }
 static inline const char* skip_spaces(const char* cur){
-	while(*cur=='\t'||*cur==' '){
+	while(COMP_SEPS(*cur,==,||)){
 		cur++;
 	}
 
 	return cur;
 }
+
 
 static inline const char* skip_empty_lines(const char* cur){
 	cur=skip_spaces(cur);
@@ -106,6 +106,16 @@ CodeLines tokenize_text(const char* raw_text){
 		const char* tok_end=get_token_end(head);
 		Token tok={head,tok_end-head};
 		
+		//check for an earlier exit
+		if(tok.data[tok.len-1]=='\0'){
+			tok.len--;//no need fot the null terminator
+			//push token and exit
+			*insert_spot=null_check(malloc(sizeof(TokenNode)));
+			(*insert_spot) -> tok=tok;
+			insert_spot=&((*insert_spot)->next);
+			break;
+		}
+
 		//push token
 		*insert_spot=null_check(malloc(sizeof(TokenNode)));
 		(*insert_spot) -> tok=tok;
@@ -131,6 +141,8 @@ CodeLines tokenize_text(const char* raw_text){
 	return ans;
 }
 
+//UNTESTED
+
 static void remove_comments(CodeLines* codes){
 	for(int i=0;i<codes->len;i++){
 		TokenNode* chain=codes->lines[i];
@@ -149,104 +161,98 @@ static void remove_comments(CodeLines* codes){
 	}
 }
 
-//errors are -2 and below
-static inline int parse_id(char* str,int len){
-	if(str[0]=='-'){
-		if(len!=2){
-			return -2;
+//splits tokens on a specific char. 
+//also makes sure there is 1 and ONLY 1 split
+//fails when the left part is completly empty
+static TokenNode* separate_char(TokenNode* line,const char**error){
+	TokenNode* last_left_token;
+
+	while(line){
+		Token tok=line->tok;
+		for(int i=0;i<tok.len;i++){
+			if(tok.data[i]==sep_char){
+				//
+				int split_start=i+1;
+				int split_len=tok.len-split_start;
+
+				if(split_len>0){
+					TokenNode* second_part=null_check(malloc(sizeof(TokenNode)));
+					second_part->next=line->next;
+					second_part->tok=(Token){&tok.data[split_start],split_len};
+
+					line->next=second_part;
+					line->tok.len=i;
+					last_left_token=line;
+					
+					line=second_part;
+					break;
+				}
+
+				line->tok.len=i;
+				last_left_token=line;
+				break;
+			}
 		}
-		if(str[1]=='1'){
-			return -1;
-		}
-		return -2;
+
+		line=line->next;
 	}
 
-	int ans=0;
-	int mul=1;
-	for(int i=0;i<len;i++){
-		if (str[i] >= '0' && str[i] <= '9') {
-	        ans+=mul*(str[i] - '0');
-	    } else {
-	        return -2; 
-	    }
-	    mul*=10;
+	if(line==NULL){
+		static const char* error1="expected a \" : \" to show seperation";
+		*error=error1;
+		return NULL;
 	}
 
-	return ans;
+	line=line->next;
+	while(line){
+		Token tok=line->tok;
+		for(int i=0;i<tok.len;i++){
+			if(tok.data[i]==sep_char){
+				static const char* error1="this line contains more than one \" : \" seperator";
+				*error=error1;
+				return NULL;
+			}
+		}
+
+		line=line->next;
+	}
+
+	return last_left_token;
 }
 
-#define raise_error( text) printf(text); exit(1);
-//#define raise_error( text) error*=(text); return {0};
+TransitionEncoding parse_trans(TokenNode* line,const char**error){
+	TokenNode*  end_left=separate_char(line,error);
+	if(*error!=NULL){
+		return (TransitionEncoding){0};
+	}
 
-//old parser version
-// static TransitionEncoding pop_next_state(TokenNode* line,char** error){
-// 	TransitionEncoding ans;
+	if(line->next!=end_left){
+		static const char* error1="expected exacly 2 tokens in the left half";
+		*error=error1;
+		return (TransitionEncoding){0};
+	}
 
-// 	int found_write=0;
-// 	int found_read=0;
-// 	int found_dir=0;
-// 	int found_state=0;
+	TokenNode* right_start=end_left->next;
+	
+	static const char* error2="expected exacly 3 tokens in the right half";
+	TokenNode* cur=right_start;
+	for(int i=1;i<3;i++){
+		if(cur->next==NULL){
+			*error=error2;
+			return (TransitionEncoding){0};
+		}
+		cur=cur->next;
+	}
 
-// 	while(line){
-// 		Token tok=line->tok;
-// 		if(tok.data[0]=='S'){
-// 			if(found_state==1){
-// 				raise_error("double definition of next state\n");
-// 			}
-// 			//read the index and use it
-// 			found_state=1;
+	if(cur->next!=NULL){
+		*error=error2;
+		return (TransitionEncoding){0};
+	}
 
-// 			ans.NextStateID=parse_id(tok.data+1,tok.len-1);
-// 			if(found_state<-1){
-// 				raise_error("invalid state id\n");
-// 			}
-// 			continue;
-// 		}
-// 		switch(tok.len){
+	TokenNode* end_right=cur;
 
-// 		case 4://read next move
-// 			if(memcmp("read",tok.data,4)==0){
-// 				if(found_read){
-// 					raise_error("double definition of write\n");
-// 				}
-// 				found_read=1;
-// 				break;
-// 			}
-// 			if(memcmp("next",tok.data,4)==0){
-// 				if(found_read){
-// 					raise_error("double definition of write\n");
-// 				}
-// 				found_read=1;
-// 				break;
-// 			}
-// 			if(memcmp("move",tok.data,4)==0){
-// 				break;
-// 			}
-// 			break;
-// 		case 5://write
-// 			if(memcmp("write",tok.data,5)==0){
-// 				if(found_write){
-// 					raise_error("double definition of write\n");
-// 				}
-// 				found_write=1;
-// 			}
-// 			break;
-
-// 		default:
-// 			//printf();
-// 			break;
-// 		}
-// 	}
-// }
-
-// static StateEncoding pop_next_state(CodeLines* lines){
-// 	StateEncoding ans;
+	//PLACE HOLDER
+	return (TransitionEncoding){0};
+}
 
 
-// }
-
-// TuringMachine parse_text(const char* raw_text){
-// 	CodeLines lines=tokenize_text(raw_text);
-// 	remove_comments(&lines);
-// 	TuringMachine ans;
-// }
