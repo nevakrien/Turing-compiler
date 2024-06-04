@@ -10,7 +10,7 @@ def call_make(target):
         return
 
 def run_test_io():
-    call_make('clean_io')
+    #call_make('clean_io')
     call_make('bin/test_io')
     print("test_io Compilation Done")
     
@@ -32,7 +32,7 @@ def run_test_io():
     os.unlink(output_filename)
 
 def run_test_turing():
-    call_make('clean_turing')
+    #call_make('clean_turing')
     call_make('bin/test_turing')
     print("test_turing Compilation Done")
 

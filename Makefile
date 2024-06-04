@@ -48,6 +48,7 @@ clean_turing:
 # Check
 check: all
 	rm -rf bin/*
+
 test: clean
 	python3 test.py
 	rm -rf bin/*

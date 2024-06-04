@@ -37,8 +37,8 @@ void test_infinite_right_flip() {
     }
 
     // State that flips the bit and moves right indefinitely
-    machine.states[0].transitions[Bit_0] = (TRANSITION){Bit_1, Right, &machine.states[0]};
-    machine.states[0].transitions[Bit_1] = (TRANSITION){Bit_0, Right, &machine.states[0]};
+    machine.states[0].transitions[Bit_0] = (Transition){Bit_1, Right, &machine.states[0]};
+    machine.states[0].transitions[Bit_1] = (Transition){Bit_0, Right, &machine.states[0]};
 
     // Run the Turing machine
     int max_steps = 2000; // Force many steps to potentially expand tape
@@ -99,8 +99,8 @@ void test_stationary_turing_machine() {
     }
 
     // State that writes the same bit and stays in place
-    machine.states[0].transitions[Bit_0] = (TRANSITION){Bit_0, Stay, &machine.states[0]};
-    machine.states[0].transitions[Bit_1] = (TRANSITION){Bit_1, Stay, &machine.states[0]};
+    machine.states[0].transitions[Bit_0] = (Transition){Bit_0, Stay, &machine.states[0]};
+    machine.states[0].transitions[Bit_1] = (Transition){Bit_1, Stay, &machine.states[0]};
 
     // Run the Turing machine with enough steps to trigger a time-out
     int max_steps = 1000;
@@ -165,14 +165,14 @@ void test_n_state_left_movement() {
         exit(1);
     }
 
-    // Set up states to write 1, move left, and transition to the next state
+    // Set up states to write 1, move left, and Transition to the next state
     for (int i = 0; i < num_states - 1; i++) {
-        machine.states[i].transitions[Bit_0] = (TRANSITION){Bit_1, Left, &machine.states[i + 1]};
-        machine.states[i].transitions[Bit_1] = (TRANSITION){Bit_1, Left, &machine.states[i + 1]};
+        machine.states[i].transitions[Bit_0] = (Transition){Bit_1, Left, &machine.states[i + 1]};
+        machine.states[i].transitions[Bit_1] = (Transition){Bit_1, Left, &machine.states[i + 1]};
     }
     // Last state transitions to NULL (halt)
-    machine.states[num_states - 1].transitions[Bit_0] = (TRANSITION){Bit_1, Left, NULL};
-    machine.states[num_states - 1].transitions[Bit_1] = (TRANSITION){Bit_1, Left, NULL};
+    machine.states[num_states - 1].transitions[Bit_0] = (Transition){Bit_1, Left, NULL};
+    machine.states[num_states - 1].transitions[Bit_1] = (Transition){Bit_1, Left, NULL};
 
     // Run the Turing machine
     TuringResult result = run_turing(&tape, machine, num_states*10); // Arbitrary high number of steps

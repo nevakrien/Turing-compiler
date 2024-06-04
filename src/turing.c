@@ -63,7 +63,7 @@ TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
 		//figure states
 		//printf("cur index:%d\n", tape->cur-tape->base);
 		Bit val= *tape->cur;
-		const TRANSITION trans=state->transitions[val];
+		const Transition trans=state->transitions[val];
 
 		//write
 		*tape->cur=trans.write;

@@ -53,13 +53,13 @@ void print_tokens(CodeLines code) {
 
 // Test functions
 void test_empty_input() {
-    CodeLines result = nevas_tokenize_text("");
+    CodeLines result = tokenize_text("");
     assert(result.len == 0);
     printf("Test Empty Input: Passed\n");
 }
 
 void test_whitespace_only() {
-    CodeLines result = nevas_tokenize_text("    \t   ");
+    CodeLines result = tokenize_text("    \t   ");
     //printf("white space only: %d\n",result.len);
     
     assert(result.len == 0);
@@ -67,7 +67,7 @@ void test_whitespace_only() {
 }
 
 void test_single_line_input() {
-    CodeLines result = nevas_tokenize_text("hello");
+    CodeLines result = tokenize_text("hello");
     assert(result.len == 1);
     assert(result.lines[0]->tok.len == 5);
     assert(strncmp(result.lines[0]->tok.data, "hello", 5) == 0);
@@ -75,7 +75,7 @@ void test_single_line_input() {
 }
 
 void test_multiple_lines() {
-    CodeLines result = nevas_tokenize_text("hello world\nsecond line\n   third line");
+    CodeLines result = tokenize_text("hello world\nsecond line\n   third line");
     assert(result.len == 3);
     assert(strncmp(result.lines[0]->tok.data, "hello", 5) == 0);
     assert(strncmp(result.lines[1]->tok.data, "second", 6) == 0);
@@ -84,21 +84,23 @@ void test_multiple_lines() {
 }
 
 void test_lines_with_only_whitespace() {
-    CodeLines result = nevas_tokenize_text(" \n\t\n\n   \n");
+    CodeLines result = tokenize_text(" \n\t\n\n   \n");
     assert(result.len == 0);
     printf("Test Lines With Only Whitespace: Passed\n");
 }
 
-
-int main(){
-    test_prints();
-
-
+void test_tokenizer(){
     test_empty_input();
     test_whitespace_only();
     test_single_line_input();
     test_multiple_lines();
     test_lines_with_only_whitespace();
+}
+
+int main(){
+    test_prints();
+    test_tokenizer();
+    
 
     return 0;
 }

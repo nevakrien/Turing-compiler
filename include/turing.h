@@ -20,17 +20,17 @@ typedef enum  Dir{
 	Right=1,
 } Dir;
 
-//typedef struct TRANSITION TRANSITION;
+//typedef struct Transition Transition;
 typedef struct State State;
 
-typedef struct TRANSITION{
+typedef struct Transition{
 	Bit write;
 	Dir move;
 	State* NextState;
-}TRANSITION;
+}Transition;
 
 typedef struct State {
-    TRANSITION transitions[2];
+    Transition transitions[2];
 } State;
 
 typedef struct TuringMachine{

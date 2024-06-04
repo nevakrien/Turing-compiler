@@ -2,8 +2,8 @@
 #include "turing.h"
 #include "utils.h"
 
-// Function to print the details of a transition with specified indentation
-void print_trans(TuringMachine machine,TRANSITION trans, int indent) {
+// Function to print the details of a Transition with specified indentation
+void print_trans(TuringMachine machine,Transition trans, int indent) {
     const char *dir_str;
     switch (trans.move) {
         case Right:
@@ -81,11 +81,8 @@ static inline const char* skip_empty_lines(const char* cur){
 	return cur;
 }
 
-CodeLines nevas_tokenize_text(const char* raw_text){
-	// if(raw_text==NULL || *raw_text=='\0'){
-	// 	UNREACHABLE();
-	// }
-	//alocate extra stuff
+//note that some information is lost BUT its recovrble since we are using refrences and no copying
+CodeLines tokenize_text(const char* raw_text){
 	CodeLines ans;
 
 	int cap=128;//vector style
@@ -131,11 +128,27 @@ CodeLines nevas_tokenize_text(const char* raw_text){
 	return ans;
 }
 
-// TuringMachine parse_text(const char* raw_text){
-// 	if(raw_text==NULL||*raw_text=='\0'){
-// 		return (CodeLines){0,NULL};
-// 	}
+// static void remove_comments(CodeLines* codes){
+// 	for(int i=0;i<codes->len;i++){
+// 		TokenNode* chain=codes->lines[i];
+// 		while(chain!=NULL){
+// 			Token tok=chain->tok;
+// 			for(int j=0;j<tok.len;j++){
+// 				if(tok.data[j]==comment_char){
+// 					tok.len=j;
+// 					free_chain(chain->next);
+// 					chain->next=NULL;
+// 				}
+// 			}
 
-// 	//TODO: actually implement this
-// 	return (CodeLines){0,NULL};
+// 			chain=chain->next; //would stop the loop if we freed 
+// 		}
+// 	}
+// }
+
+
+
+// TuringMachine parse_text(const char* raw_text){
+// 	CodeLines lines=tokenize_text(raw_text);
+// 	remove_comments(&lines);
 // }
