@@ -47,6 +47,17 @@ static inline void free_chain(TokenNode* list){
 	}
 }
 
+//TODO need to add this
+// typedef struct{
+// 	TokenNode* head;
+// 	int lineNum;
+// }Line;
+
+// typedef struct{
+// 	void * data; //probably just a char* message but we can get creative
+// 	int code;
+// }ParseError;
+
 typedef struct{
 	int len;
 	TokenNode** lines;//array of pointers
