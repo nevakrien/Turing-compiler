@@ -42,6 +42,10 @@ typedef struct{
 	int NextStateID;
 } TransitionEncoding;
 
+typedef struct{
+	TransitionEncoding state[2];
+}StateEncoding;
+
 CodeLines tokenize_text(const char* raw_text);
 
 

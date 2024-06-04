@@ -2,6 +2,9 @@
 #include "turing.h"
 #include "utils.h"
 
+#include <errno.h>
+#include <errno.h>
+
 // Function to print the details of a Transition with specified indentation
 void print_trans(TuringMachine machine,Transition trans, int indent) {
     const char *dir_str;
@@ -128,27 +131,122 @@ CodeLines tokenize_text(const char* raw_text){
 	return ans;
 }
 
-// static void remove_comments(CodeLines* codes){
-// 	for(int i=0;i<codes->len;i++){
-// 		TokenNode* chain=codes->lines[i];
-// 		while(chain!=NULL){
-// 			Token tok=chain->tok;
-// 			for(int j=0;j<tok.len;j++){
-// 				if(tok.data[j]==comment_char){
-// 					tok.len=j;
-// 					free_chain(chain->next);
-// 					chain->next=NULL;
-// 				}
-// 			}
+static void remove_comments(CodeLines* codes){
+	for(int i=0;i<codes->len;i++){
+		TokenNode* chain=codes->lines[i];
+		while(chain!=NULL){
+			Token tok=chain->tok;
+			for(int j=0;j<tok.len;j++){
+				if(tok.data[j]==comment_char){
+					tok.len=j;
+					free_chain(chain->next);
+					chain->next=NULL;
+				}
+			}
 
-// 			chain=chain->next; //would stop the loop if we freed 
+			chain=chain->next; //would stop the loop if we freed 
+		}
+	}
+}
+
+//errors are -2 and below
+static inline int parse_id(char* str,int len){
+	if(str[0]=='-'){
+		if(len!=2){
+			return -2;
+		}
+		if(str[1]=='1'){
+			return -1;
+		}
+		return -2;
+	}
+
+	int ans=0;
+	int mul=1;
+	for(int i=0;i<len;i++){
+		if (str[i] >= '0' && str[i] <= '9') {
+	        ans+=mul*(str[i] - '0');
+	    } else {
+	        return -2; 
+	    }
+	    mul*=10;
+	}
+
+	return ans;
+}
+
+#define raise_error( text) printf(text); exit(1);
+//#define raise_error( text) error*=(text); return {0};
+
+//old parser version
+// static TransitionEncoding pop_next_state(TokenNode* line,char** error){
+// 	TransitionEncoding ans;
+
+// 	int found_write=0;
+// 	int found_read=0;
+// 	int found_dir=0;
+// 	int found_state=0;
+
+// 	while(line){
+// 		Token tok=line->tok;
+// 		if(tok.data[0]=='S'){
+// 			if(found_state==1){
+// 				raise_error("double definition of next state\n");
+// 			}
+// 			//read the index and use it
+// 			found_state=1;
+
+// 			ans.NextStateID=parse_id(tok.data+1,tok.len-1);
+// 			if(found_state<-1){
+// 				raise_error("invalid state id\n");
+// 			}
+// 			continue;
+// 		}
+// 		switch(tok.len){
+
+// 		case 4://read next move
+// 			if(memcmp("read",tok.data,4)==0){
+// 				if(found_read){
+// 					raise_error("double definition of write\n");
+// 				}
+// 				found_read=1;
+// 				break;
+// 			}
+// 			if(memcmp("next",tok.data,4)==0){
+// 				if(found_read){
+// 					raise_error("double definition of write\n");
+// 				}
+// 				found_read=1;
+// 				break;
+// 			}
+// 			if(memcmp("move",tok.data,4)==0){
+// 				break;
+// 			}
+// 			break;
+// 		case 5://write
+// 			if(memcmp("write",tok.data,5)==0){
+// 				if(found_write){
+// 					raise_error("double definition of write\n");
+// 				}
+// 				found_write=1;
+// 			}
+// 			break;
+
+// 		default:
+// 			//printf();
+// 			break;
 // 		}
 // 	}
 // }
 
+// static StateEncoding pop_next_state(CodeLines* lines){
+// 	StateEncoding ans;
 
+
+// }
 
 // TuringMachine parse_text(const char* raw_text){
 // 	CodeLines lines=tokenize_text(raw_text);
 // 	remove_comments(&lines);
+// 	TuringMachine ans;
 // }
