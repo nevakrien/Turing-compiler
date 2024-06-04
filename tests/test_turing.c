@@ -24,7 +24,7 @@ void test_infinite_right_flip() {
     tape.left_init = tape.left_limit + (test_tape_size / 2)-offset; // Initialize left half
     tape.right_init = tape.cur-tape.base; // Initialize right part
 
-    int start_id=tape.cur-tape.base;
+    //int start_id=tape.cur-tape.base;
 
     // Setup a simple Turing machine
     TuringMachine machine;

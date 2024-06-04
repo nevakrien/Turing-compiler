@@ -7,12 +7,13 @@
 //user optional definitions
 #define CHECK_UNREACHABLE //puts an assert instead of ub 
 
-// static inline void null_check(void* p){
-// 	if(p==NULL){
-// 		perror("went oom\n");
-// 		exit(1);
-// 	}
-// }
+static inline void* null_check(void* p){
+	if(p==NULL){
+		perror("went oom\n");
+		exit(1);
+	}
+	return p;
+}
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 

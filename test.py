@@ -12,7 +12,7 @@ def call_make(target):
 def run_test_io():
     call_make('clean_io')
     call_make('bin/test_io')
-    print("test_io ReCompilation Done")
+    print("test_io Compilation Done")
     
 
     # Create a temporary file to use for output
@@ -24,43 +24,51 @@ def run_test_io():
     
     # Check results
     if test_proc.returncode == 0:
-        print("IO Test Passed: Tape data validated successfully.")
+        print("IO Test Passed")
     else:
-        print(f"IO Test Failed with exit code {test_proc.returncode}:\n  {test_proc.stdout} sterr:{test_proc.stderr}")
+        print(f"\nIO Test Failed with exit code {test_proc.returncode}:\n  {test_proc.stdout} sterr:{test_proc.stderr}\n")
 
-    print("")
     # Clean up the temporary file
     os.unlink(output_filename)
 
 def run_test_turing():
     call_make('clean_turing')
     call_make('bin/test_turing')
-    print("test_turing ReCompilation Done")
+    print("test_turing Compilation Done")
 
     test_proc = subprocess.run(['./bin/test_turing'], text=True, capture_output=True)
     
     # Check results
     if test_proc.returncode == 0:
-        print("Turing Test Passed: Tape data validated successfully.")
+        print("Turing Test Passed")
     else:
-        print(f"Turing Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}")
+        print(f"\nTuring Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
-    print("")
+    
 
 def run_test_parser():
     call_make('bin/test_parser')
+    print("test_parser Compilation Done")
 
     test_proc = subprocess.run(['./bin/test_parser'], text=True, capture_output=True)
 
     # Check results
     if test_proc.returncode == 0:
-        print(f"PRINT TEST:\n{test_proc.stdout}")
+        #print(f"PRINT TEST:\n{test_proc.stdout}")
+        print("Parser Test Passed")
     else:
-        print(f"Parser Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}")
+        print(f"\nParser Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
-    print("")
 
 if __name__ == '__main__':
+    print("starting tests...\n")
     run_test_io()
+    print("")
+    
     run_test_turing()
+    print("")
+
     run_test_parser()
+    print("")
+
+    print("all tests are done!")

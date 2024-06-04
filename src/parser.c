@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "turing.h"
+#include "utils.h"
 
 // Function to print the details of a transition with specified indentation
 void print_trans(TuringMachine machine,TRANSITION trans, int indent) {
@@ -55,3 +56,86 @@ void print_machine(TuringMachine machine, int indent) {
     }
 }
 
+
+static inline const char* get_token_end(const char* cur){
+	while(*cur!='\0'&&*cur!='\t'&&*cur!=' '&&*cur!='\n'){
+		cur++;
+	}
+
+	return cur;
+}
+static inline const char* skip_spaces(const char* cur){
+	while(*cur=='\t'||*cur==' '){
+		cur++;
+	}
+
+	return cur;
+}
+
+static inline const char* skip_empty_lines(const char* cur){
+	cur=skip_spaces(cur);
+	while(*cur=='\n'){
+		cur++;
+		cur=skip_spaces(cur);
+	}
+	return cur;
+}
+
+CodeLines nevas_tokenize_text(const char* raw_text){
+	// if(raw_text==NULL || *raw_text=='\0'){
+	// 	UNREACHABLE();
+	// }
+	//alocate extra stuff
+	CodeLines ans;
+
+	int cap=128;//vector style
+	ans.len=0;
+	ans.lines=null_check(malloc(cap*sizeof(TokenNode*)));
+
+	TokenNode** insert_spot=&ans.lines[0];
+
+
+	const char* head=skip_empty_lines(raw_text);
+	if(*head=='\0'){
+		free(ans.lines);
+		ans.lines=NULL;
+		return ans;
+	}
+
+	while(*head!='\0'){
+		const char* tok_end=get_token_end(head);
+		Token tok={head,tok_end-head};
+		
+		//push token
+		*insert_spot=null_check(malloc(sizeof(TokenNode)));
+		(*insert_spot) -> tok=tok;
+		insert_spot=&((*insert_spot)->next);
+
+		head=tok_end;
+		head=skip_spaces(head);
+		if(*head=='\n'){
+			*insert_spot=NULL;
+			//push line
+			if(ans.len==cap){
+				cap*=2;
+				ans.lines=null_check(realloc(ans.lines,cap*sizeof(TokenNode*)));
+			}
+			ans.len++;
+			insert_spot=&ans.lines[ans.len];
+			
+			head=skip_empty_lines(head);
+		}
+	}
+	ans.len++;
+	ans.lines=null_check(realloc(ans.lines,ans.len*sizeof(TokenNode*)));
+	return ans;
+}
+
+// TuringMachine parse_text(const char* raw_text){
+// 	if(raw_text==NULL||*raw_text=='\0'){
+// 		return (CodeLines){0,NULL};
+// 	}
+
+// 	//TODO: actually implement this
+// 	return (CodeLines){0,NULL};
+// }
