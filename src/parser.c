@@ -155,6 +155,7 @@ CodeLines tokenize_text(const char* raw_text){
 				*insert_spot=null_check(malloc(sizeof(TokenNode)));
 				(*insert_spot) -> tok=tok;
 				insert_spot=&((*insert_spot)->next);
+				*insert_spot=NULL;
 				ans.len++;
 			}
 			break;
@@ -243,7 +244,9 @@ static TokenNode* split_2(TokenNode* line, ParseError* error){
 		Token tok=line->tok;
 		for(int i=0;i<tok.len;i++){
 			if(tok.data[i]==sep_char){
-				//
+				//this is a source of bugs
+				//the entire interior needs work
+
 				int split_start=i+1;
 				int split_len=tok.len-split_start;
 
@@ -257,17 +260,19 @@ static TokenNode* split_2(TokenNode* line, ParseError* error){
 					last_left_token=line;
 					
 					line=second_part;
-					break;
+					goto end_while;
 				}
 
 				line->tok.len=i;
 				last_left_token=line;
-				break;
+				goto end_while;
 			}
 		}
 
 		line=line->next;
 	}
+
+	end_while:
 
 	if(line==NULL){
 		static char* error1="expected a \" : \" to show seperation";

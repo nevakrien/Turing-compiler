@@ -87,8 +87,8 @@ void test_multiple_lines() {
 
 void test_multiple_trailing_space() {
     CodeLines result = tokenize_text("\n  hello world\nsecond line\n\n\n   fifth line  ");
-    printf("len is:%d\n",result.len);
-    print_code(result);
+    // printf("len is:%d\n",result.len);
+    // print_code(result);
 
     assert(result.len == 3);
 }
@@ -129,28 +129,28 @@ void test_parse_trans(char* filename){
     size_t len;
     char* text=read_file_into_buffer(filename,&len);
     CodeLines code = tokenize_text(text);
-    //code.len-=1;//hack
-    //remove_comments(&code);
+
+    remove_comments(&code);
     print_code(code);
 
-    ParseError error;
     for(int i=0;i<code.len;i++){
         if(code.lines[i].head!=NULL){
+            ParseError error={0};
             parse_trans(&code.lines[i],&error);
         }
     }
 }
 
 int main(int argc, char *argv[]) {
-    // if (argc < 2) {
-    //     // If the filename is not provided, output the correct usage
-    //     fprintf(stderr, "Usage: %s <turing.t>\n", argv[0]);
-    //     return 1; // Exit with a non-zero value to indicate an error
-    // }
+    if (argc < 2) {
+        // If the filename is not provided, output the correct usage
+        fprintf(stderr, "Usage: %s <turing.t>\n", argv[0]);
+        return 1; // Exit with a non-zero value to indicate an error
+    }
 
-    test_prints();
+    //test_prints();
     test_tokenizer();
-    //test_parse_trans(argv[1]);
+    test_parse_trans(argv[1]);
     
 
     return 0;

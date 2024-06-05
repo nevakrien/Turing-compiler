@@ -12,3 +12,5 @@ Y,1:1 R S0 #invalid since Y is a single charchter, must be at least 2
 (Y,A):1
 
 T,A:1,2,3
+
+T,A : 1,2,3
