@@ -98,259 +98,183 @@ void print_machine(TuringMachine machine, int indent) {
     }
 }
 
-
-static inline const char* get_token_end(const char* cur){
-	while(*cur!='\0'&&*cur!='\n'&&COMP_SEPS(*cur,!=,&&)){
-		cur++;
-	}
-
-	return cur;
-}
-static inline const char* skip_spaces(const char* cur){
-	while(COMP_SEPS(*cur,==,||)){
-		cur++;
-	}
-
-	return cur;
+static inline void replace_seps(char* s){
+    while(*s!='\0'){
+        if(*s==';'||*s==','||*s=='"'||*s=='\''||*s=='\t'||*s=='('||*s==')'||*s=='['||*s==']'||*s=='{'||*s=='}'){
+            *s=' ';
+        }
+        s++;
+    }
 }
 
-
-static inline const char* skip_empty_lines(const char* cur,int* line_num){
-	cur=skip_spaces(cur);
-	while(*cur=='\n'){
-		*line_num=*line_num+1;
-		cur++;
-		cur=skip_spaces(cur);
-	}
-	return cur;
+static inline char* skip_spaces(char* s){
+    while(*s==' '){
+        s++;
+    }
+    return s;
 }
 
-//note that some information is lost BUT its recovrble since we are using refrences and no copying
-CodeLines tokenize_text(const char* raw_text){
-	CodeLines ans;
-
-	int cap=128;//vector style
-	ans.len=0;
-	ans.lines=null_check(malloc(cap*sizeof(Line)));
-
-	TokenNode** insert_spot=&ans.lines[0].head;
-
-	int line_num=1;
-
-	const char* head=raw_text;
-
-
-	//while(1){
-	while(*head!='\0'){
-		head=skip_empty_lines(head,&line_num);
-		ans.lines[ans.len].lineNum=line_num;
-
-		const char* tok_end=get_token_end(head);
-		Token tok={head,tok_end-head};
-		
-		//check for an earlier exit
-		if(*tok_end=='\0'){
-			if(tok.len!=0){
-				//push token and exit
-				*insert_spot=null_check(malloc(sizeof(TokenNode)));
-				(*insert_spot) -> tok=tok;
-				insert_spot=&((*insert_spot)->next);
-				*insert_spot=NULL;
-				ans.len++;
-			}
-			break;
-		}
-
-		//push token
-		*insert_spot=null_check(malloc(sizeof(TokenNode)));
-		(*insert_spot) -> tok=tok;
-		insert_spot=&((*insert_spot)->next);
-
-		head=tok_end;
-		head=skip_spaces(head);
-		if(*head=='\n'||*head=='\0'){
-			*insert_spot=NULL;
-
-			//push line
-			if(ans.len==cap){
-				cap*=2;
-				ans.lines=null_check(realloc(ans.lines,cap*sizeof(Line)));
-			}
-			ans.len++;
-			insert_spot=&ans.lines[ans.len].head;
-
-		}
-	}
-
-	if(ans.len==0){
-		ans.lines=NULL;
-	}
-	else{
-		ans.lines=null_check(realloc(ans.lines,ans.len*sizeof(Line)));
-	}
-	
-	return ans;
+static inline char* find_char(char* s,char c){
+    while(*s!='\0'){
+        if(*s==c){
+            return s;
+        }
+        s++;
+    }
+    return NULL;
 }
 
-//UNTESTED
-
-void remove_comments(CodeLines* codes){
-	
-	for(int i=0;i<codes->len;i++){
-		if(codes->lines[i].head==NULL){
-			continue;
-		}
-		TokenNode** chain=&(codes->lines[i].head);
-
-
-		int run=1;
-		while(*chain!=NULL&&run){
-			Token tok=(*chain)->tok;
-			for(int j=0;j<tok.len;j++){
-				if(tok.data[j]==comment_char){
-					tok.len=j;
-					if(tok.len!=0){
-						free_chain((*chain)->next);
-						(*chain)->next=NULL;
-					}
-					else{
-						free(*chain);
-						*chain=NULL;
-					}
-
-					run=0;
-					goto end_while;
-				}
-			}
-			if((*chain)->next==NULL){
-				break;
-			}
-			chain=&((*chain)->next);
-		}
-		end_while:
-	}
+static inline void remove_comments(char* s){
+    while(*s!='\0'){
+        if(*s=='#'){
+            *s='\0';
+            return;
+        }
+        s++;
+    }
 }
 
+typedef struct{
+    char* str;
+    int num;//1 indexed
+}Line;
 
-typedef struct 
-{
-	TokenNode** tok;
-	int i;
-}CharLoc;
+TuringMachineEncoding parse_text_with_prints(char* raw_text){
+    replace_seps(raw_text);
 
-static inline CharLoc find_sep(TokenNode** line,int start){
-	while(*line){
-		Token tok=(*line)->tok;
-		for(int i=start;i<tok.len;i++){
-			if(tok.data[i]==sep_char){
-				return(CharLoc){line,i};
-			}
-		}
-		start=0;
-		line=&((*line)->next);
-	}
-	return (CharLoc){NULL,-1};
-}
+    int len=0;
+    int cap=128;
+    Line* lines=null_check(malloc(cap*sizeof(Line)));
 
-TransitionEncoding parse_trans(Line* line,ParseError* error){
-	if(line->head==NULL){
-		UNREACHABLE();
-	}
+    //gather lines
+    char* s=raw_text;
+    int line_num=0;
+    while(*s!='\0'){
+        //printf("printing s:%s",s);
+        char* head=s;
+        char* tail=find_char(s,'\n');
+        //printf("tail is:%s",tail);
+        line_num++;
 
-	CharLoc split=find_sep(&(line->head),0);
-	if(split.tok==NULL){
-		printf("ERROR at line[%d]: no \" : \" seperator\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-	}
+        if(len==cap){
+            cap*=2;
+            lines=null_check(realloc(lines,cap*sizeof(Line)));
+        }
+        lines[len]=(Line){head,line_num};
+        len++;
 
-	CharLoc e=find_sep(split.tok,split.i+1);
-	if(e.tok!=NULL){
-		printf("ERROR at line[%d]: more than one \" : \" seperator\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-	}
+        if(!tail){
+            break;
+        }
+        *tail='\0';
+        s=tail+1;
+        //printf("printing s:%s",s); 
+    }
+    
+    printf("found %d lines\n",len);
+    //
+    for(int i=0;i<len;i++){
+        remove_comments(lines[i].str);
+        printf("%s\n",lines[i].str);
+    }
 
-	if(split.tok==&(line->head)){
-	err_too_few_left:
-		printf("ERROR at line[%d]: less than 2 items on left half\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-	}
+    //rn just the checks
+    //TuringMachineEncoding ans;
+    int errored=0;
 
-	TokenNode* left[2];
-	TokenNode* right[3];
+    for(int i=0;i<len;i++){
+        Line line=lines[i];
+        
+        char* base=skip_spaces(line.str);
+        if(*base=='\0'){
+            continue;
+        }
 
-	//split on the seperator
+        char* left[2];
+        char* right[3];
 
-	int i=split.i;
-	Token t=(*split.tok)->tok;
-	int right_tok_len=t.len-i-1;
+        //split
+        char* sep=find_char(base,':');
+        if(sep==NULL){
+            printf("ERROR at line[%d]: no \" : \" seperator\n",line.num);
+            errored=1;
+            continue;
+        }
+        *sep='\0';
+        right[0]=skip_spaces(sep+1);
+        if(sep==find_char(right[0],':')){
+            printf("ERROR at line[%d]: more than one \" : \" seperator\n",line.num);
+            errored=1;
+            continue;
+        }
 
-	//extend to the right.
-	if(right_tok_len>0){
-		Token right_tok=(Token){t.data+i+1,t.len-i-1};
-		TokenNode* right_part=null_check(malloc(sizeof(TokenNode)));
-		right_part->tok=right_tok;
-		right_part->next=(*split.tok)->next;
+        //validate left
+        left[0]=base;
 
-		(*split.tok)->next=right_part;
-	}
+        left[1]=find_char(left[0],' ');
+        if(left[1]==NULL){
+            printf("ERROR at line[%d]: less than 2 left args\n",line.num);
+            errored=1;
+            continue;
+        }
+        *left[1]='\0';
+        left[1]=skip_spaces(left[1]+1);
+        if(*left[1]=='\0'){
+            printf("ERROR at line[%d]: less than 2 left args\n",line.num);
+            errored=1;
+            continue;
+        }
 
-	//split the list
-	right[0]=(*split.tok)->next;
-	(*split.tok)->next=NULL;
-	
-	
-	//cut empty node
-	(*split.tok)->tok.len=i-1;
-	if((*split.tok)->tok.len<1){
-		free(*split.tok);
-		*split.tok=NULL;
-	}
+        char* bad=find_char(left[1],' ');
+        if(bad!=NULL){
+            if(*skip_spaces(bad)!='\0'){
+                printf("ERROR at line[%d]: more than 2 left args\n",line.num);
+                errored=1;
+                continue;
+            }
+            *bad='\0';
+        }
 
-	//len checks
-	
+        //validate right
+        if(*right[0]=='\0'){
+            printf("ERROR at line[%d]: no right args\n",line.num);
+            errored=1;
+            continue;
+        }
 
-	left[0]=line->head;
-	if(left[0]==NULL){
-		goto err_too_few_left;
-	}
+        right[1]=find_char(right[0],' ');
+        if(right[1]==NULL){
+            printf("ERROR at line[%d]: only 1\\3 right args\n",line.num);
+            errored=1;
+            continue;
+        }
+        *right[1]='\0';
+        right[1]=skip_spaces(right[1]+1);
 
-	left[1]=line->head->next;
-	if(left[1]==NULL){
-		goto err_too_few_left;
-	}
+        right[2]=find_char(right[1],' ');
+        if(right[2]==NULL){
+            printf("ERROR at line[%d]: only 2\\3 right args\n",line.num);
+            errored=1;
+            continue;
+        }
+        *right[2]='\0';
+        right[2]=skip_spaces(right[2]+1);
 
-	if(left[1]->next!=NULL){
-		printf("ERROR at line[%d]: more than 2 items on left half\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-	}
+        bad=find_char(right[2],' ');
+        if(bad!=NULL){
+            if(*skip_spaces(bad)!='\0'){
+                printf("ERROR at line[%d]: more than 2 left args\n",line.num);
+                errored=1;
+                continue;
+            }
+            *bad='\0';
+        }
 
-	//right len checks
-	if(right[0]->next==NULL){
-	err_too_few_right:
-		printf("ERROR at line[%d]: less than 3 items on right half\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-
-	}
-
-	right[1]=right[0]->next;
-
-	if(right[1]->next==NULL){
-		goto err_too_few_right;
-	}
-
-	right[2]=right[1]->next;
-	if(right[2]->next!=NULL){
-		printf("ERROR at line[%d]: more than 3 items on right half\n",line->lineNum);
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0};
-	}
-
-	printf("YAY at line[%d]\n",line->lineNum);
-	//place holder
-	return (TransitionEncoding){0};
+        //validation over
+        printf("YAY at line[%d]\n",line.num);
+    }
+    if(errored){
+        printf("errored\n");
+    }
+    return (TuringMachineEncoding){0};
 }
