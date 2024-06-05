@@ -135,7 +135,7 @@ void test_parse_trans(char* filename){
 
     for(int i=0;i<code.len;i++){
         if(code.lines[i].head!=NULL){
-            ParseError error={0};
+            ParseError error={NULL,PARSE_WORKED };
             parse_trans(&code.lines[i],&error);
         }
     }

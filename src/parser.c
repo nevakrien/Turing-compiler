@@ -231,119 +231,126 @@ void remove_comments(CodeLines* codes){
 	}
 }
 
-//splits tokens on a sep_char = ':'. 
-//also makes sure there is 1 and ONLY 1 split
-//fails when the left part is completly empty
-static TokenNode* split_2(TokenNode* line, ParseError* error){
-	if(line==NULL){
-		UNREACHABLE();
-	}
-	TokenNode* last_left_token;
 
-	while(line){
-		Token tok=line->tok;
-		for(int i=0;i<tok.len;i++){
+typedef struct 
+{
+	TokenNode** tok;
+	int i;
+}CharLoc;
+
+static inline CharLoc find_sep(TokenNode** line,int start){
+	while(*line){
+		Token tok=(*line)->tok;
+		for(int i=start;i<tok.len;i++){
 			if(tok.data[i]==sep_char){
-				//this is a source of bugs
-				//the entire interior needs work
-
-				int split_start=i+1;
-				int split_len=tok.len-split_start;
-
-				if(split_len>0){
-					TokenNode* second_part=null_check(malloc(sizeof(TokenNode)));
-					second_part->next=line->next;
-					second_part->tok=(Token){&tok.data[split_start],split_len};
-
-					line->next=second_part;
-					line->tok.len=i;
-					last_left_token=line;
-					
-					line=second_part;
-					goto end_while;
-				}
-
-				line->tok.len=i;
-				last_left_token=line;
-				goto end_while;
+				return(CharLoc){line,i};
 			}
 		}
-
-		line=line->next;
+		start=0;
+		line=&((*line)->next);
 	}
-
-	end_while:
-
-	if(line==NULL){
-		static char* error1="expected a \" : \" to show seperation";
-		error->data=error1;
-		error->code=PARSE_PERROR;
-		return NULL;
-	}
-
-	line=line->next;
-	while(line){
-		Token tok=line->tok;
-		for(int i=0;i<tok.len;i++){
-			if(tok.data[i]==sep_char){
-				static char* error1="this line contains more than one \" : \" seperator";
-				error->data=error1;
-				error->code=PARSE_PERROR;
-				return NULL;
-			}
-		}
-
-		line=line->next;
-	}
-
-	return last_left_token;
+	return (CharLoc){NULL,-1};
 }
 
 TransitionEncoding parse_trans(Line* line,ParseError* error){
-	if(line==NULL ||line->head==NULL){
+	if(line->head==NULL){
 		UNREACHABLE();
 	}
-	TokenNode*  end_left=split_2(line->head,error);
-	
-	if(error->code){
-		if(error->code==PARSE_PERROR){
-			printf("ERROR at line[%d]: %s\n",line->lineNum,(char*)(error->data));
-		}
-		else{
-			printf("UNKNOWEN ERROR at line[%d]\n",line->lineNum);
-		}
-		error->code=PARSE_ERROR_PRINTED;
-		return (TransitionEncoding){0}; 
-	}
 
-	if(line->head->next!=end_left){
-		printf("ERROR at line[%d]: expected exacly 2 tokens in the left half\n",line->lineNum);
+	CharLoc split=find_sep(&(line->head),0);
+	if(split.tok==NULL){
+		printf("ERROR at line[%d]: no \" : \" seperator\n",line->lineNum);
 		error->code=PARSE_ERROR_PRINTED;
 		return (TransitionEncoding){0};
 	}
 
-	TokenNode* right_start=end_left->next;
-	
-	TokenNode* cur=right_start;
-	for(int i=1;i<3;i++){
-		if(cur->next==NULL){
-			printf("ERROR at line[%d]: not enough tokens at the right half expected exacly 3\n",line->lineNum);
-			error->code=PARSE_ERROR_PRINTED;
-			return (TransitionEncoding){0};
-		}
-		cur=cur->next;
-	}
-
-	if(cur->next!=NULL){
-		printf("ERROR at line[%d]: too many tokens at the right half expected exacly 3\n",line->lineNum);
+	CharLoc e=find_sep(split.tok,split.i+1);
+	if(e.tok!=NULL){
+		printf("ERROR at line[%d]: more than one \" : \" seperator\n",line->lineNum);
 		error->code=PARSE_ERROR_PRINTED;
 		return (TransitionEncoding){0};
 	}
 
-	//TokenNode* end_right=cur;
+	if(split.tok==&(line->head)){
+	err_too_few_left:
+		printf("ERROR at line[%d]: less than 2 items on left half\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
+		return (TransitionEncoding){0};
+	}
 
-	//PLACE HOLDER
+	TokenNode* left[2];
+	TokenNode* right[3];
+
+	//split on the seperator
+
+	int i=split.i;
+	Token t=(*split.tok)->tok;
+	int right_tok_len=t.len-i-1;
+
+	//extend to the right.
+	if(right_tok_len>0){
+		Token right_tok=(Token){t.data+i+1,t.len-i-1};
+		TokenNode* right_part=null_check(malloc(sizeof(TokenNode)));
+		right_part->tok=right_tok;
+		right_part->next=(*split.tok)->next;
+
+		(*split.tok)->next=right_part;
+	}
+
+	//split the list
+	right[0]=(*split.tok)->next;
+	(*split.tok)->next=NULL;
+	
+	
+	//cut empty node
+	(*split.tok)->tok.len=i-1;
+	if((*split.tok)->tok.len<1){
+		free(*split.tok);
+		*split.tok=NULL;
+	}
+
+	//len checks
+	
+
+	left[0]=line->head;
+	if(left[0]==NULL){
+		goto err_too_few_left;
+	}
+
+	left[1]=line->head->next;
+	if(left[1]==NULL){
+		goto err_too_few_left;
+	}
+
+	if(left[1]->next!=NULL){
+		printf("ERROR at line[%d]: more than 2 items on left half\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
+		return (TransitionEncoding){0};
+	}
+
+	//right len checks
+	if(right[0]->next==NULL){
+	err_too_few_right:
+		printf("ERROR at line[%d]: less than 3 items on right half\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
+		return (TransitionEncoding){0};
+
+	}
+
+	right[1]=right[0]->next;
+
+	if(right[1]->next==NULL){
+		goto err_too_few_right;
+	}
+
+	right[2]=right[1]->next;
+	if(right[2]->next!=NULL){
+		printf("ERROR at line[%d]: more than 3 items on right half\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
+		return (TransitionEncoding){0};
+	}
+
+	printf("YAY at line[%d]\n",line->lineNum);
+	//place holder
 	return (TransitionEncoding){0};
 }
-
-
