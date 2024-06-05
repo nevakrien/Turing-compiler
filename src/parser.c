@@ -2,7 +2,47 @@
 #include "turing.h"
 #include "utils.h"
 
-//#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+
+// Function to read an entire file into memory
+char *read_file_into_buffer(const char *filename, size_t *length) {
+    FILE *file = fopen(filename, "rb");  // Open the file in binary mode
+    if (file == NULL) {
+        perror("Error opening file");
+        return NULL;
+    }
+
+    // Seek to the end of the file to determine the file size
+    fseek(file, 0, SEEK_END);
+    *length = ftell(file);
+    fseek(file, 0, SEEK_SET);  // Go back to the start of the file
+
+    // Allocate memory for the file content
+    char *buffer = null_check(malloc(*length));
+    
+    // Read the file into the buffer
+    size_t read_size = fread(buffer, 1, *length, file);
+    if (read_size < *length) {
+        if (errno) {
+            perror("File read error");
+            free(buffer);
+            fclose(file);
+            return NULL;
+        }
+    }
+
+    // Check if the file is already null-terminated
+    if (buffer[read_size - 1] != '\0') {
+        buffer = null_check(realloc(buffer, read_size + 1));
+        buffer[read_size] = '\0'; // Manually null terminate if not already
+    }
+
+    fclose(file);  // Close the file
+    *length = read_size; // Update length to actual bytes read
+    return buffer;
+}
 
 // Function to print the details of a Transition with specified indentation
 void print_trans(TuringMachine machine,Transition trans, int indent) {
@@ -75,9 +115,10 @@ static inline const char* skip_spaces(const char* cur){
 }
 
 
-static inline const char* skip_empty_lines(const char* cur){
+static inline const char* skip_empty_lines(const char* cur,int* line_num){
 	cur=skip_spaces(cur);
 	while(*cur=='\n'){
+		*line_num=*line_num+1;
 		cur++;
 		cur=skip_spaces(cur);
 	}
@@ -90,29 +131,32 @@ CodeLines tokenize_text(const char* raw_text){
 
 	int cap=128;//vector style
 	ans.len=0;
-	ans.lines=null_check(malloc(cap*sizeof(TokenNode*)));
+	ans.lines=null_check(malloc(cap*sizeof(Line)));
 
-	TokenNode** insert_spot=&ans.lines[0];
+	TokenNode** insert_spot=&ans.lines[0].head;
+
+	int line_num=1;
+
+	const char* head=raw_text;
 
 
-	const char* head=skip_empty_lines(raw_text);
-	if(*head=='\0'){
-		free(ans.lines);
-		ans.lines=NULL;
-		return ans;
-	}
-
+	//while(1){
 	while(*head!='\0'){
+		head=skip_empty_lines(head,&line_num);
+		ans.lines[ans.len].lineNum=line_num;
+
 		const char* tok_end=get_token_end(head);
 		Token tok={head,tok_end-head};
 		
 		//check for an earlier exit
-		if(tok.data[tok.len-1]=='\0'){
-			tok.len--;//no need fot the null terminator
-			//push token and exit
-			*insert_spot=null_check(malloc(sizeof(TokenNode)));
-			(*insert_spot) -> tok=tok;
-			insert_spot=&((*insert_spot)->next);
+		if(*tok_end=='\0'){
+			if(tok.len!=0){
+				//push token and exit
+				*insert_spot=null_check(malloc(sizeof(TokenNode)));
+				(*insert_spot) -> tok=tok;
+				insert_spot=&((*insert_spot)->next);
+				ans.len++;
+			}
 			break;
 		}
 
@@ -123,48 +167,76 @@ CodeLines tokenize_text(const char* raw_text){
 
 		head=tok_end;
 		head=skip_spaces(head);
-		if(*head=='\n'){
+		if(*head=='\n'||*head=='\0'){
 			*insert_spot=NULL;
+
 			//push line
 			if(ans.len==cap){
 				cap*=2;
-				ans.lines=null_check(realloc(ans.lines,cap*sizeof(TokenNode*)));
+				ans.lines=null_check(realloc(ans.lines,cap*sizeof(Line)));
 			}
 			ans.len++;
-			insert_spot=&ans.lines[ans.len];
-			
-			head=skip_empty_lines(head);
+			insert_spot=&ans.lines[ans.len].head;
+
 		}
 	}
-	ans.len++;
-	ans.lines=null_check(realloc(ans.lines,ans.len*sizeof(TokenNode*)));
+
+	if(ans.len==0){
+		ans.lines=NULL;
+	}
+	else{
+		ans.lines=null_check(realloc(ans.lines,ans.len*sizeof(Line)));
+	}
+	
 	return ans;
 }
 
 //UNTESTED
 
-static void remove_comments(CodeLines* codes){
+void remove_comments(CodeLines* codes){
+	
 	for(int i=0;i<codes->len;i++){
-		TokenNode* chain=codes->lines[i];
-		while(chain!=NULL){
-			Token tok=chain->tok;
+		if(codes->lines[i].head==NULL){
+			continue;
+		}
+		TokenNode** chain=&(codes->lines[i].head);
+
+
+		int run=1;
+		while(*chain!=NULL&&run){
+			Token tok=(*chain)->tok;
 			for(int j=0;j<tok.len;j++){
 				if(tok.data[j]==comment_char){
 					tok.len=j;
-					free_chain(chain->next);
-					chain->next=NULL;
+					if(tok.len!=0){
+						free_chain((*chain)->next);
+						(*chain)->next=NULL;
+					}
+					else{
+						free(*chain);
+						*chain=NULL;
+					}
+
+					run=0;
+					goto end_while;
 				}
 			}
-
-			chain=chain->next; //would stop the loop if we freed 
+			if((*chain)->next==NULL){
+				break;
+			}
+			chain=&((*chain)->next);
 		}
+		end_while:
 	}
 }
 
-//splits tokens on a specific char. 
+//splits tokens on a sep_char = ':'. 
 //also makes sure there is 1 and ONLY 1 split
 //fails when the left part is completly empty
-static TokenNode* separate_char(TokenNode* line,const char**error){
+static TokenNode* split_2(TokenNode* line, ParseError* error){
+	if(line==NULL){
+		UNREACHABLE();
+	}
 	TokenNode* last_left_token;
 
 	while(line){
@@ -198,8 +270,9 @@ static TokenNode* separate_char(TokenNode* line,const char**error){
 	}
 
 	if(line==NULL){
-		static const char* error1="expected a \" : \" to show seperation";
-		*error=error1;
+		static char* error1="expected a \" : \" to show seperation";
+		error->data=error1;
+		error->code=PARSE_PERROR;
 		return NULL;
 	}
 
@@ -208,8 +281,9 @@ static TokenNode* separate_char(TokenNode* line,const char**error){
 		Token tok=line->tok;
 		for(int i=0;i<tok.len;i++){
 			if(tok.data[i]==sep_char){
-				static const char* error1="this line contains more than one \" : \" seperator";
-				*error=error1;
+				static char* error1="this line contains more than one \" : \" seperator";
+				error->data=error1;
+				error->code=PARSE_PERROR;
 				return NULL;
 			}
 		}
@@ -220,36 +294,48 @@ static TokenNode* separate_char(TokenNode* line,const char**error){
 	return last_left_token;
 }
 
-TransitionEncoding parse_trans(TokenNode* line,const char**error){
-	TokenNode*  end_left=separate_char(line,error);
-	if(*error!=NULL){
-		return (TransitionEncoding){0};
+TransitionEncoding parse_trans(Line* line,ParseError* error){
+	if(line==NULL ||line->head==NULL){
+		UNREACHABLE();
+	}
+	TokenNode*  end_left=split_2(line->head,error);
+	
+	if(error->code){
+		if(error->code==PARSE_PERROR){
+			printf("ERROR at line[%d]: %s\n",line->lineNum,(char*)(error->data));
+		}
+		else{
+			printf("UNKNOWEN ERROR at line[%d]\n",line->lineNum);
+		}
+		error->code=PARSE_ERROR_PRINTED;
+		return (TransitionEncoding){0}; 
 	}
 
-	if(line->next!=end_left){
-		static const char* error1="expected exacly 2 tokens in the left half";
-		*error=error1;
+	if(line->head->next!=end_left){
+		printf("ERROR at line[%d]: expected exacly 2 tokens in the left half\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
 		return (TransitionEncoding){0};
 	}
 
 	TokenNode* right_start=end_left->next;
 	
-	static const char* error2="expected exacly 3 tokens in the right half";
 	TokenNode* cur=right_start;
 	for(int i=1;i<3;i++){
 		if(cur->next==NULL){
-			*error=error2;
+			printf("ERROR at line[%d]: not enough tokens at the right half expected exacly 3\n",line->lineNum);
+			error->code=PARSE_ERROR_PRINTED;
 			return (TransitionEncoding){0};
 		}
 		cur=cur->next;
 	}
 
 	if(cur->next!=NULL){
-		*error=error2;
+		printf("ERROR at line[%d]: too many tokens at the right half expected exacly 3\n",line->lineNum);
+		error->code=PARSE_ERROR_PRINTED;
 		return (TransitionEncoding){0};
 	}
 
-	TokenNode* end_right=cur;
+	//TokenNode* end_right=cur;
 
 	//PLACE HOLDER
 	return (TransitionEncoding){0};

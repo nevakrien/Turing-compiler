@@ -42,7 +42,7 @@ void test_prints() {
 void print_tokens(CodeLines code) {
     printf("Number of lines: %d\n", code.len);
     for (int i = 0; i < code.len; i++) {
-        TokenNode* current = code.lines[i];
+        TokenNode* current = code.lines[i].head;
         printf("Line %d tokens:\n", i+1);
         while (current) {
             printf("'%.*s'\n", current->tok.len, current->tok.data);
@@ -68,18 +68,43 @@ void test_whitespace_only() {
 
 void test_single_line_input() {
     CodeLines result = tokenize_text("hello");
+    // printf("len is:%d\n",result.len);
+    // print_code(result);
+
     assert(result.len == 1);
-    assert(result.lines[0]->tok.len == 5);
-    assert(strncmp(result.lines[0]->tok.data, "hello", 5) == 0);
+    assert(result.lines[0].head->tok.len == 5);
+    assert(strncmp(result.lines[0].head->tok.data, "hello", 5) == 0);
     printf("Test Single Line Input: Passed\n");
 }
 
 void test_multiple_lines() {
-    CodeLines result = tokenize_text("hello world\nsecond line\n   third line");
+    CodeLines result = tokenize_text("\n  hello world\nsecond line\n\n\n   fifth line\n");
+    //printf("len is:%d\n",result.len);
+    //print_code(result);
+
     assert(result.len == 3);
-    assert(strncmp(result.lines[0]->tok.data, "hello", 5) == 0);
-    assert(strncmp(result.lines[1]->tok.data, "second", 6) == 0);
-    assert(strncmp(result.lines[2]->tok.data, "third", 5) == 0);
+}
+
+void test_multiple_trailing_space() {
+    CodeLines result = tokenize_text("\n  hello world\nsecond line\n\n\n   fifth line  ");
+    printf("len is:%d\n",result.len);
+    print_code(result);
+
+    assert(result.len == 3);
+}
+
+
+
+void test_line_nums() {
+    CodeLines result = tokenize_text("hello world\nsecond line\n\n\n   fifth line");
+    assert(result.len == 3);
+    assert(strncmp(result.lines[0].head->tok.data, "hello", 5) == 0);
+    assert(strncmp(result.lines[1].head->tok.data, "second", 6) == 0);
+    assert(strncmp(result.lines[2].head->tok.data, "fifth", 5) == 0);
+    //printf("5th line is:%d\n",result.lines[2].lineNum);
+    assert(result.lines[2].lineNum==5);
+    assert(result.lines[0].lineNum==1);
+    assert(result.lines[1].lineNum==2);
     printf("Test Multiple Lines: Passed\n");
 }
 
@@ -94,12 +119,38 @@ void test_tokenizer(){
     test_whitespace_only();
     test_single_line_input();
     test_multiple_lines();
+    test_line_nums();
+    test_multiple_trailing_space();
     test_lines_with_only_whitespace();
 }
 
-int main(){
+void test_parse_trans(char* filename){
+    printf("got file name:%s\n",filename);
+    size_t len;
+    char* text=read_file_into_buffer(filename,&len);
+    CodeLines code = tokenize_text(text);
+    //code.len-=1;//hack
+    //remove_comments(&code);
+    print_code(code);
+
+    ParseError error;
+    for(int i=0;i<code.len;i++){
+        if(code.lines[i].head!=NULL){
+            parse_trans(&code.lines[i],&error);
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
+    // if (argc < 2) {
+    //     // If the filename is not provided, output the correct usage
+    //     fprintf(stderr, "Usage: %s <turing.t>\n", argv[0]);
+    //     return 1; // Exit with a non-zero value to indicate an error
+    // }
+
     test_prints();
     test_tokenizer();
+    //test_parse_trans(argv[1]);
     
 
     return 0;

@@ -11,7 +11,7 @@ CFLAGS = -g2 -Wall -Iinclude
 #bin
 
 # Default target
-all: bin/test_io bin/test_turing bin/parser.o
+all: bin/test_io bin/test_turing bin/test_parser
 
 # Compile source files to object files
 bin/io.o: src/io.c
