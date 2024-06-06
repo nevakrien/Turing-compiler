@@ -217,13 +217,21 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
     
     printf("found %d lines\n",len);
     //
+    int final_len=0;
     for(int i=0;i<len;i++){
         remove_comments(lines[i].str);
-        printf("%s\n",lines[i].str);
+        if(lines[i].str[0]!='\0'){
+            final_len++;
+        }
+        //printf("%s\n",lines[i].str);
     }
 
     //rn just the checks
-    //TuringMachineEncoding ans;
+    
+    TuringMachineEncoding ans;
+    ans.len=0;
+    ans.states=null_check(malloc(final_len*sizeof(TransitionEncoding)));
+
     int errored=0;
 
     for(int i=0;i<len;i++){
@@ -389,14 +397,25 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
             }
         }
 
+        ans.states[ans.len]=trans;
+        ans.len++;
         
 
 
         printf("YAY at line[%d]\n",line.num);
         continue_outer_for:
     }
+
+    free(lines);
     if(errored){
         printf("errored\n");
+        free(ans.states);
+        return (TuringMachineEncoding){0};
     }
-    return (TuringMachineEncoding){0};
+    if(ans.len!=final_len){
+        UNREACHABLE();
+    }
+
+    printf("passed\n");
+    return ans;
 }

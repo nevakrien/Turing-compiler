@@ -55,9 +55,19 @@ def run_test_parser():
     # Check results
     if test_proc.returncode == 0:
         #print(f"PRINT TEST:\n{test_proc.stdout}")
-        print("Parser Test Passed")
+        print("Parser Test (first.t) Passed")
     else:
-        print(f"\n!!!Parser Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+        print(f"\n!!!Parser Test (first.t) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+    
+    test_proc = subprocess.run(['./bin/test_parser','syntax_examples/valid.t'], text=True, capture_output=True)
+
+    # Check results
+    if test_proc.returncode == 0:
+        #print(f"PRINT TEST:\n{test_proc.stdout}")
+        print("Parser Test (valid.t) Passed")
+    else:
+        print(f"\n!!!Parser Test (valid.t) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+
 
 
 if __name__ == '__main__':

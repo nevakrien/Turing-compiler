@@ -15,7 +15,7 @@ typedef struct{
 // }StateEncoding;
 
 typedef struct TuringMachineEncoding{
-	int size;
+	int len;
 	TransitionEncoding* states;
 }TuringMachineEncoding;
 

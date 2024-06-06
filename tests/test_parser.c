@@ -43,6 +43,8 @@ void test_parse_text_with_prints(char* filename){
     size_t len;
     char* text=read_file_into_buffer(filename,&len);
     TuringMachineEncoding ans=parse_text_with_prints(text);
+    free(ans.states);
+    free(text);
 }
 
 int main(int argc, char *argv[]) {
