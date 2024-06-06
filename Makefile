@@ -18,12 +18,16 @@ bin/io.o: src/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
+bin/cli.o: src/cli.c
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -c $< -o $@
+
 bin/turing.o: src/turing.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Build test executables
-bin/test_io: tests/test_io.c bin/io.o
+bin/test_io: tests/test_io.c bin/io.o bin/cli.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 bin/test_turing: tests/test_turing.c bin/turing.o

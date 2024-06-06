@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "io.h" // Assume this header file contains all necessary declarations
+#include "cli.h"
 
 //#define PAGE_SIZE 4096
 #define TestTapeBitCount 4096
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
     tape.left_limit = tape.left_init;
     tape.right_limit = tape.right_init;
 
+    PrintTape(tape);
     // Dump tape to file
     DumpTape(&tape, output_filename);
 

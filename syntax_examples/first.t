@@ -5,7 +5,14 @@ S1 ,,,, 1: 1 L S0 #also valid since ',' is being ignored
 
 S0,1:1,L,S0 #also valid since , being ignored means its treated as a space
 
-Y,1:1 R S0 #valid?
+Y,1:1 R S0 #valid since y isnt a dir
+Y,1:1 R R #valid since y isnt a dir
+Y,1:1 S0 S0 #valid since y isnt a dir
+
+1,Y:1 R S0 #valid since y isnt a dir
+
+R,1:1 R S0 
+
 
 6,6,6:2 2
 

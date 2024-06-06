@@ -139,6 +139,50 @@ typedef struct{
     int num;//1 indexed
 }Line;
 
+typedef enum{
+    Name=0,
+    Binary,
+    Direction,
+
+}TokenType;
+
+static inline TokenType get_type(const char* s){
+    if(s[1]!='\0'){
+        return Name;
+    }
+    if(s[0]=='0'||s[0]=='1'){
+        return Binary;
+    }
+    if(s[0]=='R'||s[0]=='L'||s[0]=='S'||s[0]=='r'||s[0]=='s'||s[0]=='l'){
+        return Direction;
+    }
+
+    return Name;
+}
+
+static inline Bit readBit(const char* s){
+    if(s[0]=='0') return Bit_0;
+    if(s[0]=='1') return Bit_1;
+    UNREACHABLE();
+}
+
+static inline Dir readDir(const char* s){
+    switch(s[0]){
+        case 'R':
+        case 'r':
+            return Right;
+        case 'S':
+        case 's':
+            return Stay;
+        case 'L':
+        case 'l':
+            return Left;
+        default:
+            UNREACHABLE();
+            break;
+    }
+}
+
 TuringMachineEncoding parse_text_with_prints(char* raw_text){
     replace_seps(raw_text);
 
@@ -270,8 +314,86 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
             *bad='\0';
         }
 
-        //validation over
+        //num arg validation over
+        
+        //ids
+        int left_name=0;
+        int left_bit=0;
+
+        TransitionEncoding trans;
+
+        for(int i2=0;i2<2;i2++){
+            TokenType type=get_type(left[i2]);
+            if(type==Direction){
+                printf("ERROR at line[%d]: direction type {R,S,L} not alowed on the left\n",line.num);
+                errored=1;
+                goto continue_outer_for;
+            }
+
+            if(type==Name){
+                if(left_name==1){
+                    printf("ERROR at line[%d]: 2 names on the left\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+
+                }
+                trans.NameStr=left[i2];
+                left_name=1;
+                
+            }
+            if(type==Binary){
+                if(left_bit==1){
+                    printf("ERROR at line[%d]: 2 read bits on the left\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+                }
+                trans.read=readBit(left[i2]);
+                left_bit=1;
+            }
+        }
+
+        //right
+        int right_name=0;
+        int right_bit=0;
+        int right_dir=0;
+
+        for(int i2=0;i2<3;i2++){
+            TokenType type=get_type(right[i2]);
+            if(type==Direction){
+                if(right_dir==1){
+                    printf("ERROR at line[%d]: more than 1 dir on the right\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+                }
+                trans.move=readDir(right[i2]);
+                right_dir=1;
+            }
+
+            if(type==Name){
+                if(right_name==1){
+                    printf("ERROR at line[%d]: more than 1 next state on the right\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+                }
+                trans.NextStateStr=left[i2];
+                right_name=1;
+            }
+            if(type==Binary){
+                if(right_name==1){
+                    printf("ERROR at line[%d]: more than 1 write bit on the right\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+                }
+                trans.write=readBit(right[i2]);
+                right_bit=1;
+            }
+        }
+
+        
+
+
         printf("YAY at line[%d]\n",line.num);
+        continue_outer_for:
     }
     if(errored){
         printf("errored\n");
