@@ -1,5 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+#include "utils.h"
 #include "turing.h"
 
 typedef struct{
@@ -16,7 +17,7 @@ typedef struct{
 
 typedef struct TuringMachineEncoding{
 	int len;
-	TransitionEncoding* states;
+	TransitionEncoding* trans;
 }TuringMachineEncoding;
 
 
@@ -27,7 +28,8 @@ void print_state(TuringMachine machine,State s, int indent);
 void print_machine(TuringMachine machine, int indent);
 
 
-
-TuringMachineEncoding parse_text_with_prints(char* raw_text);
+//keeps refrences to raw_text and mutates it. 
+//raw_text should only be freed once we finished working with names directly
+TuringMachineEncoding parse_text_with_prints(MUTATEBLE char* raw_text);
 
 #endif // PARSER_H

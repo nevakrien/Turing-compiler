@@ -26,6 +26,11 @@ bin/turing.o: src/turing.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
+bin/IR.o: src/IR.c
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
 # Build test executables
 bin/test_io: tests/test_io.c bin/io.o bin/cli.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -36,7 +41,7 @@ bin/test_turing: tests/test_turing.c bin/turing.o
 bin/parser.o: src/parser.c #bin/turing.o
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-bin/test_parser: tests/test_parser.c bin/parser.o
+bin/test_parser: tests/test_parser.c bin/parser.o bin/IR.o
 	$(CC) $(CFLAGS) $^ -o $@
 # Cleanup
 clean:

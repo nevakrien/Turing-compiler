@@ -7,6 +7,8 @@
 //user optional definitions
 #define CHECK_UNREACHABLE //puts an assert instead of ub 
 
+#define MUTATEBLE 
+
 static inline void* null_check(void* p){
 	if(p==NULL){
 		perror("went oom\n");

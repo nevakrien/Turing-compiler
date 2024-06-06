@@ -6,7 +6,10 @@ the make test system deletes the compiled files. since everything compiles under
 if this is not desirble test.py would work by itself. 
 
 # TODO 
+## major bugs
+inital ir does not treat the name hault as unique
+
+also there is an unexplained error on valid.t
 
 ## parser
-add line numbers 
 add better error handeling with a dedicated struct.

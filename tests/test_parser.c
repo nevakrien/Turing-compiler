@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "IR.h"
 #include "turing.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,7 +44,14 @@ void test_parse_text_with_prints(char* filename){
     size_t len;
     char* text=read_file_into_buffer(filename,&len);
     TuringMachineEncoding ans=parse_text_with_prints(text);
-    free(ans.states);
+    if(ans.trans!=NULL){
+        TuringIR ir=make_initial_ir(ans);
+        if(ir.states!=NULL){
+            free(ir.states);
+            free(ir.names);
+        }
+    }
+    free(ans.trans);
     free(text);
 }
 
