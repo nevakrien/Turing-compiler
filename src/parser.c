@@ -230,7 +230,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
     
     TuringMachineEncoding ans;
     ans.len=0;
-    ans.states=null_check(malloc(final_len*sizeof(TransitionEncoding)));
+    ans.trans=null_check(malloc(final_len*sizeof(TransitionEncoding)));
 
     int errored=0;
 
@@ -387,7 +387,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
                 right_name=1;
             }
             if(type==Binary){
-                if(right_name==1){
+                if(right_bit==1){
                     printf("ERROR at line[%d]: more than 1 write bit on the right\n",line.num);
                     errored=1;
                     goto continue_outer_for;
@@ -397,7 +397,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
             }
         }
 
-        ans.states[ans.len]=trans;
+        ans.trans[ans.len]=trans;
         ans.len++;
         
 
@@ -409,7 +409,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
     free(lines);
     if(errored){
         printf("errored\n");
-        free(ans.states);
+        free(ans.trans);
         return (TuringMachineEncoding){0};
     }
     if(ans.len!=final_len){
