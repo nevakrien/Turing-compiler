@@ -383,7 +383,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
                     errored=1;
                     goto continue_outer_for;
                 }
-                trans.NextStateStr=left[i2];
+                trans.NextStateStr=right[i2];
                 right_name=1;
             }
             if(type==Binary){

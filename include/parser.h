@@ -32,4 +32,23 @@ void print_machine(TuringMachine machine, int indent);
 //raw_text should only be freed once we finished working with names directly
 TuringMachineEncoding parse_text_with_prints(MUTATEBLE char* raw_text);
 
+// Print a TransitionEncoding struct
+static inline void print_trans_enc(const TransitionEncoding *te) {
+    printf("NameStr: %s\n", te->NameStr);
+    printf("Read : %d\n", te->read);
+    printf("Write : %d\n", te->write);
+    printf("Move : %d\n", te->move);
+    printf("NextStateStr: %s\n", te->NextStateStr);
+}
+
+static inline void print_tm_enc(const TuringMachineEncoding *tm) {
+    printf("Transition table for Turing machine with %d states:\n", tm->len);
+    for (int i = 0; i < tm->len; i++) {
+        TransitionEncoding *te = &(tm->trans[i]);
+        print_trans_enc(te);
+        printf("\n");
+    }
+}
+
+
 #endif // PARSER_H

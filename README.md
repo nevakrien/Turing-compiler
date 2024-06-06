@@ -9,7 +9,7 @@ if this is not desirble test.py would work by itself.
 ## major bugs
 inital ir does not treat the name hault as unique
 
-also there is an unexplained error on valid.t
+parser cuts some of the token
 
 ## parser
 add better error handeling with a dedicated struct.

@@ -50,24 +50,16 @@ def run_test_parser():
     call_make('bin/test_parser')
     print("test_parser Compilation Done")
 
-    test_proc = subprocess.run(['./bin/test_parser','syntax_examples/first.t'], text=True, capture_output=True)
+    for filename in os.listdir('syntax_examples'):
+        if filename.endswith('.t'):
+            file_path = os.path.join('syntax_examples', filename)
+            test_proc = subprocess.run(['./bin/test_parser', file_path], text=True, capture_output=True)
 
-    # Check results
-    if test_proc.returncode == 0:
-        #print(f"PRINT TEST:\n{test_proc.stdout}")
-        print("Parser Test (first.t) Passed")
-    else:
-        print(f"\n!!!Parser Test (first.t) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
-    
-    test_proc = subprocess.run(['./bin/test_parser','syntax_examples/valid.t'], text=True, capture_output=True)
-
-    # Check results
-    if test_proc.returncode == 0:
-        #print(f"PRINT TEST:\n{test_proc.stdout}")
-        print("Parser Test (valid.t) Passed")
-    else:
-        print(f"\n!!!Parser Test (valid.t) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
-
+            # Check results
+            if test_proc.returncode == 0:
+                print(f"Parser Test ({filename}) Passed")
+            else:
+                print(f"\n!!!Parser Test ({filename}) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
 
 if __name__ == '__main__':

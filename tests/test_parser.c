@@ -45,6 +45,7 @@ void test_parse_text_with_prints(char* filename){
     char* text=read_file_into_buffer(filename,&len);
     TuringMachineEncoding ans=parse_text_with_prints(text);
     if(ans.trans!=NULL){
+        print_tm_enc(&ans);
         TuringIR ir=make_initial_ir(ans);
         if(ir.states!=NULL){
             free(ir.states);

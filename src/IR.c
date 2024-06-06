@@ -123,10 +123,21 @@ TuringIR make_initial_ir (TuringMachineEncoding encoding){
 	for(int i=0;i<encoding.len;i++){
 		TransitionEncoding trans=encoding.trans[i];
 		HashNode* outNode=get_id(&table,trans.NextStateStr,0);
+		
+		int outid;
 		if(outNode==NULL){
-			printf("ERROR: no definition for symbol [%s]\n",trans.NextStateStr);
-			free(ans.states);
-			goto exit_error;
+			if(strcmp(trans.NextStateStr,"hault")==0){
+				outid=-1;
+
+			}
+			else{
+				printf("ERROR: no definition for symbol [%s]\n",trans.NextStateStr);
+				free(ans.states);
+				goto exit_error;
+			}	
+		}
+		else{
+			outid=outNode->id;
 		}
 
 		HashNode* inNode=get_id(&table,trans.NameStr,0);
@@ -134,7 +145,7 @@ TuringIR make_initial_ir (TuringMachineEncoding encoding){
 			UNREACHABLE();//we already inserted it earlier
 		}
 		ans.states[inNode->id].stateId=inNode->id;
-		ans.states[inNode->id].trans[trans.read]=(TransIR){trans.write,trans.move,outNode->id};
+		ans.states[inNode->id].trans[trans.read]=(TransIR){trans.write,trans.move,outid};
 
 	}
 
