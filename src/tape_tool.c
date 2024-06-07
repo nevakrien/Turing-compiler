@@ -27,8 +27,28 @@ Tape unsafe_init_tape(int left_limit,int right_limit,int left_init,int right_ini
 	return tape;
 }
 
+void change_bounds(const char* filename,int left,int right){
+	Tape tape=ReadTape(filename);
+	int cur_index=tape.cur-tape.base;
+
+	if(cur_index>right||cur_index<left){
+		printf("invalid bounds\n");
+		exit(1);
+	}
+	if(left>tape.left_init){
+		tape.left_init=left;
+	}
+	if(right<tape.right_init){
+		tape.right_init=right;
+	}
+
+	DumpTape(&tape,filename);
+
+}
+
 void print_help(){
 	printf("use show file.tape to see a tape\nuse new filename left_limit right_limit left_init rigt_init to make a new tape\n");
+	printf("use change file.tape new_left_limit new_right_limit to change bounds\n");
 }
 
 
@@ -57,6 +77,14 @@ int main(int argc, char* argv[]){
 		DumpTape(&tape,argv[2] );
 		return 0;
 
+	}
+	
+	if(strcmp(argv[1],"change")==0){
+		if(argc!=5){
+			printf("incorect usage %s change filename left right\n",argv[0]);
+		}
+		change_bounds(argv[2],atoi(argv[3]),atoi(argv[4]));
+		return 0;
 	}
 
 	print_help();

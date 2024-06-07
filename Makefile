@@ -11,7 +11,7 @@ CFLAGS = -g2 -Wall -Iinclude
 #bin
 
 # Default target
-all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool
+all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing
 
 # Compile source files to object files
 bin/io.o: src/io.c
@@ -30,6 +30,9 @@ bin/IR.o: src/IR.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
+bin/parser.o: src/parser.c #bin/turing.o
+	$(CC) $(CFLAGS) -c $^ -o $@
+
 # Build test executables
 bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -37,8 +40,6 @@ bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
 bin/test_turing: tests/test_turing.c bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-bin/parser.o: src/parser.c #bin/turing.o
-	$(CC) $(CFLAGS) -c $^ -o $@
 
 bin/test_parser: tests/test_parser.c bin/parser.o bin/IR.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -47,6 +48,10 @@ bin/test_parser: tests/test_parser.c bin/parser.o bin/IR.o
 
 bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
 	$(CC) $(CFLAGS) $^ -o $@
+
+bin/run_turing: src/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
+	$(CC) $(CFLAGS) $^ -o $@
+
 # Cleanup
 clean:
 	rm -rf bin/*
