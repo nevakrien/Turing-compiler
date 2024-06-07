@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "io.h" // Assume this header file contains all necessary declarations
-#include "cli.h"
+#include "io.h" 
+//#include "cli.h"//this is there for a print function if we need it
+//but since this modules main use is the compiled
 
 //#define PAGE_SIZE 4096
 #define TestTapeBitCount 4096
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
     tape.left_limit = tape.left_init;
     tape.right_limit = tape.right_init;
 
-    PrintTape(tape);
+    //PrintTape(tape);
     // Dump tape to file
     DumpTape(&tape, output_filename);
 

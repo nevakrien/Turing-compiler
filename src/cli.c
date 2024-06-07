@@ -35,3 +35,25 @@ void PrintTape(const Tape tape){
 
     printf("\033[35m]\033[0m\n"); // End purple color for ']'
 }
+
+CompileStepOne first_compile_step(const char* filename){
+	size_t length;
+	char* raw_text=read_file_into_buffer(filename,&length);
+	if(raw_text==NULL){
+		return(CompileStepOne){0};
+	}
+	TuringMachineEncoding encoding = parse_text_with_prints(raw_text);
+	if(encoding.trans==NULL){
+		free(raw_text);
+		return(CompileStepOne){0};
+	}
+
+	TuringIR ir= make_initial_ir (encoding);
+	if(ir.states==NULL){
+		free(raw_text);
+		free(encoding.trans);
+		return(CompileStepOne){0};
+	}
+	free(encoding.trans);
+	return (CompileStepOne){ir,raw_text};
+}

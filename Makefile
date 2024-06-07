@@ -18,7 +18,7 @@ bin/io.o: src/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/cli.o: src/cli.c
+bin/cli.o: src/cli.c  
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -32,7 +32,7 @@ bin/IR.o: src/IR.c
 
 
 # Build test executables
-bin/test_io: tests/test_io.c bin/io.o bin/cli.o
+bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 bin/test_turing: tests/test_turing.c bin/turing.o

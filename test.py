@@ -50,18 +50,28 @@ def run_test_parser():
     call_make('bin/test_parser')
     print("test_parser Compilation Done")
 
-    for filename in os.listdir('syntax_examples'):
-        if filename.endswith('.t'):
-            file_path = os.path.join('syntax_examples', filename)
-            test_proc = subprocess.run(['./bin/test_parser', file_path], text=True, capture_output=True)
+    # Directories containing syntax examples
+    valid_dir = 'tests/code_samples/valid'
+    invalid_dir = 'tests/code_samples/invalid'
 
-            # Check results
-            if test_proc.returncode == 0:
-                print(f"Parser Test ({filename}) Passed")
-            else:
-                print(f"\n!!!Parser Test ({filename}) Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+    def run_tests(directory, expected_return_code):
+        for filename in os.listdir(directory):
+            if filename.endswith('.t'):
+                file_path = os.path.join(directory, filename)
+                test_proc = subprocess.run(['./bin/test_parser', file_path], text=True, capture_output=True)
+                
+                # Check results
+                if test_proc.returncode == expected_return_code:
+                    print(f"Parser Test ({filename}) Passed")
+                else:
+                    print(f"\n!!!Parser Test ({filename}) Failed with exit code {test_proc.returncode} (expected {expected_return_code}):\n\n{test_proc.stdout} stderr:{test_proc.stderr}\n")
 
+    # Run tests for valid syntax examples
+    run_tests(valid_dir, expected_return_code=0)
 
+    # Run tests for invalid syntax examples
+    run_tests(invalid_dir, expected_return_code=1)
+    
 if __name__ == '__main__':
     print("starting tests...\n")
     run_test_io()
