@@ -109,3 +109,70 @@ TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
 
 	return (TuringResult){TIME_OUT,i,get_state_id(machine,state)};
 }
+
+TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine){
+	if(tape->cur-tape->base > tape->right_init) {UNREACHABLE();}
+	if(tape->cur-tape->base < tape->left_init) {UNREACHABLE();}
+
+	const State* state=&machine.states[0];
+	
+	//c++ style iterator
+	Bit* end_right=tape->base+tape->right_init;
+	Bit* end_left=tape->base-tape->left_init;
+
+	//c++ style iterator
+	const Bit* end_max=tape->base+tape->right_limit;
+	const Bit* end_min=tape->base-tape->left_limit;
+
+	//printf("limits right:%d left:%d \n",tape->right_limit,tape->left_limit);
+
+	if(end_right==end_left) UNREACHABLE();
+
+	for(;;){
+		//figure states
+		//printf("cur index:%d\n", tape->cur-tape->base);
+		Bit val= *tape->cur;
+		const Transition trans=state->transitions[val];
+
+		//write
+		*tape->cur=trans.write;
+
+		//move
+		tape->cur+=trans.move;
+		
+		//printf("current dist from right_end:%d\n",end_right-tape->cur);
+		//bounds checks
+		if(tape->cur>end_right){
+			//printf("\ncurrent dist from end_max:%d\n",end_max-tape->cur);
+			if(tape->cur==end_max+1){
+				return (TuringResult){OUT_OF_TAPE,-1,get_state_id(machine,trans.NextState)};
+			}
+
+			expand_tape_right(tape);
+			end_right=tape->base+tape->right_init;
+			
+			if(end_right>end_max){
+				UNREACHABLE();
+			}
+		}
+
+		else if(tape->cur<end_left){
+			if(tape->cur==end_min-1	){
+				return (TuringResult){OUT_OF_TAPE,-1,get_state_id(machine,trans.NextState)};
+			}
+
+			expand_tape_left(tape);
+			end_left=tape->base-tape->left_init;
+
+			if(end_left<end_min){
+				UNREACHABLE();
+			}
+		}
+
+		if(trans.NextState==NULL){
+			return (TuringResult){HAULT,-1,-1};
+		}
+		//state update
+		state=trans.NextState;
+	}
+}

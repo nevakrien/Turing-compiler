@@ -60,5 +60,6 @@ typedef struct TuringResult{
 
 
 TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps);
+TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine);
 
 #endif //TURING_H
