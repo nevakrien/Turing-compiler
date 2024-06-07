@@ -1,5 +1,6 @@
 debug.gdb
 bin/*
+*.tape
 # Prerequisites
 *.d
 

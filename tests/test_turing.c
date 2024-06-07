@@ -42,7 +42,7 @@ void test_infinite_right_flip() {
 
     // Run the Turing machine
     int max_steps = 2000; // Force many steps to potentially expand tape
-    TuringResult result = run_turing(&tape, machine, max_steps);
+    TuringResult result = run_turing(&tape, machine,0, max_steps);
 
     // Check conditions after simulation
     if (result.code != OUT_OF_TAPE) {
@@ -104,7 +104,7 @@ void test_stationary_turing_machine() {
 
     // Run the Turing machine with enough steps to trigger a time-out
     int max_steps = 1000;
-    TuringResult result = run_turing(&tape, machine, max_steps);
+    TuringResult result = run_turing(&tape, machine,0, max_steps);
 
     if (result.code != TIME_OUT) {
         printf("Expected TIME_OUT, but got different result code.\n");
@@ -175,7 +175,7 @@ void test_n_state_left_movement() {
     machine.states[num_states - 1].transitions[Bit_1] = (Transition){Bit_1, Left, NULL};
 
     // Run the Turing machine
-    TuringResult result = run_turing(&tape, machine, num_states*10); // Arbitrary high number of steps
+    TuringResult result = run_turing(&tape, machine,0, num_states*10); // Arbitrary high number of steps
 
     // Check conditions after simulation
     if (result.code != HAULT) {
@@ -255,7 +255,7 @@ void test_NO_STOP_n_state_left_movement() {
     machine.states[num_states - 1].transitions[Bit_1] = (Transition){Bit_1, Left, NULL};
 
     // Run the Turing machine
-    TuringResult result = run_turing_no_stop(&tape, machine); // Arbitrary high number of steps
+    TuringResult result = run_turing_no_stop(&tape, machine,0); // Arbitrary high number of steps
 
     // Check conditions after simulation
     if (result.code != HAULT) {

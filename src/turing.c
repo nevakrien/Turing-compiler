@@ -40,11 +40,11 @@ static inline void expand_tape_left(Tape* tape){
 	tape->left_init=new_init;
 }
 
-TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
+TuringResult run_turing(Tape* tape,const TuringMachine machine,int start,int max_steps){
 	if(tape->cur-tape->base > tape->right_init) {UNREACHABLE();}
 	if(tape->cur-tape->base < tape->left_init) {UNREACHABLE();}
 
-	const State* state=&machine.states[0];
+	const State* state=&machine.states[start];
 	
 	//c++ style iterator
 	Bit* end_right=tape->base+tape->right_init;
@@ -110,11 +110,11 @@ TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps){
 	return (TuringResult){TIME_OUT,i,get_state_id(machine,state)};
 }
 
-TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine){
+TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine,int start){
 	if(tape->cur-tape->base > tape->right_init) {UNREACHABLE();}
 	if(tape->cur-tape->base < tape->left_init) {UNREACHABLE();}
 
-	const State* state=&machine.states[0];
+	const State* state=&machine.states[start];
 	
 	//c++ style iterator
 	Bit* end_right=tape->base+tape->right_init;

@@ -59,7 +59,7 @@ typedef struct TuringResult{
 
 
 
-TuringResult run_turing(Tape* tape,const TuringMachine machine,int max_steps);
-TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine);
+TuringResult run_turing(Tape* tape,const TuringMachine machine,int start_state,int max_steps);
+TuringResult run_turing_no_stop(Tape* tape,const TuringMachine machine,int start_state);
 
 #endif //TURING_H

@@ -16,7 +16,7 @@ void PrintTape(const Tape tape){
     printf("\033[1;36mcurrent id:%d initialized data:\n\033[0m", cur_id);
     printf("\033[35m[\033[0m"); // Start purple color for '[' and reset immediately
 
-    for (int i = tape.left_init; i <= tape.right_limit; i++) {
+    for (int i = tape.left_init; i <= tape.right_init; i++) {
         if (i == cur_id) {
             printf("\033[32m["); // Start green color for '['
         } else {
