@@ -57,3 +57,27 @@ CompileStepOne first_compile_step(const char* filename){
 	free(encoding.trans);
 	return (CompileStepOne){ir,raw_text};
 }
+
+static inline State* IdToPtr(int stateid,State* base){
+	if(stateid==-1){
+		return NULL;
+	}
+	return base+stateid;
+}
+
+TuringMachine finalize_unsafe(TuringIR ir){
+	TuringMachine ans;
+	ans.size=ir.len;
+	ans.states=null_check(malloc(ans.size*sizeof(State)));
+	for(int i=0;i<ir.len;i++){
+		if(ir.states[i].stateId!=i){
+		 	UNREACHABLE();
+		}
+		for(int t=0;t<2;t++){
+			ans.states[i].transitions[t].write=ir.states[i].trans[t].write;
+			ans.states[i].transitions[t].move=ir.states[i].trans[t].move;
+			ans.states[i].transitions[t].NextState=IdToPtr(ir.states[i].trans[t].nextState,ans.states);
+		}
+	}
+	return ans;
+}

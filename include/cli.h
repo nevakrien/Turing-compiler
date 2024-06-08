@@ -16,4 +16,6 @@ typedef struct
 
 CompileStepOne first_compile_step(const char* filename);
 
+TuringMachine finalize_unsafe(TuringIR ir);
+
 #endif // CLI_H
