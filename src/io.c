@@ -34,6 +34,22 @@ void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
 
 
 
+void __attribute__((sysv_abi)) free_all_tape(void* memory, size_t size) {
+    #ifdef _WIN32
+        // Windows-specific memory deallocation using VirtualFree
+        if (!VirtualFree(memory, 0, MEM_RELEASE)) {
+            perror("Memory deallocation failed [free_all_tape]\n");
+            exit(EXIT_FAILURE);
+        }
+    #else
+        // Unix-like systems memory deallocation using munmap
+        if (munmap(memory, size) == -1) {
+            perror("Memory deallocation failed [free_all_tape]\n");
+            exit(EXIT_FAILURE);
+        }
+    #endif
+}
+
 
 void __attribute__((sysv_abi)) exit_turing(TuringDone code,int current_step){
 	if(code==HAULT){

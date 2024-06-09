@@ -25,4 +25,6 @@ void exit_turing(TuringDone code,int current_step) __attribute__((sysv_abi));
 void DumpTape(Tape* tape, const char *out_filename)__attribute__((sysv_abi));
 Tape ReadTape(const char *out_filename)__attribute__((sysv_abi));
 
+void free_all_tape(void* memory, size_t size)  __attribute__((sysv_abi));
+
 #endif //IO_H

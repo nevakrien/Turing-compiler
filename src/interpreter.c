@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "utils.h"
 
+//#define FREE_FOR_DEBUG
 
 int main(int argc, char* argv[]){
 	if(argc!=4){
@@ -29,5 +30,15 @@ int main(int argc, char* argv[]){
 			UNREACHABLE();
 	}
 	DumpTape(&tape,argv[3]);
+	
+	//no need to free anything.
+	#ifdef FREE_FOR_DEBUG
+	free(comp.ir.names);
+	free(comp.ir.states);
+	free(comp.text);
+	free(machine.states);
+	free_all_tape(&(tape.base[tape.left_limit]),sizeof(Bit)*(tape.right_limit-tape.left_limit));
+	#endif
+	
 	return 0;
 }
