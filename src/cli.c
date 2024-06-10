@@ -2,15 +2,17 @@
 #include <stdio.h>
 
 // Helper function to print metadata of the tape
-void PrintMetadata(const Tape tape){
+void PrintMetadata(const Tape tape)
+{
     // Using bold and cyan color for the header
     printf("\033[1;36mfull tape [%d,%d] initialized tape [%d,%d]\033[0m\n", tape.left_limit, tape.right_limit, tape.left_init, tape.right_init);
 }
 
-void PrintTape(const Tape tape){
+void PrintTape(const Tape tape)
+{
     const int cur_id = tape.cur - tape.base;
 
-    PrintMetadata(tape);  // Call the helper function to print the metadata
+    PrintMetadata(tape); // Call the helper function to print the metadata
 
     // Using bold and cyan color for current id and initialized data
     printf("\033[1;36mcurrent id:%d initialized data:\n\033[0m", cur_id);
@@ -23,8 +25,10 @@ void PrintTape(const Tape tape){
             printf("\033[33m"); // Start yellow color for non-key ids
         }
 
-        if (tape.base[i]) putchar('1');
-        else putchar('0');
+        if (tape.base[i])
+            putchar('1');
+        else
+            putchar('0');
 
         if (i == cur_id) {
             printf("]\033[0m"); // End green color for ']'
@@ -36,48 +40,51 @@ void PrintTape(const Tape tape){
     printf("\033[35m]\033[0m\n"); // End purple color for ']'
 }
 
-CompileStepOne first_compile_step(const char* filename){
-	size_t length;
-	char* raw_text=read_file_into_buffer(filename,&length);
-	if(raw_text==NULL){
-		return(CompileStepOne){0};
-	}
-	TuringMachineEncoding encoding = parse_text_with_prints(raw_text);
-	if(encoding.trans==NULL){
-		free(raw_text);
-		return(CompileStepOne){0};
-	}
+CompileStepOne first_compile_step(const char* filename)
+{
+    size_t length;
+    char* raw_text = read_file_into_buffer(filename, &length);
+    if (raw_text == NULL) {
+        return (CompileStepOne) { 0 };
+    }
+    TuringMachineEncoding encoding = parse_text_with_prints(raw_text);
+    if (encoding.trans == NULL) {
+        free(raw_text);
+        return (CompileStepOne) { 0 };
+    }
 
-	TuringIR ir= make_initial_ir (encoding);
-	if(ir.states==NULL){
-		free(raw_text);
-		free(encoding.trans);
-		return(CompileStepOne){0};
-	}
-	free(encoding.trans);
-	return (CompileStepOne){ir,raw_text};
+    TuringIR ir = make_initial_ir(encoding);
+    if (ir.states == NULL) {
+        free(raw_text);
+        free(encoding.trans);
+        return (CompileStepOne) { 0 };
+    }
+    free(encoding.trans);
+    return (CompileStepOne) { ir, raw_text };
 }
 
-static inline State* IdToPtr(int stateid,State* base){
-	if(stateid==-1){
-		return NULL;
-	}
-	return base+stateid;
+static inline State* IdToPtr(int stateid, State* base)
+{
+    if (stateid == -1) {
+        return NULL;
+    }
+    return base + stateid;
 }
 
-TuringMachine finalize_unsafe(TuringIR ir){
-	TuringMachine ans;
-	ans.size=ir.len;
-	ans.states=null_check(malloc(ans.size*sizeof(State)));
-	for(int i=0;i<ir.len;i++){
-		if(ir.states[i].stateId!=i){
-		 	UNREACHABLE();
-		}
-		for(int t=0;t<2;t++){
-			ans.states[i].transitions[t].write=ir.states[i].trans[t].write;
-			ans.states[i].transitions[t].move=ir.states[i].trans[t].move;
-			ans.states[i].transitions[t].NextState=IdToPtr(ir.states[i].trans[t].nextState,ans.states);
-		}
-	}
-	return ans;
+TuringMachine finalize_unsafe(TuringIR ir)
+{
+    TuringMachine ans;
+    ans.size = ir.len;
+    ans.states = null_check(malloc(ans.size * sizeof(State)));
+    for (int i = 0; i < ir.len; i++) {
+        if (ir.states[i].stateId != i) {
+            UNREACHABLE();
+        }
+        for (int t = 0; t < 2; t++) {
+            ans.states[i].transitions[t].write = ir.states[i].trans[t].write;
+            ans.states[i].transitions[t].move = ir.states[i].trans[t].move;
+            ans.states[i].transitions[t].NextState = IdToPtr(ir.states[i].trans[t].nextState, ans.states);
+        }
+    }
+    return ans;
 }
