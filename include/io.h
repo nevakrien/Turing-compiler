@@ -20,7 +20,7 @@ typedef struct  __attribute__((packed)) {
 } MetaData;
 
 void* allocate_all_tape(size_t size) __attribute__((sysv_abi));
-void exit_turing(TuringDone code,int current_step) __attribute__((sysv_abi));
+void exit_turing(TuringDone code) __attribute__((sysv_abi));
 
 void DumpTape(Tape* tape, const char *out_filename)__attribute__((sysv_abi));
 Tape ReadTape(const char *out_filename)__attribute__((sysv_abi));

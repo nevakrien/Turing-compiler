@@ -11,12 +11,18 @@ CFLAGS = -g2 -Wall -Iinclude
 #bin
 
 # Default target
-all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing
+all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing #bin/libio.so
+
+# #for debuging
+# bin/libio.so: src/io.c
+# 	mkdir -p bin
+# 	$(CC) $(CFLAGS) -fPIC -shared  $^ -o $@ 
 
 # Compile source files to object files
 bin/io.o: src/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
+
 
 bin/cli.o: src/cli.c  
 	@mkdir -p bin
@@ -34,8 +40,11 @@ bin/parser.o: src/parser.c #bin/turing.o
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 # Build test executables
-bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
-	$(CC) $(CFLAGS) $^ -o $@
+# bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
+# 	$(CC) $(CFLAGS) $^ -o $@
+
+bin/test_io: tests/test_io.c bin/io.o
+	$(CC) $(CFLAGS) $^ -o $@ -fno-inline -fno-inline-functions 
 
 bin/test_turing: tests/test_turing.c bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -70,6 +79,5 @@ check: clean
 
 test: clean
 	python3 test.py
-	#rm -rf bin/*
 
 .PHONY: all clean clean_io clean_turing test check
