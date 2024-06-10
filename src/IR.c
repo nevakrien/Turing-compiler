@@ -126,7 +126,7 @@ TuringIR make_initial_ir (TuringMachineEncoding encoding){
 		
 		int outid;
 		if(outNode==NULL){
-			if(strcmp(trans.NextStateStr,"hault")==0){
+			if(strcmp(trans.NextStateStr,"halt")==0){
 				outid=-1;
 
 			}

@@ -178,8 +178,8 @@ void test_n_state_left_movement() {
     TuringResult result = run_turing(&tape, machine,0, num_states*10); // Arbitrary high number of steps
 
     // Check conditions after simulation
-    if (result.code != HAULT) {
-        printf("Expected HAULT, but got different result code: %d\n", result.code);
+    if (result.code != HALT) {
+        printf("Expected HALT, but got different result code: %d\n", result.code);
         exit(1);
     }
     
@@ -258,8 +258,8 @@ void test_NO_STOP_n_state_left_movement() {
     TuringResult result = run_turing_no_stop(&tape, machine,0); // Arbitrary high number of steps
 
     // Check conditions after simulation
-    if (result.code != HAULT) {
-        printf("Expected HAULT, but got different result code: %d\n", result.code);
+    if (result.code != HALT) {
+        printf("Expected HALT, but got different result code: %d\n", result.code);
         exit(1);
     }
     

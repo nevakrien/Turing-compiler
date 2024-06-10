@@ -1,4 +1,4 @@
-(S0, 1):  (1 R hault) #stuff
+(S0, 1):  (1 R halt) #stuff
 (S0, 0:  (1 L S0 #also valid since "(" is being ignored anywat
 
 S1 ,,,, 1: 1 L S0 #also valid since ',' is being ignored
@@ -22,10 +22,10 @@ T,A:1,2,3
 
 T,A : 1,2,3
 
-S0, 1 :: 1 R hault 
-S0, 1 :cooment: 1 R hault 
+S0, 1 :: 1 R halt 
+S0, 1 :cooment: 1 R halt 
 
-S0, 1 :cooment : 1 R hault 
+S0, 1 :cooment : 1 R halt 
 
 
 ::11 2

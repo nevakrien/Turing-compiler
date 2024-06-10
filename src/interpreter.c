@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
 	}
 
 	switch(result.code){
-		case HAULT:
-			printf("machine haulted ");
+		case HALT:
+			printf("machine halted ");
 			break;
 		case OUT_OF_TAPE:
 			printf("ran out of tape state: %s ",comp.ir.names[result.state_id]);

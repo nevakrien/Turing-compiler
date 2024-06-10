@@ -52,12 +52,12 @@ void __attribute__((sysv_abi)) free_all_tape(void* memory, size_t size) {
 
 
 void __attribute__((sysv_abi)) exit_turing(TuringDone code){
-	if(code==HAULT){
-		printf("haulted\n");
-		return;
+	if(code==HALT){
+		printf("halted\n");
+		exit(code);
 	}
 
-	printf("didnt hault");
+	printf("didnt halt");
 	switch(code){
 		case OUT_OF_TAPE:
 			printf("  ERROR: out of tape");
@@ -65,12 +65,14 @@ void __attribute__((sysv_abi)) exit_turing(TuringDone code){
 		case TIME_OUT:
 			printf("  ERROR: out of tape");
 			break;
-			
+		case BAD_ARGS:
+            printf("  ERROR: bad args");
+            break;
 		default:
 			printf(" unknowen error code: %d!!!",code);
 			break;
 	}
-
+    putchar('\n');
 	exit(code);
 }
 

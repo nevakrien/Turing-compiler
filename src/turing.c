@@ -78,7 +78,7 @@ static inline TuringResult process_step(Tape* tape, const TuringMachine machine,
     }
 
     if (trans.NextState == NULL) {
-        return (TuringResult){HAULT, step_count, -1};
+        return (TuringResult){HALT, step_count, -1};
     }
 
     // State update

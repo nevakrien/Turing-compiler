@@ -13,10 +13,6 @@ CFLAGS = -g2 -Wall -Iinclude
 # Default target
 all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing #bin/libio.so
 
-# #for debuging
-# bin/libio.so: src/io.c
-# 	mkdir -p bin
-# 	$(CC) $(CFLAGS) -fPIC -shared  $^ -o $@ 
 
 # Compile source files to object files
 bin/io.o: src/io.c

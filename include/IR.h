@@ -10,7 +10,7 @@
 typedef struct{
 	Bit write;
 	Dir move;
-	int nextState; //-1 is hault -2 is not intilized
+	int nextState; //-1 is halt -2 is not intilized
 } TransIR;
 
 typedef struct{

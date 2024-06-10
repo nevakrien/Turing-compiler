@@ -16,15 +16,15 @@ if __name__=="__main__":
 
 	os.makedirs("tasks/69")
 	with open('tasks/69/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',69,'S','hault')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',69,'S','halt')))
 	make_tape('tasks/69/input.tape',-100,100,-10,10)
 
 	os.makedirs("tasks/42")
 	with open('tasks/42/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%3 else 'S',42,'S','hault')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%3 else 'S',42,'S','halt')))
 	make_tape('tasks/42/input.tape',-100,100,-10,10)
 
 	os.makedirs("tasks/1000")
 	with open('tasks/1000/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'L',1000,'S','hault')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'L',1000,'S','halt')))
 	make_tape('tasks/1000/input.tape',-10,10,-10,10)

@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 typedef enum TuringDone{	
-	HAULT=0,
+	HALT=0,
 	TIME_OUT,
 	OUT_OF_TAPE,
+	BAD_ARGS=3,
 }TuringDone;
 
 typedef enum  Bit{
