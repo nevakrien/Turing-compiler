@@ -1,20 +1,21 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-//user optional definitions
-#define CHECK_UNREACHABLE //puts an assert instead of ub 
+// user optional definitions
+#define CHECK_UNREACHABLE // puts an assert instead of ub
 
-#define MUTATEBLE 
+#define MUTATEBLE
 
-static inline void* null_check(void* p){
-	if(p==NULL){
-		perror("went oom\n");
-		exit(1);
-	}
-	return p;
+static inline void* null_check(void* p)
+{
+    if (p == NULL) {
+        perror("went oom\n");
+        exit(1);
+    }
+    return p;
 }
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -27,9 +28,8 @@ static inline void* null_check(void* p){
 #elif defined(_MSC_VER)
 #define UNREACHABLE() __assume(0)
 #else
-//null pointer dereference to signal unreachability
+// null pointer dereference to signal unreachability
 #define UNREACHABLE() (*(int*)0 = 0)
 #endif
 
-
-#endif// UTILS_H
+#endif // UTILS_H
