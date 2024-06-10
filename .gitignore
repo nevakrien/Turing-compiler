@@ -1,3 +1,4 @@
+code_tests/tasks/*
 debug.gdb
 bin/*
 *.tape

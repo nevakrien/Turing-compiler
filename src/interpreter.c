@@ -8,27 +8,50 @@
 //#define FREE_FOR_DEBUG
 
 int main(int argc, char* argv[]){
-	if(argc!=4){
-		printf("usage: %s src_file tape_file out_tape_file\n",argv[0]);
+	if(argc<4){
+		printf("usage: %s src_file tape_file out_tape_file (optionaly max_steps)\n",argv[0]);
 		return 1;
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
 	Tape tape=ReadTape(argv[2]);
 	
 	TuringMachine machine = finalize_unsafe(comp.ir);
-	TuringResult result = run_turing_no_stop(&tape,machine,0);
+
+	TuringResult result;
+	int print_steps=0;
+	if(argc==4){
+	 result = run_turing_no_stop(&tape,machine,0);
+
+	}
+
+	else if(argc==5){
+		result = run_turing(&tape,machine,0,atoi(argv[4]));
+		print_steps=1;
+	}
+
+	else{
+		printf("too many arguments\n");
+		return 1;
+	}
 
 	switch(result.code){
 		case HAULT:
-			printf("machine haulted\n");
+			printf("machine haulted ");
 			break;
 		case OUT_OF_TAPE:
-			printf("ran out of tape\n");
+			printf("ran out of tape state: %s ",comp.ir.names[result.state_id]);
 			break;
 		case TIME_OUT:
+			printf("ran out of time state: %s ",comp.ir.names[result.state_id]);
+			break;
 		default:
 			UNREACHABLE();
 	}
+	if(print_steps){
+		printf("steps: %d",result.steps);
+	}
+	putchar('\n');
+
 	DumpTape(&tape,argv[3]);
 	
 	//no need to free anything.
@@ -37,7 +60,7 @@ int main(int argc, char* argv[]){
 	free(comp.ir.states);
 	free(comp.text);
 	free(machine.states);
-	free_all_tape(&(tape.base[tape.left_limit]),sizeof(Bit)*(tape.right_limit-tape.left_limit));
+	free_all_tape(&(tape.base[tape.left_limit]),sizeof(Bit)*(1+tape.right_limit-tape.left_limit));
 	#endif
 	
 	return 0;
