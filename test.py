@@ -71,7 +71,19 @@ def run_test_parser():
 
     # Run tests for invalid syntax examples
     run_tests(invalid_dir, expected_return_code=1)
+
+def run_test_compiler():
+    call_make('bin/test_compiler')
+    print("test_compiler Compilation Done")
+
+    test_proc = subprocess.run(['./bin/test_compiler'], text=True, capture_output=True)
     
+    # Check results
+    if test_proc.returncode == 0:
+        print("nasm ld Test Passed")
+    else:
+        print(f"\n!!!nasm ld Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+
 if __name__ == '__main__':
     print("starting tests...\n")
     run_test_io()
@@ -83,4 +95,7 @@ if __name__ == '__main__':
     run_test_parser()
     print("")
 
+    run_test_compiler()
+    print("")
+    
     print("all tests are done!")

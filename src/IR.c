@@ -20,15 +20,14 @@ typedef struct{
 	int curid;
 } HashTable;
 
-//djb2
-static inline uint32_t hash(const char *str) {
-    uint32_t hash = 5381;
-    int c;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
+//FNV-1a
+static inline uint32_t hash(const char* str)
+{
+    uint32_t h = 0x811c9dc5u;
+    for (unsigned char* p = (unsigned char*)str; *p != '\0'; p++) {
+        h = (h ^ *p) * 0x1000193u;
+    }
+    return h;
 }
 
 static inline HashNode* get_id(HashTable* table,const char* key,int add){

@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "utils.h"
 
-const char *assembly_template = 
+static const char *assembly_template = 
 "section .text\n"
 "    global _start\n"
 "    extern ReadTape\n"
@@ -37,32 +39,53 @@ const char *assembly_template =
 "    mov rdi, 3\n"
 "    call exit_turing\n";
 
-int main() {
+int assemble_and_link(const char* filename, const char* code) {
     // Step 1: Generate the assembly code
-    FILE *file = fopen("generated.asm", "w");
+    char* working_name=null_check(malloc(strlen(filename)+5));
+    strcpy(working_name,filename);
+    strcat(working_name,".asm");
+
+    FILE *file = fopen(working_name, "w");
     if (file == NULL) {
+        free(working_name);
         perror("Failed to open file");
         return 1;
     }
 
     // Custom code to be inserted into the placeholder
-    const char *custom_code = "    ; Inserted custom code";
+    //const char *custom_code = "    ; Inserted custom code";
 
-    fprintf(file, assembly_template, custom_code);
+    fprintf(file, assembly_template, code);
 
     fclose(file);
     printf("Assembly code generated successfully.\n");
 
+
+
+    const char* cnasm="nasm -f elf64 -o %s.o %s";
+    char* nasm=null_check(malloc(strlen(cnasm)+strlen(working_name)+strlen(filename)));
+    sprintf(nasm,cnasm,filename,working_name);
+
     // Step 2: Assemble the generated assembly code
-    int result = system("nasm -f elf64 -o generated.o generated.asm");
+    int result = system(nasm);
     if (result != 0) {
+        free(working_name);
+        free(nasm);
         fprintf(stderr, "Failed to assemble the code.\n");
         return 1;
     }
     printf("Assembly completed successfully.\n");
 
     // Step 3: Link the object file with io.o to create the final executable
-    result = system("ld -o generated.out generated.o bin/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2");
+    const char* cld="ld -o %s.out %s.o bin/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2";
+    char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)));
+    sprintf(ld,cld,filename,filename);
+    
+    result = system(ld);
+    free(working_name);
+    free(nasm);
+    free(ld);
+
     if (result != 0) {
         fprintf(stderr, "Failed to link the object file.\n");
         return 1;
