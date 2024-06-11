@@ -6,12 +6,12 @@
 #include <stdbool.h>
 
 typedef struct HashNode HashNode;
-typedef struct HashNode{
+struct HashNode{
 	int id;
 	bool seen[2];//for both read options
 	const char* key;
 	HashNode* next;
-} HashNode;
+};
 
 typedef struct{
 	HashNode** data;

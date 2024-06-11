@@ -11,8 +11,7 @@ CFLAGS = -g2 -Wall -Iinclude
 #bin
 
 # Default target
-all: bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
-
+all:bin/tmc0 bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
 
 # Compile source files to object files
 bin/io.o: src/io.c
@@ -57,6 +56,9 @@ bin/test_compiler:tests/test_compiler.c bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 #tools
+bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+	$(CC) $(CFLAGS) $^ -o $@
+
 
 bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
 	$(CC) $(CFLAGS) $^ -o $@

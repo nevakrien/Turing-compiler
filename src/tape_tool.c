@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
 			printf("incorect usage %s new filename left_limit right_limit left_init rigt_init\n",argv[0]);
 			return 1;
 		}
-		Tape tape=unsafe_init_tape(atoi(argv[3]),atoi(argv[4]),atoi(argv[5]),atoi(argv[6]));
+		Tape tape=unsafe_init_tape(int_of_str(argv[3]),int_of_str(argv[4]),int_of_str(argv[5]),int_of_str(argv[6]));
 		DumpTape(&tape,argv[2] );
 		return 0;
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 		if(argc!=5){
 			printf("incorect usage %s change filename left right\n",argv[0]);
 		}
-		change_bounds(argv[2],atoi(argv[3]),atoi(argv[4]));
+		change_bounds(argv[2],int_of_str(argv[3]),int_of_str(argv[4]));
 		return 0;
 	}
 

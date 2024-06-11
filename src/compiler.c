@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
+#include "compiler.h"
 
-static const char *assembly_template = 
+static const char *assembly_start_template = 
 "section .text\n"
 "    global _start\n"
 "    extern ReadTape\n"
@@ -23,12 +24,14 @@ static const char *assembly_template =
 "\n"
 "    call ReadTape\n"
 "\n"
+"    ;!!!ACTUAL CODE: done boiler plate\n";
+//"%s\n"  // Placeholder for actual code
+
+static const char *assembly_end_template = 
+"    ;DONE:output boilerplate and exit;\n"
 "    mov rsi, [rsp+24+32]   ; Second argument (output file) now shifted by 32\n"
 "    lea rdi, [rsp]         ; Same struct pointer\n"
 "\n"
-"    ;!!!ACTUAL CODE: done boiler plate\n"
-"%s\n"  // Placeholder for actual code
-"    ;DONE:output boilerplate and exit;\n"
 "    call DumpTape\n"
 "\n"
 "    ; Exit the program\n"
@@ -39,7 +42,7 @@ static const char *assembly_template =
 "    mov rdi, 3\n"
 "    call exit_turing\n";
 
-int assemble_and_link(const char* filename, const char* code) {
+int assemble_and_link(const char* filename, printer_func_t codefunc,void* data) {
     // Step 1: Generate the assembly code
     char* working_name=null_check(malloc(strlen(filename)+5));
     strcpy(working_name,filename);
@@ -55,7 +58,14 @@ int assemble_and_link(const char* filename, const char* code) {
     // Custom code to be inserted into the placeholder
     //const char *custom_code = "    ; Inserted custom code";
 
-    fprintf(file, assembly_template, code);
+    fprintf(file,"%s",assembly_start_template);
+    codefunc(file,data);
+    fprintf(file,"%s",assembly_end_template);
+
+    if (ferror(file)) {
+        perror("Error occurred during Assembly generation\n");
+        exit(1);
+    }
 
     fclose(file);
     printf("Assembly code generated successfully.\n");
@@ -93,4 +103,49 @@ int assemble_and_link(const char* filename, const char* code) {
     printf("Linking completed successfully.\n");
 
     return 0;
+}
+
+const char* spaces="    ";
+
+//does not handle hault properly yet. other issues with register size specifications on the ops
+void O0_IR_to_ASM(FILE *file,TuringIR ir){
+    const char* address_register="rax";
+    const char* bit_register="ecx";
+    int move_size=4;
+    for(int i=0;i<ir.len;i++){
+        fprintf(file,"L%d:;%s\n",i,ir.names[i]);
+        
+        //brench based on bit
+        fprintf(file,"%smov %s, [%s]\n",spaces,bit_register,address_register);
+        fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
+        fprintf(file,"%sjnz L%d_1\n",spaces,i);    
+
+        //read 0
+        fprintf(file,"L%d_0:;%s\n",i,ir.names[i]);
+        fprintf(file,"%smov [%s], %d \n",spaces,address_register,ir.states[i].trans[0].write);
+
+
+        if(ir.states[i].trans[0].move!=Stay){
+            char sign=ir.states[i].trans[0].move > 0 ? '+' : '-';
+            fprintf(file, "%slea %s, [%s%c%d] \n", spaces, address_register, address_register, sign,move_size);
+
+        }
+
+        fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[0].nextState);
+
+
+        //read 1
+        fprintf(file,"L%d_1:;%s\n",i,ir.names[i]);   
+        fprintf(file,"%smov [%s], %d \n",spaces,address_register,ir.states[i].trans[1].write);
+        
+        if(ir.states[i].trans[1].move!=Stay){
+            char sign=ir.states[i].trans[1].move > 0 ? '+' : '-';
+            fprintf(file, "%slea %s, [%s%c%d] \n", spaces, address_register, address_register, sign,move_size);
+
+        }
+
+        fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[1].nextState);
+        
+
+    }
 }

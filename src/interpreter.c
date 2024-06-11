@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 	}
 
 	else if(argc==5){
-		result = run_turing(&tape,machine,0,atoi(argv[4]));
+		result = run_turing(&tape,machine,0,int_of_str(argv[4]));
 		print_steps=1;
 	}
 

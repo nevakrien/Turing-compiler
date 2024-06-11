@@ -30,9 +30,9 @@ typedef struct Transition{
 	State* NextState;
 }Transition;
 
-typedef struct State {
+struct State {
     Transition transitions[2];
-} State;
+};
 
 typedef struct TuringMachine{
 	int size;

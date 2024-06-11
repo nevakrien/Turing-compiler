@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
+#include <errno.h>
 
 //user optional definitions
 #define CHECK_UNREACHABLE //puts an assert instead of ub 
@@ -15,6 +17,19 @@ static inline void* null_check(void* p){
 		exit(1);
 	}
 	return p;
+}
+
+// Used the same way as atoi but does error checking.
+static inline int int_of_str(const char* str)
+{
+    errno = 0;
+    char* end;
+    long r = strtol(str, &end, 10);
+    if (errno == ERANGE || end == str || *end || r < INT_MIN || r > INT_MAX) {
+        fprintf(stderr, "\"%s\" is not an integer\n",str);
+        exit(1);
+    }
+    return r;
 }
 
 #define max(a, b) ((a) > (b) ? (a) : (b))

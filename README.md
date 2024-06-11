@@ -13,6 +13,7 @@ if there is demand I would open a windows brench
 as of now there are 2 major tools:
 1. tape_tool: used to mainpulate .tape files 
 2. run_turing: runs a turing machine described in .t on a .tape file and writes the output to anoter .tape file
+3. tmc0: not yet functional would compile a .t file into a binary when its done
 
 # benchmarking
 from the tests I ran on the interpeter it apears that not keeping track of the counter has a small yet semi consistent advantage.
@@ -29,8 +30,9 @@ then we will generate intel asembly files that would need to be assembeled with 
 linking is still up in the air I think for now I will use gcc or ld but this could change.
 
 # TODO 
-1. unify the cli tools
-2. rework the low level api in io.h
+1. fix major bugs in O0
+2. unify the cli tools
+3. rework the low level api in io.h
 
 ## parser
 add better error handeling with a dedicated struct.
