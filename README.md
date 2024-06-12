@@ -33,7 +33,7 @@ then we will generate intel asembly files that would need to be assembeled with 
 linking is still up in the air I think for now I will use gcc or ld but this could change.
 
 # TODO 
-1. fix major bugs in O0
+1. fix major bugs in O0 (add left)
 2. unify the cli tools
 3. rework the low level api in io.h
 
