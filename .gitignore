@@ -1,3 +1,7 @@
+/__pycache__/
+/__pycache__/*
+code_tests/__pycache__/
+code_tests/__pycache__/*
 code_tests/tasks/*
 debug.gdb
 bin/*

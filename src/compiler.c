@@ -4,6 +4,13 @@
 #include "utils.h"
 #include "compiler.h"
 
+// cur is at offset 0
+// base is at offset 8
+// left_limit is at offset 16
+// right_limit is at offset 20
+// left_init is at offset 24
+// right_init is at offset 28
+
 static const char *assembly_start_template = 
 "section .text\n"
 "    global _start\n"
@@ -28,16 +35,19 @@ static const char *assembly_start_template =
 //"%s\n"  // Placeholder for actual code
 
 static const char *assembly_end_template = 
-"    ;DONE:output boilerplate and exit;\n"
-"exit_good:"
-"    mov [rsp],qword rax\n"
-"    mov rsi, [rsp+24+32]   ; Second argument (output file) now shifted by 32\n"
+"    ;DONE:output boilerplate and exit;\n\n"
+
+"    mov rsi, [rsp+32+24]   ; Second argument (output file) now shifted by 32\n"
 "    lea rdi, [rsp]         ; Same struct pointer\n"
 "\n"
 "    call DumpTape\n"
 "\n"
 "    ; Exit the program\n"
 "    mov rdi, 0\n"
+"    call exit_turing\n"
+"\n"
+"exit_out_of_tape:\n"
+"    mov rdi, 2\n"
 "    call exit_turing\n"
 "\n"
 "_exit_error:\n"
@@ -74,7 +84,7 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
 
 
 
-    const char* cnasm="nasm -f elf64 -o %s.o %s";
+    const char* cnasm="nasm -g -f elf64 -o %s.o %s";
     char* nasm=null_check(malloc(strlen(cnasm)+strlen(working_name)+strlen(filename)));
     sprintf(nasm,cnasm,filename,working_name);
 
@@ -111,21 +121,50 @@ const char* spaces="    ";
 
 //does not handle hault properly yet. other issues with register size specifications on the ops
 void O0_IR_to_ASM(FILE *file,TuringIR ir){
-    const char* address_register="rax";//this is also used in the assembly_end_template so dont mess with it.
-    const char* bit_register="r10d";
-    const char* right_limit_register="r8d";
-    const char* left_limit_register="r9d";
-    int move_size=4;
+    
+    //we are using rax rcx rdi 
+    //inside of some of the loops. this means that they are NOT ALOWED to be chosen
+
+    const char* address_register="r14";//this is also used in the assembly_end_template so dont mess with it.
+    const char* bit_register="r15d";
+    const char* right_limit_register="r8";
+    const char* left_limit_register="r9";
+    const char* right_init_register="r10";
+    const char* left_init_register="r11";
+    const int move_size=4;
+    const int extend_size=256*4;//same as the interpeter //HAS to be a multiple of 4
+
 
     fprintf(file,"%smov %s,qword [rsp]\n",spaces,address_register);//load cur
 
-    fprintf(file,"%smov %s,dword [rsp+20]\n",spaces,right_limit_register);
-    fprintf(file,"%sadd %s,dword [rsp+8]\n",spaces,right_limit_register);//add base
-    
-    fprintf(file,"%smov %s,dword [rsp+16]\n",spaces,left_limit_register);
-    fprintf(file,"%sadd %s,dword [rsp+8]\n",spaces,left_limit_register);//add base
+    char* tmp = "rcx";
+    char* tmp2_short = "eax";
+    char* tmp2 = "rax";
 
 
+    fprintf(file, "%sxor %s, %s\n", spaces, tmp2,tmp2);
+    // Load base address into tmp
+    fprintf(file, "%smov %s, qword [rsp+8]\n", spaces, tmp);
+
+    //right_limit
+    fprintf(file, "%smov %s, dword [rsp+20]\n", spaces, tmp2_short);
+    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces, right_limit_register, tmp, tmp2);
+
+    //left_limit
+    fprintf(file, "%smov %s, dword [rsp+16]\n", spaces, tmp2_short);
+    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces, left_limit_register, tmp, tmp2);
+
+    //right_init
+    fprintf(file, "%smov %s, dword [rsp+24]\n", spaces, tmp2_short);
+    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces,left_init_register , tmp, tmp2);
+
+    //left_init
+    fprintf(file, "%smov %s, dword [rsp+28]\n", spaces, tmp2_short);
+    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces,right_init_register , tmp, tmp2);
+
+
+
+    fprintf(file,"%scld\n",spaces);
 
     for(int i=0;i<ir.len;i++){
         fprintf(file,"L%d:;%s\n",i,ir.names[i]);
@@ -135,41 +174,81 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
         fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
         fprintf(file,"%sjnz L%d_1\n",spaces,i);    
 
-        //read 0
-        fprintf(file,"L%d_0:;%s\n",i,ir.names[i]);
-        fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[0].write);
+        for(int k=0;k<2;k++){
+            fprintf(file,"L%d_%d:;%s[%d]\n",i,k,ir.names[i],k);
+            fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[k].write);
+
+            //move
+            switch(ir.states[i].trans[k].move){
+                case Stay:
+                    break;
+                case Right:
+                    fprintf(file, "%slea %s, [%s+%d] \n", spaces, address_register, address_register,move_size);
+                    
+                    fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
+                    fprintf(file, "%sjle Done_L%d_%d\n", spaces,i,k);
+
+                    tmp = "rax";//using this to avoid a move
+
+                    fprintf(file, "%slea %s,[%s+%d]\n",spaces,tmp,right_init_register,extend_size);
+                    
+                    //tmp = min(tmp right_limit)
+                    fprintf(file, "%scmp %s,%s\n",spaces,tmp,right_limit_register);
+                    fprintf(file, "%sjle Extend_L%d_%d\n", spaces,i,k);
+
+                    fprintf(file, "%smov %s,%s\n",spaces,tmp,right_limit_register);
+
+                    fprintf(file,"Extend_L%d_%d:\n",i,k);
+
+                    //memset 0 
+                    // Set rdi to the starting address
+                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, right_init_register);
+                    fprintf(file, "%smov %s, %s\n", spaces, right_init_register, tmp); // Update the right_init_register to the new end
+
+                    // Calculate the number of 64-bit elements to zero out
+                    //not needed since tmp=rax fprintf(file, "%smov rax, %s\n", spaces, tmp);
+                    fprintf(file, "%ssub rax, rdi\n", spaces);
+                    fprintf(file, "%sshr rax, 3\n;more effishent to do quads", spaces); // Divide by 8
+
+                    // Zero out the memory
+                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
+                    fprintf(file, "%srep stosq\n", spaces);
+                    
+
+                   
+                    
+                    fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,right_init_register);
 
 
-        if(ir.states[i].trans[0].move!=Stay){
-            char sign=ir.states[i].trans[0].move > 0 ? '+' : '-';
-            fprintf(file, "%slea %s, [%s%c%d] \n", spaces, address_register, address_register, sign,move_size);
+                    fprintf(file,"Done_L%d_%d:\n",i,k);
+                    break;
+                case Left:
+                    fprintf(file, "%slea %s, [%s-%d] \n", spaces, address_register, address_register,move_size);
+                    break;
+            }
 
+            //next
+            if(ir.states[i].trans[k].nextState!=-1){
+                fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[k].nextState);
+            }
+            else{
+                fprintf(file,"%sjmp exit_good\n",spaces);
+            }
         }
-
-        if(ir.states[i].trans[0].nextState!=-1){
-            fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[0].nextState);
-        }
-        else{
-            fprintf(file,"%sjmp exit_good\n",spaces);
-        }
-
-
-        //read 1
-        fprintf(file,"L%d_1:;%s\n",i,ir.names[i]);   
-        fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[1].write);
-        
-        if(ir.states[i].trans[1].move!=Stay){
-            char sign=ir.states[i].trans[1].move > 0 ? '+' : '-';
-            fprintf(file, "%slea %s, [%s%c%d] \n", spaces, address_register, address_register, sign,move_size);
-
-        }
-
-        if(ir.states[i].trans[1].nextState!=-1){
-            fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[1].nextState);
-        }
-        else{
-            fprintf(file,"%sjmp exit_good\n",spaces);
-        }
-
     }
+
+    //write to the struct
+    fprintf(file,"exit_good:\n");
+    fprintf(file,"%smov [rsp],qword %s\n",spaces,address_register);
+
+    tmp = "rcx";
+    // Load base address into tmp
+    fprintf(file, "%smov %s, qword [rsp+8]\n", spaces, tmp);
+
+    //right init
+    fprintf(file,"%ssub %s,%s\n",spaces,right_init_register,tmp);
+    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,right_init_register);
+    fprintf(file, "%smov [rsp+28], dword %s \n", spaces, right_init_register);
+    //this confirms I am writing to the correct spot fprintf(file, "%smov [rsp+28], dword 54 \n", spaces );
 }

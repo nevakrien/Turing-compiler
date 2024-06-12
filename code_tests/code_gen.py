@@ -11,7 +11,7 @@ def make_tape(target,left_limit, right_limit, left_init, rigt_init):
         print(compile_proc.stderr)
         return
 
-if __name__=="__main__":
+def main():
 	#os.mkdir("tasks")
 
 	os.makedirs("tasks/100")
@@ -33,3 +33,6 @@ if __name__=="__main__":
 	with open('tasks/1000/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'L',1000,'S','halt')))
 	make_tape('tasks/1000/input.tape',-10,10,-10,10)
+
+if __name__=="__main__":
+	main()

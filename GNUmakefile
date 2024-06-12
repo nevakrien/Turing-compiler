@@ -85,4 +85,8 @@ check: clean
 test: clean
 	python3 test.py
 
+test_compiler:
+	make --assume-new=bin/compiler.o
+	python -c "from test import run_comp_test;run_comp_test()"
+
 .PHONY: all clean clean_io clean_turing test check

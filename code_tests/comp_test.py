@@ -3,7 +3,7 @@ import os
 from os.path import join
 import json
 import filecmp
-
+import shutil
 
 def run_turing(task):
     # Run the command using subprocess
@@ -88,6 +88,12 @@ def run_and_compare(task):
     return 0
 
 if __name__=="__main__":
+    import code_gen
+
+    if(os.path.exists('tasks')):
+        shutil.rmtree('tasks')
+    code_gen.main()
+
     tasks = [join('tasks', d) for d in os.listdir('tasks')]
     for task in tasks:
         run_and_compare(task)
