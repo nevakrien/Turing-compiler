@@ -186,7 +186,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file, "%slea %s, [%s+%d] \n", spaces, address_register, address_register,move_size);
                     
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
-                    fprintf(file, "%sjle Done_L%d_%d\n", spaces,i,k);
+                    fprintf(file, "%sjbe Done_L%d_%d\n", spaces,i,k);
 
                     tmp = "rax";//using this to avoid a move
 
@@ -194,7 +194,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     
                     //tmp = min(tmp right_limit)
                     fprintf(file, "%scmp %s,%s\n",spaces,tmp,right_limit_register);
-                    fprintf(file, "%sjle Extend_L%d_%d\n", spaces,i,k);
+                    fprintf(file, "%sjbe Extend_L%d_%d\n", spaces,i,k);
 
                     fprintf(file, "%smov %s,%s\n",spaces,tmp,right_limit_register);
 
@@ -202,29 +202,72 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
                     //memset 0 
                     // Set rdi to the starting address
-                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, right_init_register);
+                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, address_register);
                     fprintf(file, "%smov %s, %s\n", spaces, right_init_register, tmp); // Update the right_init_register to the new end
 
                     // Calculate the number of 64-bit elements to zero out
                     //not needed since tmp=rax fprintf(file, "%smov rax, %s\n", spaces, tmp);
                     fprintf(file, "%ssub rax, rdi\n", spaces);
-                    fprintf(file, "%sshr rax, 3\n;more effishent to do quads", spaces); // Divide by 8
+                    fprintf(file, "%sshr rax, 2\n;bad more effishent to do quads", spaces); // Divide by 8
+                    fprintf(file, "%ssub rax, 1\n", spaces);//????? needed but idk why
+
 
                     // Zero out the memory
-                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    //MAJO BUG IN THE ORDER
                     fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
-                    fprintf(file, "%srep stosq\n", spaces);
+                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    fprintf(file, "%srep stosd\n", spaces);
                     
 
                    
                     
-                    fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,right_init_register);
+                    //when we improve the speed fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,right_init_register);
 
 
                     fprintf(file,"Done_L%d_%d:\n",i,k);
                     break;
                 case Left:
                     fprintf(file, "%slea %s, [%s-%d] \n", spaces, address_register, address_register,move_size);
+                    
+                    fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,left_init_register);
+                    fprintf(file, "%sjae Done_L%d_%d\n", spaces,i,k);
+
+                    tmp = "rax";//using this to avoid a move
+
+                    fprintf(file, "%slea %s,[%s-%d]\n",spaces,tmp,left_init_register,extend_size);
+                    
+                    //tmp = max(tmp right_limit)
+                    fprintf(file, "%scmp %s,%s\n",spaces,tmp,left_limit_register);
+                    fprintf(file, "%sjae Extend_L%d_%d\n", spaces,i,k);
+
+                    fprintf(file, "%smov %s,%s\n",spaces,tmp,left_limit_register);
+
+                    fprintf(file,"Extend_L%d_%d:\n",i,k);
+
+                    //memset 0 
+                    // Set rdi to the starting address (notice reverse order from right case)
+                    fprintf(file, "%smov %s, %s\n", spaces, left_init_register, tmp); // Update the left_init_register to the new end
+                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, left_init_register);
+                    
+
+                    // Calculate the number of 64-bit elements to zero out
+                    //not needed since tmp=rax fprintf(file, "%smov rax, %s\n", spaces, tmp);
+                    fprintf(file, "%ssub rax, rdi\n", spaces);
+                    fprintf(file, "%sshr rax, 2\n;more effishent to do quads", spaces); // Divide by 8
+                    fprintf(file, "%ssub rax, 1\n", spaces);//????? needed but idk why
+
+                    // Zero out the memory
+                    fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
+                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    fprintf(file, "%srep stosd\n", spaces);
+                    
+
+                   
+                    
+                    // //when we improve the speed fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,left_init_register);
+
+
+                    fprintf(file,"Done_L%d_%d:\n",i,k);
                     break;
             }
 

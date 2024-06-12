@@ -21,7 +21,7 @@ def main():
 
 	os.makedirs("tasks/69")
 	with open('tasks/69/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',69,'S','halt')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'L',69,'S','halt')))
 	make_tape('tasks/69/input.tape',-100,100,-10,10)
 
 	os.makedirs("tasks/42")
