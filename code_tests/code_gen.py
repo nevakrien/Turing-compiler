@@ -14,6 +14,11 @@ def make_tape(target,left_limit, right_limit, left_init, rigt_init):
 if __name__=="__main__":
 	#os.mkdir("tasks")
 
+	os.makedirs("tasks/100")
+	with open('tasks/100/code.t','w') as f:
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',100,'S','halt')))
+	make_tape('tasks/100/input.tape',-200,200,-200,200)
+
 	os.makedirs("tasks/69")
 	with open('tasks/69/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',69,'S','halt')))

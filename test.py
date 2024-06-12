@@ -1,13 +1,16 @@
 import subprocess
 import tempfile
 import os
+import time
+
 
 def call_make(target):
     compile_proc = subprocess.run(['make', target], text=True, capture_output=True)
     if compile_proc.returncode != 0:
         print("Compilation Failed:")
         print(compile_proc.stderr)
-        return
+        raise Exception(f"failed to compile {target}") 
+    
 
 def run_test_io():
     #call_make('clean_io')
@@ -84,18 +87,55 @@ def run_test_compiler():
     else:
         print(f"\n!!!nasm ld Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
+
+def run_comp_test():
+    call_make('all')
+    print("full Compilation Done")
+    # Save the current working directory
+    original_cwd = os.getcwd()
+    
+    try:
+        # Change to the code_tests directory
+        os.chdir('code_tests')
+        
+        # Run the comp_test.py script
+        test_proc=subprocess.run(['python3', 'comp_test.py'], stderr=subprocess.STDOUT, text=True)
+        print('tmc0 test done')
+        #print(test_proc.stderr)
+    except:
+        print('tmc0 test Failed')
+
+    finally:
+        # Change back to the original working directory
+        os.chdir(original_cwd)
+    
+
+    # # Check results
+    # if test_proc.returncode == 0:
+    #     print("tmc0 comperison Test Passed")
+    # else:
+    #     print(f"\n!!!tmc0 comperison Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+
 if __name__ == '__main__':
+    start_time = time.time()
+    
     print("starting tests...\n")
     run_test_io()
     print("")
     
     run_test_turing()
     print("")
-
+    
     run_test_parser()
     print("")
-
+    
     run_test_compiler()
     print("")
     
-    print("all tests are done!")
+    run_comp_test()
+    print("")
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    print(f"all tests are done! Time elapsed: {elapsed_time:.2f} seconds")

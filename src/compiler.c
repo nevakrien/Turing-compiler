@@ -30,6 +30,7 @@ static const char *assembly_start_template =
 static const char *assembly_end_template = 
 "    ;DONE:output boilerplate and exit;\n"
 "exit_good:"
+"    mov [rsp],qword rax\n"
 "    mov rsi, [rsp+24+32]   ; Second argument (output file) now shifted by 32\n"
 "    lea rdi, [rsp]         ; Same struct pointer\n"
 "\n"
@@ -110,8 +111,8 @@ const char* spaces="    ";
 
 //does not handle hault properly yet. other issues with register size specifications on the ops
 void O0_IR_to_ASM(FILE *file,TuringIR ir){
-    const char* address_register="rax";
-    const char* bit_register="ecx";
+    const char* address_register="rax";//this is also used in the assembly_end_template so dont mess with it.
+    const char* bit_register="r10d";
     const char* right_limit_register="r8d";
     const char* left_limit_register="r9d";
     int move_size=4;

@@ -4,6 +4,7 @@ from os.path import join
 import json
 import filecmp
 
+
 def run_turing(task):
     # Run the command using subprocess
     result = subprocess.run(['./../bin/run_turing', join(task, 'code.t'), join(task, 'input.tape'), join(task, 'run_turing.tape')], text=True, capture_output=True)
@@ -26,7 +27,7 @@ def run_turing(task):
     with open(result_file_path, 'w') as result_file:
         json.dump(result_info, result_file, indent=4)
 
-    print(f"Results saved to {result_file_path}")
+    #print(f"Results saved to {result_file_path}")
     return 0
 
 
@@ -63,7 +64,7 @@ def compile_and_run_turing(task):
     with open(result_file_path, 'w') as result_file:
         json.dump(result_info, result_file, indent=4)
 
-    print(f"Results saved to {result_file_path}")
+    #print(f"Results saved to {result_file_path}")
     return 0
 
 
@@ -80,9 +81,9 @@ def run_and_compare(task):
     tape2 = join(task, 'tmc0_run.tape')
 
     if compare_tapes(tape1, tape2):
-        print("Passed the tapes are identical.")
+        print(f"[{task}] Passed the tapes are identical.")
     else:
-        print("ERROR: The tapes are different.")
+        print(f"[{task}] ERROR: The tapes are different.")
 
     return 0
 
