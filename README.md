@@ -15,6 +15,9 @@ as of now there are 2 major tools:
 2. run_turing: runs a turing machine described in .t on a .tape file and writes the output to anoter .tape file
 3. tmc0: not yet functional would compile a .t file into a binary when its done
 
+currently using  export PATH=$(pwd)/bin:$PATH does not work with tmc0
+because the path to io.o is derived programatically. this can be fixed in the future by directly basking io.o's binary into compiler.o as a string. 
+
 # benchmarking
 from the tests I ran on the interpeter it apears that not keeping track of the counter has a small yet semi consistent advantage.
 the advantage could very well be caused by the need to parse another argument or something else that is as silly.

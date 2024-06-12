@@ -4,7 +4,7 @@
 #include "IR.h"
 
 typedef void (*printer_func_t)(FILE *file,void* data);
-int assemble_and_link(const char* filename, printer_func_t code,void* data);
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t code,void* data);
 //this function checks for write errors by itself. 
 //this means that the interface calle can just ignore the possibilety
 

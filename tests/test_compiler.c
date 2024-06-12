@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include <libgen.h>
 #include <stdio.h>
 
 void code_func(FILE* f,void* data){
@@ -6,8 +7,8 @@ void code_func(FILE* f,void* data){
 }
 
 
-int main(){
-    int code= assemble_and_link("generated",&code_func,NULL);
+int main(int argc,char* argv[]){
+    int code= assemble_and_link("generated",dirname(argv[0]),&code_func,NULL);
     system("rm generated.*");
     //system("rm a.out");
 

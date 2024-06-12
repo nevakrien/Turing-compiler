@@ -29,6 +29,7 @@ static const char *assembly_start_template =
 
 static const char *assembly_end_template = 
 "    ;DONE:output boilerplate and exit;\n"
+"exit_good:"
 "    mov rsi, [rsp+24+32]   ; Second argument (output file) now shifted by 32\n"
 "    lea rdi, [rsp]         ; Same struct pointer\n"
 "\n"
@@ -42,7 +43,7 @@ static const char *assembly_end_template =
 "    mov rdi, 3\n"
 "    call exit_turing\n";
 
-int assemble_and_link(const char* filename, printer_func_t codefunc,void* data) {
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc,void* data) {
     // Step 1: Generate the assembly code
     char* working_name=null_check(malloc(strlen(filename)+5));
     strcpy(working_name,filename);
@@ -87,9 +88,9 @@ int assemble_and_link(const char* filename, printer_func_t codefunc,void* data) 
     printf("Assembly completed successfully.\n");
 
     // Step 3: Link the object file with io.o to create the final executable
-    const char* cld="ld -o %s.out %s.o bin/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2";
+    const char* cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2";
     char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)));
-    sprintf(ld,cld,filename,filename);
+    sprintf(ld,cld,filename,filename,dirname);
     
     result = system(ld);
     free(working_name);
@@ -111,18 +112,31 @@ const char* spaces="    ";
 void O0_IR_to_ASM(FILE *file,TuringIR ir){
     const char* address_register="rax";
     const char* bit_register="ecx";
+    const char* right_limit_register="r8d";
+    const char* left_limit_register="r9d";
     int move_size=4;
+
+    fprintf(file,"%smov %s,qword [rsp]\n",spaces,address_register);//load cur
+
+    fprintf(file,"%smov %s,dword [rsp+20]\n",spaces,right_limit_register);
+    fprintf(file,"%sadd %s,dword [rsp+8]\n",spaces,right_limit_register);//add base
+    
+    fprintf(file,"%smov %s,dword [rsp+16]\n",spaces,left_limit_register);
+    fprintf(file,"%sadd %s,dword [rsp+8]\n",spaces,left_limit_register);//add base
+
+
+
     for(int i=0;i<ir.len;i++){
         fprintf(file,"L%d:;%s\n",i,ir.names[i]);
         
         //brench based on bit
-        fprintf(file,"%smov %s, [%s]\n",spaces,bit_register,address_register);
+        fprintf(file,"%smov %s,dword [%s]\n",spaces,bit_register,address_register);
         fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
         fprintf(file,"%sjnz L%d_1\n",spaces,i);    
 
         //read 0
         fprintf(file,"L%d_0:;%s\n",i,ir.names[i]);
-        fprintf(file,"%smov [%s], %d \n",spaces,address_register,ir.states[i].trans[0].write);
+        fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[0].write);
 
 
         if(ir.states[i].trans[0].move!=Stay){
@@ -131,12 +145,17 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
         }
 
-        fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[0].nextState);
+        if(ir.states[i].trans[0].nextState!=-1){
+            fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[0].nextState);
+        }
+        else{
+            fprintf(file,"%sjmp exit_good\n",spaces);
+        }
 
 
         //read 1
         fprintf(file,"L%d_1:;%s\n",i,ir.names[i]);   
-        fprintf(file,"%smov [%s], %d \n",spaces,address_register,ir.states[i].trans[1].write);
+        fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[1].write);
         
         if(ir.states[i].trans[1].move!=Stay){
             char sign=ir.states[i].trans[1].move > 0 ? '+' : '-';
@@ -144,8 +163,12 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
         }
 
-        fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[1].nextState);
-        
+        if(ir.states[i].trans[1].nextState!=-1){
+            fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[1].nextState);
+        }
+        else{
+            fprintf(file,"%sjmp exit_good\n",spaces);
+        }
 
     }
 }
