@@ -141,26 +141,28 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
     char* tmp2_short = "eax";
     char* tmp2 = "rax";
 
+    //the left side of these isnt inilized properly...
 
     fprintf(file, "%sxor %s, %s\n", spaces, tmp2,tmp2);
     // Load base address into tmp
     fprintf(file, "%smov %s, qword [rsp+8]\n", spaces, tmp);
 
-    //right_limit
-    fprintf(file, "%smov %s, dword [rsp+20]\n", spaces, tmp2_short);
-    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces, right_limit_register, tmp, tmp2);
+    // right_limit
+    fprintf(file, "%smovsxd rax, dword [rsp+20]\n", spaces); // Load and sign-extend the value into rax (a 64-bit register)
+    fprintf(file, "%slea %s, [%s + 4*rax]\n", spaces, right_limit_register, tmp);
 
-    //left_limit
-    fprintf(file, "%smov %s, dword [rsp+16]\n", spaces, tmp2_short);
-    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces, left_limit_register, tmp, tmp2);
+    // left_limit
+    fprintf(file, "%smovsxd rax, dword [rsp+16]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax]\n", spaces, left_limit_register, tmp);
 
-    //right_init
-    fprintf(file, "%smov %s, dword [rsp+24]\n", spaces, tmp2_short);
-    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces,left_init_register , tmp, tmp2);
+    // right_init
+    fprintf(file, "%smovsxd rax, dword [rsp+24]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax]\n", spaces, left_init_register, tmp);
 
-    //left_init
-    fprintf(file, "%smov %s, dword [rsp+28]\n", spaces, tmp2_short);
-    fprintf(file, "%slea %s, [%s + 4*%s]\n", spaces,right_init_register , tmp, tmp2);
+    // left_init
+    fprintf(file, "%smovsxd rax, dword [rsp+28]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax]\n", spaces, right_init_register, tmp);
+
 
 
 
@@ -188,7 +190,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
                     fprintf(file, "%sjbe Done_L%d_%d\n", spaces,i,k);
 
-                    tmp = "rax";//using this to avoid a move
+                    tmp = "rcx";//using this to avoid a move
 
                     fprintf(file, "%slea %s,[%s+%d]\n",spaces,tmp,right_init_register,extend_size);
                     
@@ -202,19 +204,18 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
                     //memset 0 
                     // Set rdi to the starting address
-                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, address_register);
+                    fprintf(file, "%smov rdi, %s;setting up for stosq \n", spaces, address_register);
                     fprintf(file, "%smov %s, %s\n", spaces, right_init_register, tmp); // Update the right_init_register to the new end
 
-                    // Calculate the number of 64-bit elements to zero out
-                    //not needed since tmp=rax fprintf(file, "%smov rax, %s\n", spaces, tmp);
-                    fprintf(file, "%ssub rax, rdi\n", spaces);
-                    fprintf(file, "%sshr rax, 2\n;bad more effishent to do quads", spaces); // Divide by 8
-                    fprintf(file, "%ssub rax, 1\n", spaces);//????? needed but idk why
+                    // Calculate the number of 32-bit elements to zero out
+                    fprintf(file, "%ssub %s, rdi\n", spaces,tmp);
+                    fprintf(file, "%sshr %s, 2;bad more effishent to do quads\n", spaces,tmp); // Divide by 8
+                    fprintf(file, "%ssub %s, 1\n", spaces,tmp);//????? needed but idk why
 
 
                     // Zero out the memory
                     //MAJO BUG IN THE ORDER
-                    fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
+                    //no need tmp is rcx fprintf(file, "%smov rcx, rax\n", spaces); // Number of 32-bit elements to store
                     fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
                     fprintf(file, "%srep stosd\n", spaces);
                     
@@ -227,12 +228,14 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file,"Done_L%d_%d:\n",i,k);
                     break;
                 case Left:
+                    fprintf(file, "%smov rcx, %s\n", spaces, left_init_register);
+
                     fprintf(file, "%slea %s, [%s-%d] \n", spaces, address_register, address_register,move_size);
                     
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,left_init_register);
                     fprintf(file, "%sjae Done_L%d_%d\n", spaces,i,k);
 
-                    tmp = "rax";//using this to avoid a move
+                    tmp = "rax";//rcx is used down
 
                     fprintf(file, "%slea %s,[%s-%d]\n",spaces,tmp,left_init_register,extend_size);
                     
@@ -245,22 +248,27 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file,"Extend_L%d_%d:\n",i,k);
 
                     //memset 0 
-                    // Set rdi to the starting address (notice reverse order from right case)
+                    // Set rdi to the starting address 
+                    // fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, address_register);
+                    
+                    
                     fprintf(file, "%smov %s, %s\n", spaces, left_init_register, tmp); // Update the left_init_register to the new end
                     fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, left_init_register);
                     
-
-                    // Calculate the number of 64-bit elements to zero out
-                    //not needed since tmp=rax fprintf(file, "%smov rax, %s\n", spaces, tmp);
-                    fprintf(file, "%ssub rax, rdi\n", spaces);
-                    fprintf(file, "%sshr rax, 2\n;more effishent to do quads", spaces); // Divide by 8
-                    fprintf(file, "%ssub rax, 1\n", spaces);//????? needed but idk why
+                    
+                    // Calculate the number of 32-bit elements to zero out
+                    fprintf(file, "%ssub rcx, %s\n",spaces,tmp);
+                    
+                    fprintf(file, "%sshr rcx, 2;bad more effishent to do quads\n", spaces); // Divide by 8
+                    //fprintf(file, "%ssub rcx, 1\n", spaces);//????? needed but idk why
 
                     // Zero out the memory
-                    fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
+                    //no need we did earlier with rcx fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
                     fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
-                    fprintf(file, "%srep stosd\n", spaces);
                     
+                    //fprintf(file, "%sstd\n", spaces);
+                    fprintf(file, "%srep stosd\n", spaces);
+                    //fprintf(file,"%scld\n",spaces);
 
                    
                     
@@ -286,12 +294,29 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
     fprintf(file,"%smov [rsp],qword %s\n",spaces,address_register);
 
     tmp = "rcx";
+    tmp2_short="eax";
+    tmp2="rax";
     // Load base address into tmp
     fprintf(file, "%smov %s, qword [rsp+8]\n", spaces, tmp);
 
+    //not handeling the sign right
+
     //right init
     fprintf(file,"%ssub %s,%s\n",spaces,right_init_register,tmp);
-    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,right_init_register);
+    fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,right_init_register);
     fprintf(file, "%smov [rsp+28], dword %s \n", spaces, right_init_register);
+
+    fprintf(file,"%ssub %s,%s\n",spaces,left_init_register,tmp);
+    fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,left_init_register);
+    //sign non sense bug
+    // fprintf(file, "%smov %s, %s;sign non sense now\n", spaces,tmp2,left_init_register);
+    // fprintf(file, "%sshr %s,32\n", spaces,left_init_register);
+    // fprintf(file, "%smov %s, 0x7FFFFFFF\n", spaces,left_init_register);
+
+    // fprintf(file, "%sshr %s,63\n", spaces,tmp2);
+    // fprintf(file, "%sshl %s,31\n", spaces,tmp2);
+    // fprintf(file, "%sor %s, %s;sign non sense now\n", spaces,tmp2,left_init_register);
+
+    //fprintf(file, "%smov [rsp+24], dword %s \n", spaces, tmp2_short);
     //this confirms I am writing to the correct spot fprintf(file, "%smov [rsp+28], dword 54 \n", spaces );
 }

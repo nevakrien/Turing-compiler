@@ -58,12 +58,16 @@ this means there is no gcc dependency!!! or any other compiler for that matter.
 
 
 # TODO 
-1. fix major bugs in O0 (handle out of tape)
+
+## compiler
+1. fix major bugs in O0 (left case still bad AND handle out of tape)
 2. add proper testing (for outoftape and timeout/infinite loop)
 3. add a way to benchmark old+new version of the compiler to asses changes
 4. uninline the expand functions
-5. add a hex dump feature to tape_tool
-6. unify the cli tools
+
+## general
+1. add a hex dump feature to tape_tool
+2. unify the cli tools
 
 ## parser
-add better error handeling with a dedicated struct.
+1. add better error handeling with a dedicated struct.
