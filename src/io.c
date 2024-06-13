@@ -119,7 +119,7 @@ static void DEBUG_METADATA_READ(MetaData x){
 #define DEBUG_METADATA_WRITE(m)
 #endif
 
-void __attribute__((sysv_abi)) DumpTape(Tape* tape, const char *out_filename) {
+void __attribute__((sysv_abi)) DumpTape(const Tape* tape, const char *out_filename) {
     if (!tape || !tape->base) {
         fprintf(stderr, "Invalid tape or base pointer\n");
         exit(EXIT_FAILURE);

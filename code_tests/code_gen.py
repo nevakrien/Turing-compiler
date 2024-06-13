@@ -34,5 +34,16 @@ def main():
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'L',1000,'S','halt')))
 	make_tape('tasks/1000/input.tape',-10,10,-10,10)
 
+
+	os.makedirs("out_of_tape/33")
+	with open('out_of_tape/33/code.t','w') as f:
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'S',100,'S','halt')))
+	make_tape('out_of_tape/33/input.tape',-10,10,-10,10)
+
+	os.makedirs("no_halt/35")
+	with open('no_halt/35/code.t','w') as f:
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'S',100,'S','S3')))
+	make_tape('no_halt/35/input.tape',-10,10,-10,10)
+
 if __name__=="__main__":
 	main()
