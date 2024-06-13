@@ -4,6 +4,7 @@ from os.path import join
 import json
 import filecmp
 import shutil
+import time
 
 def run_turing(task):
     # Run the command using subprocess
@@ -34,7 +35,9 @@ def run_turing(task):
 
 def compile_and_run_turing(task):
     # Step 1: Compile the code using tmc0
+    start_compile_time = time.time()
     compile_result = subprocess.run(['./../bin/tmc0', join(task, 'code.t'), join(task, 'tmc0')], text=True, capture_output=True)
+    compile_duration = time.time() - start_compile_time
 
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
@@ -44,7 +47,9 @@ def compile_and_run_turing(task):
         return 1
 
     # Step 2: Run the compiled output with the input and output tapes
+    start_run_time = time.time()
     run_result = subprocess.run([join(task, 'tmc0.out'), join(task, 'input.tape'), join(task, 'tmc0_run.tape')], text=True, capture_output=True)
+    run_duration = time.time() - start_run_time
 
     # Check the return code for the run step
     if run_result.returncode != 0:
@@ -56,7 +61,9 @@ def compile_and_run_turing(task):
     # Prepare the result information
     result_info = {
         "output": run_result.stdout,
-        "errors": run_result.stderr
+        "errors": run_result.stderr,
+        "compile_duration": compile_duration,
+        "run_duration": run_duration
     }
 
     # Save the result to a JSON file
@@ -64,7 +71,10 @@ def compile_and_run_turing(task):
     with open(result_file_path, 'w') as result_file:
         json.dump(result_info, result_file, indent=4)
 
-    #print(f"Results saved to {result_file_path}")
+    # print(f"Results saved to {result_file_path}")
+    # print(f"Compilation Time: {compile_duration:.4f} seconds")
+    # print(f"Execution Time: {run_duration:.4f} seconds")
+    
     return 0
 
 
@@ -81,9 +91,9 @@ def run_and_compare(task):
     tape2 = join(task, 'tmc0_run.tape')
 
     if compare_tapes(tape1, tape2):
-        print(f"[{task}] Passed the tapes are identical.")
+        print(f"[{task}] the tapes are identical. PASS")
     else:
-        print(f"[{task}] ERROR: The tapes are different.")
+        print(f"[{task}] The tapes are different. FAIL")
 
     return 0
 

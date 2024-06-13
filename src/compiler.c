@@ -17,6 +17,12 @@ static const char *assembly_start_template =
 "    extern ReadTape\n"
 "    extern DumpTape\n"
 "    extern exit_turing\n"
+
+//for some reason nasm is SOOO fucking slow to assmble if this is at the bottom
+"exit_out_of_tape:\n"
+"    mov rdi, 2\n"
+"    call exit_turing\n"
+
 "_start:\n"
 "    ;initial boiler plate\n"
 "    ; Ensure there are at least 2 arguments (argc >= 3)\n"
@@ -46,9 +52,7 @@ static const char *assembly_end_template =
 "    mov rdi, 0\n"
 "    call exit_turing\n"
 "\n"
-"exit_out_of_tape:\n"
-"    mov rdi, 2\n"
-"    call exit_turing\n"
+
 "\n"
 "_exit_error:\n"
 "    mov rdi, 3\n"
@@ -178,7 +182,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
         //brench based on bit
         fprintf(file,"%smov %s,dword [%s]\n",spaces,bit_register,address_register);
         fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
-        fprintf(file,"%sjnz L%d_1\n",spaces,i);    
+        fprintf(file,"%sjnz L%d_1\n\n",spaces,i);    
 
         for(int k=0;k<2;k++){
             fprintf(file,"L%d_%d:;%s[%d]\n",i,k,ir.names[i],k);
@@ -201,9 +205,10 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
                     tmp = "rcx";//using this to avoid a move
 
+                    fprintf(file,"%s\n;find new bound\n",spaces);
+
                     fprintf(file, "%slea %s,[%s+%d]\n",spaces,tmp,right_init_register,extend_size);
                     
-                    //tmp = min(tmp right_limit)
                     fprintf(file, "%scmp %s,%s\n",spaces,tmp,right_limit_register);
                     fprintf(file, "%sjbe Extend_L%d_%d\n", spaces,i,k);
 
@@ -296,10 +301,10 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
             //next
             if(ir.states[i].trans[k].nextState!=-1){
-                fprintf(file,"%sjmp L%d\n",spaces,ir.states[i].trans[k].nextState);
+                fprintf(file,"%sjmp L%d\n\n",spaces,ir.states[i].trans[k].nextState);
             }
             else{
-                fprintf(file,"%sjmp exit_good\n",spaces);
+                fprintf(file,"%sjmp exit_good\n\n",spaces);
             }
         }
     }
