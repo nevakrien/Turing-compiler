@@ -131,6 +131,10 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
     const char* left_limit_register="r9";
     const char* right_init_register="r10";
     const char* left_init_register="r11";
+
+    const char* small_right_init_register="r10d";
+    const char* small_left_init_register="r11d";
+
     const int move_size=4;
     const int extend_size=256*4;//same as the interpeter //HAS to be a multiple of 4
 
@@ -304,19 +308,13 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
     //right init
     fprintf(file,"%ssub %s,%s\n",spaces,right_init_register,tmp);
     fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,right_init_register);
-    fprintf(file, "%smov [rsp+28], dword %s \n", spaces, right_init_register);
+    fprintf(file, "%smov %s, dword %s;sign handeling \n", spaces, tmp2_short,small_right_init_register);
+    fprintf(file, "%smov [rsp+28], dword %s \n", spaces, tmp2_short);
 
     fprintf(file,"%ssub %s,%s\n",spaces,left_init_register,tmp);
     fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,left_init_register);
     //sign non sense bug
-    // fprintf(file, "%smov %s, %s;sign non sense now\n", spaces,tmp2,left_init_register);
-    // fprintf(file, "%sshr %s,32\n", spaces,left_init_register);
-    // fprintf(file, "%smov %s, 0x7FFFFFFF\n", spaces,left_init_register);
-
-    // fprintf(file, "%sshr %s,63\n", spaces,tmp2);
-    // fprintf(file, "%sshl %s,31\n", spaces,tmp2);
-    // fprintf(file, "%sor %s, %s;sign non sense now\n", spaces,tmp2,left_init_register);
-
-    //fprintf(file, "%smov [rsp+24], dword %s \n", spaces, tmp2_short);
+    fprintf(file, "%smov %s, dword %s;sign handeling \n", spaces, tmp2_short,small_left_init_register);
+    fprintf(file, "%smov [rsp+24], dword %s \n", spaces, tmp2_short);
     //this confirms I am writing to the correct spot fprintf(file, "%smov [rsp+28], dword 54 \n", spaces );
 }
