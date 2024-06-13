@@ -194,6 +194,11 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
                     fprintf(file, "%sjbe Done_L%d_%d\n", spaces,i,k);
 
+                    //!!! these 2 lines are single handedly responsible for over a 100x preformance drop
+                    fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,right_limit_register);
+                    fprintf(file, "%sja exit_out_of_tape\n", spaces);
+                    //!!!!
+
                     tmp = "rcx";//using this to avoid a move
 
                     fprintf(file, "%slea %s,[%s+%d]\n",spaces,tmp,right_init_register,extend_size);
@@ -232,15 +237,21 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file,"Done_L%d_%d:\n",i,k);
                     break;
                 case Left:
-                    fprintf(file, "%smov rcx, %s\n", spaces, left_init_register);
+                    
 
                     fprintf(file, "%slea %s, [%s-%d] \n", spaces, address_register, address_register,move_size);
                     
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,left_init_register);
                     fprintf(file, "%sjae Done_L%d_%d\n", spaces,i,k);
 
+                    //!!! these 2 lines are single handedly responsible for over a 100x preformance drop
+                    fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,left_limit_register);
+                    fprintf(file, "%sjb exit_out_of_tape\n", spaces);
+                    //!!!!
+
                     tmp = "rax";//rcx is used down
 
+                    fprintf(file, "%smov rcx, %s\n", spaces, left_init_register);
                     fprintf(file, "%slea %s,[%s-%d]\n",spaces,tmp,left_init_register,extend_size);
                     
                     //tmp = max(tmp right_limit)
