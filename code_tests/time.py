@@ -6,6 +6,8 @@ from time import time_ns
 import gc
 from concurrent.futures import ProcessPoolExecutor
 
+TEST_SIZE=1000
+
 def run_turing(task):
     def run_timing():
         # Highly sensitive timing
@@ -21,7 +23,7 @@ def run_turing(task):
         # Calculate elapsed time in nanoseconds
         return end_time_ns - start_time_ns, compile_proc
 
-    trials = [run_timing() for _ in range(1000)]
+    trials = [run_timing() for _ in range(TEST_SIZE)]
     elapsed_times_ns = [trial[0] for trial in trials]
     average_time_ns = sum(elapsed_times_ns) / len(elapsed_times_ns)
     
@@ -68,7 +70,7 @@ def run_turing_counted(task):
         # Calculate elapsed time in nanoseconds
         return end_time_ns - start_time_ns, compile_proc
 
-    trials = [run_timing() for _ in range(1000)]
+    trials = [run_timing() for _ in range(TEST_SIZE)]
     elapsed_times_ns = [trial[0] for trial in trials]
     average_time_ns = sum(elapsed_times_ns) / len(elapsed_times_ns)
     
@@ -100,10 +102,52 @@ def run_turing_counted(task):
     print(f"Results saved to {result_file_path}")
     return elapsed_times_ns
 
+def run_tmc0(task):
+    def run_timing():
+        gc.disable()
+        start_time_ns = time_ns()
+
+        compile_proc = subprocess.run([join(task, 'tmc0.out'), join(task, 'input.tape'), join(task, 'tmc0_run.tape')], text=True, capture_output=True)
+
+        end_time_ns = time_ns()
+        gc.enable()
+
+        return end_time_ns - start_time_ns, compile_proc
+
+    trials = [run_timing() for _ in range(TEST_SIZE)]
+    elapsed_times_ns = [trial[0] for trial in trials]
+    average_time_ns = sum(elapsed_times_ns) / len(elapsed_times_ns)
+    
+    outputs = [trial[1].stdout for trial in trials]
+    errors = [trial[1].stderr for trial in trials if trial[1].stderr]
+    returncodes = [trial[1].returncode for trial in trials]
+
+    if any(returncode != 0 for returncode in returncodes):
+        print("run_tmc0 Failed:")
+        for error in errors:
+            print(error)
+        return
+
+    result_info = {
+        "timing": {
+            "average_ns": average_time_ns,
+            "all_times_ns": elapsed_times_ns
+        },
+        "output": outputs,
+        "errors": errors
+    }
+
+    result_file_path = join(task, 'compile_run_turing.json')
+    with open(result_file_path, 'w') as result_file:
+        json.dump(result_info, result_file, indent=4)
+
+    print(f"Results saved to {result_file_path}")
+    return elapsed_times_ns
+
 def lazy_flatten(iterable):
     for item in iterable:
-        if isinstance(item, (list, tuple)):  # Check if item is a list or tuple
-            yield from lazy_flatten(item)   # Recursively flatten
+        if isinstance(item, (list, tuple)):
+            yield from lazy_flatten(item)
         else:
             yield item
 
@@ -113,12 +157,28 @@ if __name__ == "__main__":
     with ProcessPoolExecutor() as executor:
         futures_turing = executor.map(run_turing, tasks)
         futures_turing_counted = executor.map(run_turing_counted, tasks)
+        futures_run_tmc0 = executor.map(run_tmc0, tasks)
         
-        results = list(zip(lazy_flatten(futures_turing), lazy_flatten(futures_turing_counted)))
+        results = list(zip(lazy_flatten(futures_turing), lazy_flatten(futures_turing_counted), lazy_flatten(futures_run_tmc0)))
 
-    #print([f'no_stop {a[0]} stop {a[1]}' for a in results])
+    interpreter_results = [
+        {
+            "run_turing": result[0],
+            "run_turing_counted": result[1],
+            "run_tmc0": result[2]
+        }
+        for result in results
+    ]
 
-    interpeter_result=[a[0]>a[1] for a in results]
-    interpeter_result=sum(interpeter_result)/len(interpeter_result)
-    print(f'run_turing: {interpeter_result} run_turing_no_stop {1-interpeter_result}')
+    # for result in interpreter_results:
+    #     print(f"run_turing: {result['run_turing']} ns, run_turing_counted: {result['run_turing_counted']} ns, run_tmc0: {result['run_tmc0']} ns")
 
+    count_wins = lambda key: sum(1 for result in interpreter_results if result[key] <= min(result.values()))
+    run_turing_wins = count_wins("run_turing")
+    run_turing_counted_wins = count_wins("run_turing_counted")
+    run_tmc0_wins = count_wins("run_tmc0")
+
+    total = len(interpreter_results)
+    print(f"run_turing wins: {run_turing_wins / total}")
+    print(f"run_turing_counted wins: {run_turing_counted_wins / total}")
+    print(f"run_tmc0 wins: {run_tmc0_wins / total}")
