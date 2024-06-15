@@ -323,12 +323,12 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
 
     //right init
     fprintf(file,"%ssub %s,%s\n",spaces,right_init_register,tmp);
-    fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,right_init_register);
+    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,right_init_register);
     //fprintf(file, "%smov %s, dword %s;sign handeling \n", spaces, tmp2_short,small_right_init_register);
     fprintf(file, "%smov [rsp+28], dword %s \n", spaces, small_right_init_register);//tmp2_short);
 
     fprintf(file,"%ssub %s,%s\n",spaces,left_init_register,tmp);
-    fprintf(file, "%ssar %s, 2;move to int indexing like c\n", spaces,left_init_register);
+    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,left_init_register);
     //sign non sense bug
     //fprintf(file, "%smov %s, dword %s;sign handeling \n", spaces, tmp2_short,small_left_init_register);
     fprintf(file, "%smov [rsp+24], dword %s \n", spaces, small_left_init_register);//tmp2_short);
