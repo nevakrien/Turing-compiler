@@ -79,14 +79,15 @@ clean_turing:
 
 # Check
 check: clean
-	make all
+	make all -j
 	#rm -rf bin/*
 
 test: clean
+	time make all -j
 	python3 test.py
 
 comp_test:
-	make --assume-new=bin/compiler.o
+	make --assume-new=bin/compiler.o -j
 	python3 -c "from test import run_comp_test;run_comp_test()"
 
 .PHONY: all clean clean_io clean_turing test check comp_test
