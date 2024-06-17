@@ -43,8 +43,11 @@ build+ python (no packages)
 ### usage
 make bench would run the benchmarks. 
 
-for selecting what you run go to code_tests/time.py and define the timers dictionay.
-for the the tmc0 test we had timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}
+for selecting what you run go to ```code_tests/time.py``` and define the ```timers``` dictionay.
+for the tmc0 test we had 
+```python 
+timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}
+```
 
 
 ### rational and statistics
