@@ -115,7 +115,7 @@ def main_timing(tasks):
     
     #avrage
     # Calculate weights
-    weights = {task: 2 if 'tasks/dead' in task else 1 for task in scores.keys()}
+    weights = {task: 2 if 'dead' in task or '2000' in task else 1 for task in scores.keys()}
     # Compute weighted average scores for each program
     total_weights = sum(weights.values())
     weighted_scores = {program: 0 for program in next(iter(scores.values())).keys()}  # Initialize scores based on programs

@@ -475,12 +475,27 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
     for(int i=0;i<ir.len;i++){
         fprintf(file,"L%d:;%s\n",i,ir.names[i]);
         
-        fprintf(file,"%s;brench based on current bit\n",spaces);
-        fprintf(file,"%smov %s,dword [%s]\n",spaces,bit_register,address_register);
-        fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
-        fprintf(file,"%sjnz L%d_1\n\n",spaces,i);    
+        
+        //check if we need to branch
+        int k_start;
 
-        for(int k=0;k<2;k++){
+        if(!eq_TransIR(ir.states[i].trans[0],ir.states[i].trans[1])){
+            fprintf(file,"%s;brench based on current bit\n",spaces);
+            fprintf(file,"%smov %s,dword [%s]\n",spaces,bit_register,address_register);
+            fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
+            fprintf(file,"%sjnz L%d_1\n\n",spaces,i);    
+
+            k_start=0;
+        }
+
+        else{
+            fprintf(file,";identical states\n");
+            fprintf(file,"L%d_0:;%s[0]\n",i,ir.names[i]);
+            k_start=1;
+        }
+        
+
+        for(int k=k_start;k<2;k++){
             fprintf(file,"L%d_%d:;%s[%d]\n",i,k,ir.names[i],k);
             fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[k].write);
 
