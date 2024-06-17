@@ -41,7 +41,10 @@ build+ python (no packages)
 # benchmarking
 
 ### usage
-make bench would run the benchmarks. 
+```bash 
+make bench
+``` 
+would run the benchmarks. 
 
 for selecting what you run go to ```code_tests/time.py``` and define the ```timers``` dictionay.
 for the tmc0 test we had 
