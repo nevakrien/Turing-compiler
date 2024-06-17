@@ -16,6 +16,8 @@ def make_tape(target,left_limit, right_limit, left_init, rigt_init):
         print(compile_proc.stderr)
         return
 
+
+
 def main():
 	#os.mkdir("tasks")
 
@@ -27,6 +29,14 @@ def main():
 
 	if(os.path.exists('out_of_tape')):
 	    shutil.rmtree('out_of_tape')
+
+	os.makedirs("tasks/made_bad")
+	shutil.copy2('made_bad.t','tasks/made_bad/code.t')
+	make_tape('tasks/made_bad/input.tape',-200,200,-200,200)
+
+	os.makedirs("tasks/hand_made")
+	shutil.copy2('hand_made.t','tasks/hand_made/code.t')
+	make_tape('tasks/hand_made/input.tape',-200,200,-200,200)
 
 	os.makedirs("tasks/dead")
 	with open('tasks/dead/code.t','w') as f:

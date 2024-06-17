@@ -489,7 +489,7 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
         }
 
         else{
-            fprintf(file,";identical states\n");
+            fprintf(file,";identical transitions\n");
             fprintf(file,"L%d_0:;%s[0]\n",i,ir.names[i]);
             k_start=1;
         }
@@ -530,6 +530,9 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
 
                     fprintf(file,"Done_L%d_%d:\n",i,k);
                     break;
+            }
+            if(k_start){
+                fprintf(file,"Done_L%d_0:\n",i);
             }
 
             //next
