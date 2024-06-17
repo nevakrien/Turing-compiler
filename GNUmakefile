@@ -2,7 +2,7 @@ CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
 #CXX = g++
 
 # Compiler flags
-CFLAGS = -O3 -march=native -Wall -Iinclude
+CFLAGS = -g2 -march=native -Wall -Iinclude
 
 ##dirs:
 #include
@@ -11,7 +11,7 @@ CFLAGS = -O3 -march=native -Wall -Iinclude
 #bin
 
 # Default target
-all:bin/tmc0 bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
+all:bin/tmc1 bin/tmc0 bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
 	@echo "Compiler used: $(CC)"
 
 # Compile source files to object files
@@ -60,6 +60,10 @@ bin/test_compiler:tests/test_compiler.c bin/compiler.o
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
+#tools
+bin/tmc1: src/tmc1.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+	$(CC) $(CFLAGS) $^ -o $@
+
 
 bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -87,8 +91,13 @@ test: clean
 	time make all -j
 	python3 test.py
 
+bench: clean
+	time make all -j
+	@cd code_tests/ && \
+    ./test.sh
+
 comp_test:
 	make --assume-new=bin/compiler.o -j
 	python3 -c "from test import run_comp_test;run_comp_test()"
 
-.PHONY: all clean clean_io clean_turing test check comp_test
+.PHONY: all clean clean_io clean_turing test check comp_test bench

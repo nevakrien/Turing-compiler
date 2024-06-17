@@ -20,6 +20,7 @@ static const char *assembly_start_template =
 
 //for some reason nasm is SOOO fucking slow to assmble if this is at the bottom
 "exit_out_of_tape:\n"
+"    and rsp, -16;we need an aligned stack and dont need memory\n"
 "    mov rdi, 2\n"
 "    call exit_turing\n"
 
@@ -28,7 +29,7 @@ static const char *assembly_start_template =
 "    ; Ensure there are at least 2 arguments (argc >= 3)\n"
 "    mov rax, [rsp]         ; Load argc\n"
 "    cmp rax, 3\n"
-"    jl _exit_error          ; If less than 3 arguments, exit\n"
+"    jl _exit_bad_args          ; If less than 3 arguments, exit\n"
 "\n"
 "    ; Load the address of the first command-line argument (input file)\n"
 "    mov rsi, [rsp+16]      ; First argument (input file)\n"
@@ -54,7 +55,7 @@ static const char *assembly_end_template =
 "\n"
 
 "\n"
-"_exit_error:\n"
+"_exit_bad_args:\n"
 "    mov rdi, 3\n"
 "    call exit_turing\n";
 
@@ -123,7 +124,7 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
 
 const char* spaces="    ";
 
-//does not handle hault properly yet. other issues with register size specifications on the ops
+//this is probably going to stay frozen. no reason to change it since it works.
 void O0_IR_to_ASM(FILE *file,TuringIR ir){
     
     //we are using rax rcx rdi 
@@ -197,7 +198,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
                     fprintf(file, "%sjbe Done_L%d_%d\n", spaces,i,k);
 
-                    //!!! these 2 lines are single handedly responsible for over a 100x preformance drop
+                    //!!! these 2 lines are single handedly responsible for over a 100x nasm preformance drop
                     fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,right_limit_register);
                     fprintf(file, "%sja exit_out_of_tape\n", spaces);
                     //!!!!
@@ -248,7 +249,7 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
                     fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,left_init_register);
                     fprintf(file, "%sjae Done_L%d_%d\n", spaces,i,k);
 
-                    //!!! these 2 lines are single handedly responsible for over a 100x preformance drop
+                    //!!! these 2 lines are single handedly responsible for over a 100x nasm preformance drop
                     fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,left_limit_register);
                     fprintf(file, "%sjb exit_out_of_tape\n", spaces);
                     //!!!!
@@ -301,6 +302,232 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
             //next
             if(ir.states[i].trans[k].nextState!=-1){
                 fprintf(file,"%sjmp L%d\n\n",spaces,ir.states[i].trans[k].nextState);
+            }
+            else{
+                fprintf(file,"%sjmp exit_good\n\n",spaces);
+            }
+        }
+    }
+
+    //write to the struct
+    fprintf(file,"exit_good:\n");
+    fprintf(file,"%smov [rsp],qword %s\n",spaces,address_register);
+
+    tmp = "rcx";
+    tmp2="rax";
+    // Load base address into tmp
+    fprintf(file, "%smov %s, qword [rsp+8]\n", spaces, tmp);
+
+    //not handeling the sign right
+
+    //right init
+    fprintf(file,"%ssub %s,%s\n",spaces,right_init_register,tmp);
+    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,right_init_register);
+    fprintf(file, "%smov [rsp+28], dword %s \n", spaces, small_right_init_register);
+
+    fprintf(file,"%ssub %s,%s\n",spaces,left_init_register,tmp);
+    fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,left_init_register);
+    fprintf(file, "%smov [rsp+24], dword %s \n", spaces, small_left_init_register);//tmp2_short);
+}
+
+//right not ver similar to the O0 version hopefuly we can see a change over time
+void O1_IR_to_ASM(FILE *file,TuringIR ir){
+    
+    //we are using rax rcx rdi 
+    //inside of some of the loops. this means that they are NOT ALOWED to be chosen
+
+    const char* address_register="r14";//this is also used in the assembly_end_template so dont mess with it.
+    const char* bit_register="r15d";
+    const char* right_limit_register="r8";
+    const char* left_limit_register="r9";
+    const char* right_init_register="r10";
+    const char* left_init_register="r11";
+
+    const char* small_right_init_register="r10d";
+    const char* small_left_init_register="r11d";
+
+    const int move_size=4;
+    const int extend_size=256*4;//same as the interpeter //HAS to be a multiple of 4
+
+
+    fprintf(file,"%smov %s,qword [rsp] ;curent\n",spaces,address_register);//load cur
+
+    char* tmp = "rcx";
+    char* tmp2 = "rax";
+
+    //the left side of these isnt inilized properly...
+
+    fprintf(file, "%sxor %s, %s\n", spaces, tmp2,tmp2);
+    // Load base address into tmp
+    fprintf(file, "%smov %s, qword [rsp+8] ;base\n", spaces, tmp);
+
+    // right_limit
+    fprintf(file, "%smovsxd rax, dword [rsp+20]\n", spaces); // Load and sign-extend the value into rax (a 64-bit register)
+    fprintf(file, "%slea %s, [%s + 4*rax] ;right limit\n", spaces, right_limit_register, tmp);
+
+    // left_limit
+    fprintf(file, "%smovsxd rax, dword [rsp+16]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax] ;left limit\n", spaces, left_limit_register, tmp);
+
+    // right_init
+    fprintf(file, "%smovsxd rax, dword [rsp+24]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax] ;left initilized\n", spaces, left_init_register, tmp);
+
+    // left_init
+    fprintf(file, "%smovsxd rax, dword [rsp+28]\n", spaces); // Load and sign-extend the value into rax
+    fprintf(file, "%slea %s, [%s + 4*rax] ;right initilized\n", spaces, right_init_register, tmp);
+
+
+    fprintf(file,"%scld\n",spaces);
+    fprintf(file,"%sjmp main_loop\n\n",spaces);
+
+    fprintf(file,"align 16\n");
+    fprintf(file,"function_extend_left:\n");
+
+                    //!!! these 2 lines are single handedly responsible for over a 100x nasm preformance drop
+                    fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,left_limit_register);
+                    fprintf(file, "%sjb exit_out_of_tape\n", spaces);
+                    //!!!!
+
+                    tmp = "rax";//rcx is used down
+
+                    fprintf(file, "%smov rcx, %s\n", spaces, left_init_register);
+                    fprintf(file, "%slea %s,[%s-%d]\n",spaces,tmp,left_init_register,extend_size);
+                    
+                    //tmp = max(tmp right_limit)
+                    fprintf(file, "%scmp %s,%s\n",spaces,tmp,left_limit_register);
+                    fprintf(file, "%sjae Extend_Left_internal\n", spaces);
+
+                    fprintf(file, "%smov %s,%s\n",spaces,tmp,left_limit_register);
+
+                    fprintf(file,"Extend_Left_internal:\n");
+
+                    //memset 0 
+                    // Set rdi to the starting address 
+                    // fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, address_register);
+                    
+                    
+                    fprintf(file, "%smov %s, %s\n", spaces, left_init_register, tmp); // Update the left_init_register to the new end
+                    fprintf(file, "%smov rdi, %s ;setting up for stosq\n", spaces, left_init_register);
+                    
+                    
+                    // Calculate the number of 32-bit elements to zero out
+                    fprintf(file, "%ssub rcx, %s\n",spaces,tmp);
+                    
+                    fprintf(file, "%sshr rcx, 2;bad more effishent to do quads\n", spaces); // Divide by 8
+                    //fprintf(file, "%ssub rcx, 1\n", spaces);//????? needed but idk why
+
+                    // Zero out the memory
+                    //no need we did earlier with rcx fprintf(file, "%smov rcx, rax\n", spaces); // Number of 64-bit elements to store
+                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    
+                    //fprintf(file, "%sstd\n", spaces);
+                    fprintf(file, "%srep stosd\n", spaces);
+                    //fprintf(file,"%scld\n",spaces);
+
+                   
+                    
+                    // //when we improve the speed fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,left_init_register);
+
+    fprintf(file,"%sret\n\n",spaces);
+
+    fprintf(file,"align 16\n");
+    fprintf(file,"function_extend_right:\n");
+    //!!! these 2 lines are single handedly responsible for over a 100x nasm preformance drop
+                    fprintf(file, "%scmp %s, %s;check out of tape\n", spaces, address_register,right_limit_register);
+                    fprintf(file, "%sja exit_out_of_tape\n", spaces);
+                    //!!!!
+
+                    tmp = "rcx";//using this to avoid a move
+
+                    fprintf(file,"%s\n;find new bound\n",spaces);
+
+                    fprintf(file, "%slea %s,[%s+%d]\n",spaces,tmp,right_init_register,extend_size);
+                    
+                    fprintf(file, "%scmp %s,%s\n",spaces,tmp,right_limit_register);
+                    fprintf(file, "%sjbe Extend_Right_internal\n", spaces);
+
+                    fprintf(file, "%smov %s,%s\n",spaces,tmp,right_limit_register);
+
+                    fprintf(file,"Extend_Right_internal:\n");
+
+                    //memset 0 
+                    // Set rdi to the starting address
+                    fprintf(file, "%smov rdi, %s;setting up for stosq \n", spaces, address_register);
+                    fprintf(file, "%smov %s, %s\n", spaces, right_init_register, tmp); // Update the right_init_register to the new end
+
+                    // Calculate the number of 32-bit elements to zero out
+                    fprintf(file, "%ssub %s, rdi\n", spaces,tmp);
+                    fprintf(file, "%sshr %s, 2;bad more effishent to do quads\n", spaces,tmp); // Divide by 8
+                    //not sure about this 1fprintf(file, "%ssub %s, 1\n", spaces,tmp);//????? needed but idk why
+
+
+                    // Zero out the memory
+                    //MAJO BUG IN THE ORDER
+                    //no need tmp is rcx fprintf(file, "%smov rcx, rax\n", spaces); // Number of 32-bit elements to store
+                    fprintf(file, "%sxor rax, rax\n", spaces); // Zero value to store
+                    fprintf(file, "%srep stosd\n", spaces);
+                    //when we improve the speed fprintf(file, "%smov [%s],dword 0;maybe there is a 4byte remainder\n", spaces,right_init_register);
+
+    fprintf(file,"%sret\n\n",spaces);
+    
+    fprintf(file,"main_loop:\n");
+    for(int i=0;i<ir.len;i++){
+        fprintf(file,"L%d:;%s\n",i,ir.names[i]);
+        
+        fprintf(file,"%s;brench based on current bit\n",spaces);
+        fprintf(file,"%smov %s,dword [%s]\n",spaces,bit_register,address_register);
+        fprintf(file,"%stest %s, %s\n",spaces,bit_register,bit_register);
+        fprintf(file,"%sjnz L%d_1\n\n",spaces,i);    
+
+        for(int k=0;k<2;k++){
+            fprintf(file,"L%d_%d:;%s[%d]\n",i,k,ir.names[i],k);
+            fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[k].write);
+
+            //move
+            switch(ir.states[i].trans[k].move){
+                case Stay:
+                    break;
+                case Right:
+                    fprintf(file, "%slea %s, [%s+%d] \n", spaces, address_register, address_register,move_size);
+                    
+                    fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,right_init_register);
+                    fprintf(file, "%sjbe Done_L%d_%d\n", spaces,i,k);
+
+
+                    fprintf(file, "%scall function_extend_right\n", spaces);
+                    
+                    
+
+
+                    fprintf(file,"Done_L%d_%d:\n",i,k);
+                    break;
+                case Left:
+                    
+
+                    fprintf(file, "%slea %s, [%s-%d] \n", spaces, address_register, address_register,move_size);
+                    
+                    fprintf(file, "%scmp %s, %s;bounds check \n", spaces, address_register,left_init_register);
+                    fprintf(file, "%sjae Done_L%d_%d\n", spaces,i,k);
+
+                    fprintf(file, "%scall function_extend_left\n", spaces);
+
+
+                    fprintf(file,"Done_L%d_%d:\n",i,k);
+                    break;
+            }
+
+            //next
+            if(ir.states[i].trans[k].nextState!=-1){
+                //we can potentialy skip the jump
+                if(k==1&&ir.states[i].trans[k].nextState==i+1){
+                    fprintf(file,"%s;no need to jump already here\n\n",spaces);
+                }
+                else{
+                    fprintf(file,"%sjmp L%d\n\n",spaces,ir.states[i].trans[k].nextState);
+                }
+                
+                
             }
             else{
                 fprintf(file,"%sjmp exit_good\n\n",spaces);

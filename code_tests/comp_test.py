@@ -34,27 +34,27 @@ def run_turing(task):
 
 
 
-def compile_and_run_turing(task):
+def compile_and_run_turing(task,compiler):
     # Step 1: Compile the code using tmc0
     start_compile_time = time.time()
-    compile_result = subprocess.run(['./../bin/tmc0', join(task, 'code.t'), join(task, 'tmc0')], text=True, capture_output=True)
+    compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     compile_duration = time.time() - start_compile_time
 
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        print("tmc0 Compilation Failed:")
+        print(f"{compiler} Compilation Failed:")
         if compile_result.stderr:
             print(compile_result.stderr)
         return 1
 
     # Step 2: Run the compiled output with the input and output tapes
     start_run_time = time.time()
-    run_result = subprocess.run([join(task, 'tmc0.out'), join(task, 'input.tape'), join(task, 'tmc0_run.tape')], text=True, capture_output=True)
+    run_result = subprocess.run([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')], text=True, capture_output=True)
     run_duration = time.time() - start_run_time
 
     # Check the return code for the run step
     if run_result.returncode != 0:
-        print("tmc0.out Execution Failed:")
+        print(f"{compiler} .out Execution Failed:")
         if run_result.stderr:
             print(run_result.stderr)
         return 1
@@ -83,14 +83,14 @@ def compile_and_run_turing(task):
 def compare_tapes(file1, file2):
     return filecmp.cmp(file1, file2, shallow=False)
 
-def run_and_compare(task):
+def run_and_compare(task,compiler):
     
-    if(run_turing(task) or compile_and_run_turing(task)):
+    if(run_turing(task) or compile_and_run_turing(task,compiler)):
         return 1
 
     # Compare the output tapes
     tape1 = join(task, 'run_turing.tape')
-    tape2 = join(task, 'tmc0_run.tape')
+    tape2 = join(task, f'{compiler}_run.tape')
 
     if compare_tapes(tape1, tape2):
         print(f"[{task}] the tapes are identical. PASS")
@@ -99,9 +99,9 @@ def run_and_compare(task):
 
     return 0
 
-def test_no_halt(task):
+def test_no_halt(task,compiler):
     # Step 1: Compile the code using tmc0
-    compile_result = subprocess.run(['./../bin/tmc0', join(task, 'code.t'), join(task, 'tmc0')], text=True, capture_output=True)
+    compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
         print("tmc0 Compilation Failed:")
@@ -111,7 +111,7 @@ def test_no_halt(task):
 
     try:
         # Step 2: Run the compiled output with the input and output tapes
-        process = subprocess.Popen([join(task, 'tmc0.out'), join(task, 'input.tape'), join(task, 'tmc0_run.tape')])
+        process = subprocess.Popen([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')])
         time.sleep(0.15)
         if process.poll() is None:
             process.kill()
@@ -132,9 +132,9 @@ def test_no_halt(task):
             process.kill()
         raise e
 
-def test_out_of_tape(task):
+def test_out_of_tape(task,compiler):
     # Step 1: Compile the code using tmc0
-    compile_result = subprocess.run(['./../bin/tmc0', join(task, 'code.t'), join(task, 'tmc0')], text=True, capture_output=True)
+    compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
         print("tmc0 Compilation Failed:")
@@ -144,7 +144,7 @@ def test_out_of_tape(task):
 
     try:
         # Step 2: Run the compiled output with the input and output tapes
-        run_result = subprocess.run([join(task, 'tmc0.out'), join(task, 'input.tape'), join(task, 'tmc0_run.tape')],capture_output=True)
+        run_result = subprocess.run([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')],capture_output=True)
         
         # Check the return code for the run step
         if run_result.returncode == 2: #2 is OUT_OF_TAPE in turing.h
@@ -164,18 +164,22 @@ if __name__=="__main__":
 
     code_gen.main()
 
-    with ThreadPoolExecutor() as ex:
-        futures=[ex.submit(test_no_halt,join('no_halt', d)) for d in os.listdir('no_halt')]
+    futures={}
 
-    tasks = [join('tasks', d) for d in os.listdir('tasks')]
-    for task in tasks:
-        run_and_compare(task)
+    for compiler in ['tmc0','tmc1']:
+        print(f'testing {compiler}')
+        with ThreadPoolExecutor() as ex:
+            futures[compiler]=[ex.submit(test_no_halt,join('no_halt', d),compiler) for d in os.listdir('no_halt')]
 
-    tasks = [join('out_of_tape', d) for d in os.listdir('out_of_tape')]
-    for task in tasks:
-        test_out_of_tape(task)
+        tasks = [join('tasks', d) for d in os.listdir('tasks')]
+        for task in tasks:
+            run_and_compare(task,compiler)
 
-    for f in futures:
-        print(f.result())
+        tasks = [join('out_of_tape', d) for d in os.listdir('out_of_tape')]
+        for task in tasks:
+            test_out_of_tape(task,compiler)
 
-
+    for compiler in ['tmc0','tmc1']:
+        print(f'no_hault {compiler}')
+        for f in futures[compiler]:
+            print(f.result())

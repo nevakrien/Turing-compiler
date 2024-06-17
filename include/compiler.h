@@ -12,4 +12,6 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir);
 //bad name but it basically a way to take IR down to assembly.
 //specifcly this is all the parts that are actually definble by the user
 
+void O1_IR_to_ASM(FILE *file,TuringIR ir); 
+
 #endif // COMPILER_H

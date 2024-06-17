@@ -47,6 +47,16 @@ def time_tmc0(task):
 
         return end_time_ns - start_time_ns, compile_proc
 
+def time_tmc1(task):
+        gc.disable()
+        start_time_ns = time_ns()
+
+        compile_proc = subprocess.run([join(task, 'tmc1.out'), join(task, 'input.tape'), '/dev/null'], text=True, capture_output=True)
+
+        end_time_ns = time_ns()
+        gc.enable()
+
+        return end_time_ns - start_time_ns, compile_proc
 
 
 def measure(d):
@@ -56,7 +66,8 @@ def main_timing(tasks):
     tasks.sort()
     print("\nstarting timers...\n")
 
-    timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}
+    #timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0,'tmc1':time_tmc1}
+    timers={'tmc0':time_tmc0,'tmc1':time_tmc1}
 
 
     jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(1000)]
@@ -125,7 +136,7 @@ def main_timing(tasks):
 def main():
     tasks=[join('tasks', d) for d in os.listdir('tasks')]
     main_timing(tasks)
-    
+
 # def setup_tmpfs(mount_point, size='128M'):
 #     # Ensure the mount point exists within the current working directory
 #     if not os.path.exists(mount_point):

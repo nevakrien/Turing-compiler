@@ -52,7 +52,9 @@ def main():
 
 	os.makedirs("tasks/2000")
 	with open('tasks/2000/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if (i//100)%2 else 'L',2000,'S','halt')))
+		code=long_chain(lambda i: i%2,lambda i: 'R' if (i//100)%2 else 'L',2000,'S','halt')
+		code=code[:2]+code[2:][::-1]
+		f.write('\n'.join(code))
 	make_tape('tasks/2000/input.tape',-1000,1000,-10,10)
 
 
