@@ -38,6 +38,9 @@ build+ python (no packages)
 # benchmarking
 goto code_tests/test.sh to run the benchmarks
 
+even the O0 compile run is consistently faster than the interpeters. this is very promicing since there is a lot wrong with tmc0 in terms of preformance.
+it is made to be as simple as possible not to be fast
+
 from the tests I ran on the interpeter it apears that not keeping track of the counter has a small yet semi consistent advantage.
 the advantage could very well be caused by the need to parse another argument or something else that is as silly.
 for most purposes it would probably not matter. the reason I am not using it is mainly because it simplifies some of the logic for the compiler.

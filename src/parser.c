@@ -20,7 +20,7 @@ char *read_file_into_buffer(const char *filename, size_t *length) {
     fseek(file, 0, SEEK_SET);  // Go back to the start of the file
 
     // Allocate memory for the file content
-    char *buffer = null_check(malloc(*length));
+    char *buffer = null_check(malloc(*length+1));
     
     // Read the file into the buffer
     size_t read_size = fread(buffer, 1, *length, file);
@@ -32,12 +32,8 @@ char *read_file_into_buffer(const char *filename, size_t *length) {
             return NULL;
         }
     }
+    buffer[read_size] = '\0';
 
-    // Check if the file is already null-terminated
-    if (buffer[read_size - 1] != '\0') {
-        buffer = null_check(realloc(buffer, read_size + 1));
-        buffer[read_size] = '\0'; // Manually null terminate if not already
-    }
 
     fclose(file);  // Close the file
     *length = read_size; // Update length to actual bytes read

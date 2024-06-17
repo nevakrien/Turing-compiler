@@ -1,7 +1,9 @@
+old_versions/*
 /__pycache__/
 /__pycache__/*
 code_tests/__pycache__/
 code_tests/__pycache__/*
+
 
 code_tests/out_of_tape/*
 code_tests/no_halt/*

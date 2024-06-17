@@ -3,7 +3,6 @@ import os
 from os.path import join
 import json
 import filecmp
-import shutil
 import time
 
 from concurrent.futures import ThreadPoolExecutor
@@ -162,14 +161,6 @@ def test_out_of_tape(task):
 if __name__=="__main__":
     import code_gen
 
-    if(os.path.exists('no_halt')):
-        shutil.rmtree('no_halt')
-
-    if(os.path.exists('tasks')):
-        shutil.rmtree('tasks')
-
-    if(os.path.exists('out_of_tape')):
-        shutil.rmtree('out_of_tape')
 
     code_gen.main()
 
