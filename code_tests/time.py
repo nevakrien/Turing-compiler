@@ -5,6 +5,7 @@ from time import time_ns
 import gc
 from concurrent.futures import ProcessPoolExecutor
 import subprocess
+import shutil
 
 def time_run_turing_no_stop(task):
         # Highly sensitive timing
@@ -51,9 +52,9 @@ def time_tmc0(task):
 def measure(d):
         return d['program'](d['task'])
 
-if __name__ == "__main__":
+def main_timing(tasks):
+    tasks.sort()
     print("\nstarting timers...\n")
-    tasks = [join('tasks', d) for d in os.listdir('tasks')]
 
     timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}
 
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(1000)]
     random.shuffle(jobs)
 
-    with ProcessPoolExecutor() as ex:
+    with ProcessPoolExecutor(os.cpu_count() - 1) as ex:
         results=list(ex.map(measure,jobs))
     
     for j,r in zip(jobs,results):
@@ -101,6 +102,7 @@ if __name__ == "__main__":
             print(f"{program}: {score:.2%}")
         print("")
     
+    #avrage
     # Calculate weights
     weights = {task: 2 if 'tasks/dead' in task else 1 for task in scores.keys()}
     # Compute weighted average scores for each program
@@ -119,3 +121,55 @@ if __name__ == "__main__":
     print("Weighted Average Scores Across All Tasks:")
     for program, score in weighted_scores.items():
         print(f"{program}: {score:.2%}")
+
+def main():
+    tasks=[join('tasks', d) for d in os.listdir('tasks')]
+    main_timing(tasks)
+    
+# def setup_tmpfs(mount_point, size='128M'):
+#     # Ensure the mount point exists within the current working directory
+#     if not os.path.exists(mount_point):
+#         os.makedirs(mount_point)
+#     # Mount the tmpfs
+#     subprocess.run(['sudo', 'mount', '-t', 'tmpfs', '-o', f'size={size}', 'tmpfs', mount_point], check=True)
+
+# def cleanup_tmpfs(mount_point):
+#     # Unmount the tmpfs
+#     subprocess.run(['sudo', 'umount', mount_point], check=True)
+#     # Remove the mount point directory to clean up
+#     if os.path.exists(mount_point):
+#         os.rmdir(mount_point)
+
+# def copy_tasks_to_mem(src_directory, dest_directory):
+#     # Copy all files from the source to the destination directory
+#     for item in os.listdir(src_directory):
+#         s = os.path.join(src_directory, item)
+#         d = os.path.join(dest_directory, item)
+#         if os.path.isdir(s):
+#             shutil.copytree(s, d, dirs_exist_ok=True)
+#         else:
+#             shutil.copy2(s, d)
+
+# #we are doing our best by memory maping the files.
+# def main_memory_maped():
+#     # Setup paths
+#     src_directory = 'tasks'  # Source tasks directory
+#     mem_tasks_directory = 'mem_tasks'  # Destination directory in tmpfs
+
+#     # Setup the tmpfs at the specified mount point
+#     setup_tmpfs(mem_tasks_directory)
+
+#     try:
+#         # Copy tasks to the memory-mapped directory
+#         copy_tasks_to_mem(src_directory, mem_tasks_directory)
+#         tasks = [join('mem_tasks', d) for d in os.listdir('mem_tasks')]
+#         main_timing(tasks)
+
+#     finally:
+#         # Ensure cleanup happens regardless of previous errors
+#         cleanup_tmpfs(mem_tasks_directory)
+
+
+
+if __name__ == "__main__":
+    main()

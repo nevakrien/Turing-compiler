@@ -45,6 +45,10 @@ from the tests I ran on the interpeter it apears that not keeping track of the c
 the advantage could very well be caused by the need to parse another argument or something else that is as silly.
 for most purposes it would probably not matter. the reason I am not using it is mainly because it simplifies some of the logic for the compiler.
 
+## notes on the benchmarks
+from playing around with code vs tape sizes its become pretty clear that the IO part can mess with the benchmark.
+because of this it is recommanded to use smaller tapes for measuring.
+
 # notes for devs
 the make test system deletes the compiled files. since everything compiles under a second its not an issue. 
 if this is not desirble test.py would work by itself. 

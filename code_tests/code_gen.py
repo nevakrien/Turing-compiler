@@ -33,32 +33,37 @@ def main():
 	os.makedirs("tasks/100")
 	with open('tasks/100/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R',100,'S','halt')))
-	make_tape('tasks/100/input.tape',-100,100,-10,10)
+	make_tape('tasks/100/input.tape',-100,100,-1,10)
 
 	os.makedirs("tasks/69")
 	with open('tasks/69/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'L',69,'S','halt')))
-	make_tape('tasks/69/input.tape',-100,100,-10,10)
+	make_tape('tasks/69/input.tape',-100,100,-10,1)
 
 	os.makedirs("tasks/42")
 	with open('tasks/42/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%3 else 'S',42,'S','halt')))
-	make_tape('tasks/42/input.tape',-100,100,-10,10)
+	make_tape('tasks/42/input.tape',-100,100,-1,10)
 
 	os.makedirs("tasks/1000")
 	with open('tasks/1000/code.t','w') as f:
 		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'L',1000,'S','halt')))
 	make_tape('tasks/1000/input.tape',-10,10,-10,10)
 
+	os.makedirs("tasks/2000")
+	with open('tasks/2000/code.t','w') as f:
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if (i//100)%2 else 'L',2000,'S','halt')))
+	make_tape('tasks/2000/input.tape',-1000,1000,-10,10)
+
 
 	os.makedirs("out_of_tape/33")
 	with open('out_of_tape/33/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'S',100,'S','halt')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%2 else 'S',33,'S','halt')))
 	make_tape('out_of_tape/33/input.tape',-10,10,-10,10)
 
 	os.makedirs("no_halt/35")
 	with open('no_halt/35/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'S',100,'S','S3')))
+		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'S',35,'S','S3')))
 	make_tape('no_halt/35/input.tape',-10,10,-10,10)
 
 if __name__=="__main__":

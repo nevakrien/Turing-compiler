@@ -1,8 +1,8 @@
-CC = gcc
-CXX = g++
+CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
+#CXX = g++
 
 # Compiler flags
-CFLAGS = -g2 -Wall -Iinclude
+CFLAGS = -O3 -march=native -Wall -Iinclude
 
 ##dirs:
 #include
@@ -12,6 +12,7 @@ CFLAGS = -g2 -Wall -Iinclude
 
 # Default target
 all:bin/tmc0 bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
+	@echo "Compiler used: $(CC)"
 
 # Compile source files to object files
 bin/io.o: src/io.c
