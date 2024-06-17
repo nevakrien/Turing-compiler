@@ -38,6 +38,17 @@ runtime+ gnumake gcc and bash.
 ### tests
 build+ python (no packages)
 
+# general plan
+the idea is to wrap all of the syscalls into io.o and have that be a stable abi on all platforms.
+then we generate intel asembly files that would need to be assembeled with nasm (I debated using opcodes but having it this way lets users read the assembly)
+linking is done with ld
+
+this means there is no gcc dependency!!! or any other compiler for that matter.
+
+we also want to have code comments on the generated assembly for clarity. 
+the idea is to make it as human readble as possible. 
+names from the source file can be found in the assembly output.
+
 # benchmarking
 
 ### usage
@@ -59,7 +70,7 @@ this lets us measure if a preformance improvment is meaningful or not. without a
 it also means we dont need to depend on numpy.
 
 ## interpeters VS tmc0
-even the O0 compile run is consistently faster than the interpeters. this is very promicing since there is a lot wrong with tmc0 in terms of preformance.
+even the O0 code is consistently faster than the interpeters. this is very promicing since there is a lot wrong with tmc0 in terms of preformance.
 it is made to be as simple as possible not to be fast
 
 from the tests I ran on the interpeter it apears that not keeping track of the counter has a small yet semi consistent advantage.
@@ -80,12 +91,7 @@ tests is where unit/integration tests can be found.
 
 it is recommended to add a small calling script into test.py for every test added.
 
-# general plan
-the idea is to wrap all of the syscalls into io.o and have that be a stable abi on all platforms.
-then we generate intel asembly files that would need to be assembeled with nasm (I debated using opcodes but having it this way lets users read the assembly)
-linking is done with ld
 
-this means there is no gcc dependency!!! or any other compiler for that matter.
 
 
 
