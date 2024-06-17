@@ -82,6 +82,13 @@ because of this it is recommanded to use smaller tapes for measuring.
 
 length does seem to  matter a lot. I am thinking this is related to branch prediction, or the instruction cache. essentially the compiled code has a major advantage because it is stored in Li and not Ld. the order of the unrolled loops seems to not be relevent.
 
+## tmc1 VS tmc0
+tmc1 is still under devlopment!!!
+
+from what I seen the code_proning only really matters for when state order is paticularly bad. 
+having it reordered so that the first states apear first has a significant speed advantage. 
+removing dead code has basically no effect... 
+
 # notes for devs
 the make test/bench system deletes the compiled files. since everything compiles under a second its not an issue. 
 if this is not desirble test.py and other python tests would work by themselves.

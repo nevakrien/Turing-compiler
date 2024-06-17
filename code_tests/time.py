@@ -66,7 +66,7 @@ def main_timing(tasks):
     tasks.sort()
     print("\nstarting timers...\n")
 
-    #timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0,'tmc1':time_tmc1}
+    #timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}#,'tmc1':time_tmc1}
     timers={'tmc0':time_tmc0,'tmc1':time_tmc1}
 
 

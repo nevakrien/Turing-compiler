@@ -37,7 +37,7 @@ def main():
 	os.makedirs("tasks/100")
 	with open('tasks/100/code.t','w') as f:
 		f.write('\n'.join(skip_chain(lambda i: i%2,lambda i: 'R',100,'S','halt')))
-	make_tape('tasks/100/input.tape',-100,100,-1,10)
+	shutil.copy2('cool_tape.tape','tasks/100/input.tape')
 
 	os.makedirs("tasks/69")
 	with open('tasks/69/code.t','w') as f:
@@ -46,7 +46,9 @@ def main():
 
 	os.makedirs("tasks/42")
 	with open('tasks/42/code.t','w') as f:
-		f.write('\n'.join(long_chain(lambda i: i%2,lambda i: 'R' if i%3 else 'S',42,'S','halt')))
+		code=long_chain(lambda i: i%2,lambda i: 'R' if i%3 else 'S',42,'S','halt')
+		code=code[:2] + code[2::2][::-1] + code[3::2]
+		f.write('\n'.join(code))
 	make_tape('tasks/42/input.tape',-100,100,-1,10)
 
 	os.makedirs("tasks/1000")
