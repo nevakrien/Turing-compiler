@@ -398,7 +398,7 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
         
 
 
-        printf("YAY at line[%d]\n",line.num);
+        //printf("YAY at line[%d]\n",line.num);
         continue_outer_for:
     }
 

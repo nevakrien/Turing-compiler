@@ -25,9 +25,15 @@ typedef struct{
 	const char** names;
 }TuringIR;
 
+static inline void free_TuringIR(TuringIR x){
+	free(x.states);
+	free(x.names);
+}
 
 
 TuringIR make_initial_ir (TuringMachineEncoding encode);
+TuringIR prone_ir (TuringIR ir);
+
 
 
 

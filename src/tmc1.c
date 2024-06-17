@@ -17,12 +17,14 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
-	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,&comp.ir);
+	TuringIR code=prone_ir(comp.ir);
+	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,&code);
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG
-	free(comp.ir.names);
-	free(comp.ir.states);
+	free_TuringIR(code);
+
+	free_TuringIR(comp.ir);
 	free(comp.text);
 	#endif
 	
