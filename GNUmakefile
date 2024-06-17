@@ -92,7 +92,7 @@ test: clean
 	python3 test.py
 
 bench: clean
-	time make all -j
+	make all -j
 	@cd code_tests/ && \
     ./test.sh
 
