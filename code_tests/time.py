@@ -70,7 +70,7 @@ def main_timing(tasks):
     timers={'tmc0':time_tmc0,'tmc1':time_tmc1}
 
 
-    jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(3_000)]
+    jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(1_000)]
     random.shuffle(jobs)
 
     with ProcessPoolExecutor(os.cpu_count() - 1) as ex:
@@ -80,7 +80,7 @@ def main_timing(tasks):
         j['time']=r
 
 
-    tally={task:{i:{name:None for name in timers.keys()} for i in range(3_000)} for task in tasks}
+    tally={task:{i:{name:None for name in timers.keys()} for i in range(1_000)} for task in tasks}
     for j in jobs:
         tally[j['task']][j['id']][j['name']]=j['time']
 
@@ -115,7 +115,7 @@ def main_timing(tasks):
     
     #avrage
     # Calculate weights
-    weights = {task: 0 if 'dead' in task or '2000' in task else 1 for task in scores.keys()}
+    weights = {task: 0 if task=='tasks/100' else 1 for task in scores.keys()}
     # Compute weighted average scores for each program
     total_weights = sum(weights.values())
     weighted_scores = {program: 0 for program in next(iter(scores.values())).keys()}  # Initialize scores based on programs
@@ -130,7 +130,7 @@ def main_timing(tasks):
 
         # Print weighted average scores
     #print("Weighted Average Scores Across All Tasks:")
-    print("Average Scores Across All Tasks: (ignoring 2000,dead)")
+    print("Average Scores Across All Tasks: (ignoring 100)")
     for program, score in weighted_scores.items():
         print(f"{program}: {score:.2%}")
 

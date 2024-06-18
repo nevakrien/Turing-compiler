@@ -35,6 +35,10 @@ void change_bounds(const char* filename,int left,int right){
 		printf("invalid bounds\n");
 		exit(1);
 	}
+
+	tape.left_limit=left;
+	tape.right_limit=right;
+
 	if(left>tape.left_init){
 		tape.left_init=left;
 	}
@@ -45,6 +49,29 @@ void change_bounds(const char* filename,int left,int right){
 	DumpTape(&tape,filename);
 
 }
+
+static inline void set_tape(const char* filename,int left,int right,Bit val){
+	Tape tape=ReadTape(filename);
+
+	if(tape.right_limit<right||tape.left_limit>left){
+		printf("invalid bounds\n");
+		exit(1);
+	}
+
+	if(left<tape.left_init){
+		tape.left_init=left;
+	}
+	if(right>tape.right_init){
+		tape.right_init=right;
+	}
+
+	for(int i=left;i<=right;i++){
+		tape.base[i]=val;
+	}
+	DumpTape(&tape,filename);
+
+}
+
 
 void print_help(){
 	printf("use show file.tape to see a tape\nuse new filename left_limit right_limit left_init rigt_init to make a new tape\n");
@@ -84,6 +111,22 @@ int main(int argc, char* argv[]){
 			printf("incorect usage %s change filename left right\n",argv[0]);
 		}
 		change_bounds(argv[2],int_of_str(argv[3]),int_of_str(argv[4]));
+		return 0;
+	}
+
+	if(strcmp(argv[1],"set1")==0){
+		if(argc!=5){
+			printf("incorect usage %s set1 filename left right\n",argv[0]);
+		}
+		set_tape(argv[2],int_of_str(argv[3]),int_of_str(argv[4]),1);
+		return 0;
+	}
+
+	if(strcmp(argv[1],"set0")==0){
+		if(argc!=5){
+			printf("incorect usage %s set0 filename left right\n",argv[0]);
+		}
+		set_tape(argv[2],int_of_str(argv[3]),int_of_str(argv[4]),0);
 		return 0;
 	}
 
