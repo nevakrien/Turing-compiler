@@ -471,13 +471,16 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
 
     fprintf(file,"%sret\n\n",spaces);
     
+    //fprintf(file,"align 16\n");
     fprintf(file,"main_loop:\n");
     for(int i=0;i<ir.len;i++){
+
         fprintf(file,"L%d:;%s\n",i,ir.names[i]);
         
         
         //check if we need to branch
         int k_start;
+        int align=4;
 
         if(!eq_TransIR(ir.states[i].trans[0],ir.states[i].trans[1])){
             fprintf(file,"%s;brench based on current bit\n",spaces);
@@ -497,7 +500,15 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
 
         for(int k=k_start;k<2;k++){
             fprintf(file,"L%d_%d:;%s[%d]\n",i,k,ir.names[i],k);
-            fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[k].write);
+
+            //potentialy skip useless write
+            if(!k_start && ir.states[i].trans[k].write==k){
+                fprintf(file,"%s;skiping useless write \n",spaces);
+            }
+            else{
+                fprintf(file,"%smov [%s],dword %d \n",spaces,address_register,ir.states[i].trans[k].write);
+            }
+            
 
             //move
             switch(ir.states[i].trans[k].move){
@@ -543,12 +554,20 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
                 }
                 else{
                     fprintf(file,"%sjmp L%d\n\n",spaces,ir.states[i].trans[k].nextState);
+                    fprintf(file,"align %d\n",align);
                 }
                 
                 
             }
             else{
-                fprintf(file,"%sjmp exit_good\n\n",spaces);
+                if(i==ir.len-1){
+                    fprintf(file,"%s;no need to jump already here\n\n",spaces);
+                }
+                else{
+                    fprintf(file,"%sjmp exit_good\n\n",spaces);
+                    fprintf(file,"align %d\n",align);
+                }
+                
             }
         }
     }
