@@ -13,7 +13,6 @@ typedef struct  __attribute__((packed)) {
     int cur_index;
     int left_index;
     int right_index;
-    //int length;
 
     int left_limit;
     int right_limit;

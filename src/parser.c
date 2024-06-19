@@ -2,6 +2,7 @@
 #include "turing.h"
 #include "utils.h"
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -343,6 +344,12 @@ TuringMachineEncoding parse_text_with_prints(char* raw_text){
                 }
                 trans.NameStr=left[i2];
                 left_name=1;
+
+                if(strcmp("halt",trans.NameStr)==0){
+                    printf("ERROR at line[%d]: halt is not alowed on the left left\n",line.num);
+                    errored=1;
+                    goto continue_outer_for;
+                }
                 
             }
             if(type==Binary){
