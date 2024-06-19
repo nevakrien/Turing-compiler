@@ -10,7 +10,7 @@ code_tests/no_halt/*
 code_tests/tasks/*
 debug.gdb
 bin/*
-*.tape
+#*.tape
 # Prerequisites
 *.d
 

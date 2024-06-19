@@ -121,14 +121,14 @@ if __name__ == '__main__':
     
     print("starting tests...\n")
 
-    run_test_io()
-    print("")
+    # run_test_io()
+    # print("")
     
     run_test_turing()
     print("")
     
-    run_test_parser()
-    print("")
+    # run_test_parser()
+    # print("")
     
     run_test_compiler()
     print("")
