@@ -14,7 +14,7 @@ typedef struct{
 } TransIR;
 
 typedef struct{
-	int stateId;
+	//int stateId;
 	TransIR trans[2];
 
 } StateIR;
@@ -95,14 +95,15 @@ static inline TuringIR prone_ir (TuringIR ir,int warn){
 	for(int i=0;i<ans.len;i++){
 		int* idptr;
 		
-		idptr=&ans.states[i].stateId;
-		*idptr=new_ids[*idptr];
+	//	idptr=&ans.states[i].stateId;
+	//	*idptr=new_ids[*idptr];
 		
 		for(int k=0;k<2;k++){
 			idptr=&ans.states[i].trans[k].nextState;
 			if(*idptr!=-1){
 				*idptr=new_ids[*idptr];
 			}
+	
 		}
 	}
 	free(new_ids);

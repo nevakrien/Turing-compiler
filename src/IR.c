@@ -143,7 +143,7 @@ TuringIR make_initial_ir (TuringMachineEncoding encoding){
 		if(inNode==NULL){
 			UNREACHABLE();//we already inserted it earlier
 		}
-		ans.states[inNode->id].stateId=inNode->id;
+		//ans.states[inNode->id].stateId=-1;//inNode->id;
 		ans.states[inNode->id].trans[trans.read]=(TransIR){trans.write,trans.move,outid};
 
 	}

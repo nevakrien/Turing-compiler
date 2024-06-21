@@ -70,9 +70,9 @@ TuringMachine finalize_unsafe(TuringIR ir){
 	ans.size=ir.len;
 	ans.states=null_check(malloc(ans.size*sizeof(State)));
 	for(int i=0;i<ir.len;i++){
-		if(ir.states[i].stateId!=i){
-		 	UNREACHABLE();
-		}
+		//if(ir.states[i].stateId!=i){
+		 //	UNREACHABLE();
+		//}
 		for(int t=0;t<2;t++){
 			ans.states[i].transitions[t].write=ir.states[i].trans[t].write;
 			ans.states[i].transitions[t].move=ir.states[i].trans[t].move;
