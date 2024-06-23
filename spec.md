@@ -52,8 +52,8 @@ the pading to byte length is done to the right.
 a turing machine is a program that takes in a tape file and outputs a tape file.
 it may also:
 
-1. go out of the tapes bounds, in this case an out of tape error is returned (optionally a segfault or any OS error is also accptble for O3)
-2. run for ever or return a TIME_OUT
+1. run for ever or return a TIME_OUT, note that if the machine WOULD run forever with infinite tape TIME_OUT is still alowed and even prefered.
+2. go out of the tapes bounds, in this case an out of tape error is returned (optionally a segfault or any OS error is also accptble for O3)
 
 ## excution
 starting from the start state
