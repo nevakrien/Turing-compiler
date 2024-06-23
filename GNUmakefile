@@ -91,8 +91,7 @@ test: clean
 	time make all -j
 	python3 test.py
 
-bench: clean
-	make all -j
+bench: check
 	@cd code_tests/ && \
     ./test.sh
 

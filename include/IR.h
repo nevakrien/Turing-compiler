@@ -43,6 +43,16 @@ static inline int eq_TransIR(TransIR a,TransIR b){
 	return 1;
 }
 
+static inline int SemiEq_noWrite_TransIR(TransIR a,TransIR b){
+	if(a.move!=b.move){
+		return 0;
+	}
+	if(a.nextState!=b.nextState){
+		return 0;
+	}
+	return 1;
+}
+
 
 TuringIR make_initial_ir (TuringMachineEncoding encode);
 static inline TuringIR prone_ir (TuringIR ir,int warn){

@@ -13,7 +13,7 @@ def run_turing(task):
 
     # Check the return code
     if result.returncode != 0:
-        raise Exception(f"run_turing Failed:\n{result.stderr}")
+        raise Exception(f"run_turing [{task}] Failed:\n{result.stderr}")
 
     # Prepare the result information
     result_info = {
@@ -39,7 +39,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"{compiler} Compilation Failed:\n{compile_result.stderr}")
+        raise Exception(f"{compiler} Compilation [{task}] Failed:\n{compile_result.stderr}")
 
     # Step 2: Run the compiled output with the input and output tapes
     start_run_time = time.time()
@@ -48,7 +48,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the run step
     if run_result.returncode != 0:
-        raise Exception(f"{compiler}.out Execution Failed:\n{run_result.stderr}")
+        raise Exception(f"{compiler}.out [{task}] Execution Failed:\n{run_result.stderr}")
 
     # Prepare the result information
     result_info = {
@@ -93,7 +93,7 @@ def test_no_halt(task,compiler):
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"tmc0 Compilation Failed:\n{compile_result.stderr}")
+        raise Exception(f"{compiler}  [{task}]Compilation Failed:\n{compile_result.stderr}")
 
     try:
         # Step 2: Run the compiled output with the input and output tapes
@@ -121,7 +121,7 @@ def test_out_of_tape(task,compiler):
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        return f"tmc0 Compilation Failed:\n{compile_result.stderr}"
+        return f"{compiler} Compilation Failed:\n{compile_result.stderr}"
          
 
     try:

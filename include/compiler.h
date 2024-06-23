@@ -14,4 +14,21 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir);
 
 void O1_IR_to_ASM(FILE *file,TuringIR ir); 
 
+typedef struct {
+    const char* address_register;
+    const char* bit_register;
+    const char* right_limit_register;
+    const char* left_limit_register;
+    const char* right_init_register;
+    const char* left_init_register;
+    const char* small_right_init_register;
+    const char* small_left_init_register;
+    
+    char* tmp;
+    char* tmp2;
+
+    const int move_size;
+    const int extend_size;
+} RegisterData;
+
 #endif // COMPILER_H

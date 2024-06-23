@@ -18,6 +18,10 @@ int main(int argc, char* argv[]){
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
 	TuringIR code=prone_ir(comp.ir,1);
+	
+	//code=comp.ir; //can be used to test things
+
+
 	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,&code);
 	
 	//no need to free anything.
