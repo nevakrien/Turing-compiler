@@ -70,7 +70,7 @@ def main_timing(tasks):
     timers={'tmc0':time_tmc0,'tmc1':time_tmc1}
 
 
-    jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(1_000)]
+    jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(3_000)]
     random.shuffle(jobs)
 
     with ProcessPoolExecutor(os.cpu_count() - 1) as ex:
@@ -80,7 +80,7 @@ def main_timing(tasks):
         j['time']=r
 
 
-    tally={task:{i:{name:None for name in timers.keys()} for i in range(1_000)} for task in tasks}
+    tally={task:{i:{name:None for name in timers.keys()} for i in range(3_000)} for task in tasks}
     for j in jobs:
         tally[j['task']][j['id']][j['name']]=j['time']
 

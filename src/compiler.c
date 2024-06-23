@@ -11,7 +11,7 @@
 // left_init is at offset 24
 // right_init is at offset 28
 
-static const char *assembly_start_template = 
+static const char *O0_assembly_start_template = 
 "section .text\n"
 "    global _start\n"
 "    extern ReadTape\n"
@@ -20,7 +20,7 @@ static const char *assembly_start_template =
 
 //for some reason nasm is SOOO fucking slow to assmble if this is at the bottom
 "exit_out_of_tape:\n"
-"    and rsp, -16;we need an aligned stack and dont need memory\n"
+//"    and rsp, -16;we need an aligned stack and dont need memory\n"
 "    mov rdi, 2\n"
 "    call exit_turing\n"
 
@@ -41,7 +41,7 @@ static const char *assembly_start_template =
 "    ;!!!ACTUAL CODE: done boiler plate\n";
 //"%s\n"  // Placeholder for actual code
 
-static const char *assembly_end_template = 
+static const char *O0_assembly_end_template = 
 "    ;DONE:output boilerplate and exit;\n\n"
 
 "    mov rsi, [rsp+32+24]   ; Second argument (output file) now shifted by 32\n"
@@ -75,9 +75,9 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
     // Custom code to be inserted into the placeholder
     //const char *custom_code = "    ; Inserted custom code";
 
-    fprintf(file,"%s",assembly_start_template);
+    //fprintf(file,"%s",assembly_start_template);
     codefunc(file,data);
-    fprintf(file,"%s",assembly_end_template);
+    //fprintf(file,"%s",assembly_end_template);
 
     if (ferror(file)) {
         perror("Error occurred during Assembly generation\n");
@@ -126,7 +126,7 @@ const char* spaces="    ";
 
 //this is probably going to stay frozen. no reason to change it since it works.
 void O0_IR_to_ASM(FILE *file,TuringIR ir){
-    
+    fprintf(file,"%s",O0_assembly_start_template);
     //we are using rax rcx rdi 
     //inside of some of the loops. this means that they are NOT ALOWED to be chosen
 
@@ -328,6 +328,71 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir){
     fprintf(file,"%ssub %s,%s\n",spaces,left_init_register,tmp);
     fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,left_init_register);
     fprintf(file, "%smov [rsp+24], dword %s \n", spaces, small_left_init_register);//tmp2_short);
+    fprintf(file,"%s",O0_assembly_end_template);
+}
+
+
+
+//!!!!!!!!!!!!!!!!!O1!!!!!!!!!!!!!!!!!!!!!!
+
+void print_O1_assembly_start_template(FILE *file) {
+    fprintf(file,
+        "section .text\n"
+        "    global _start\n"
+        "    extern ReadTape\n"
+        "    extern DumpTape\n"
+        "    extern exit_turing\n"
+        "\n"
+        // for some reason nasm is SOOO fucking slow to assemble if this is at the bottom
+        "exit_out_of_tape:\n"
+        "    and rsp, -16;we need an aligned stack and dont need memory\n"
+        "    mov rdi, 2\n"
+        "    call exit_turing\n"
+        "\n"
+        // "%s\n"  // Placeholder for actual code
+    );
+}
+
+void print_O1_assembly_setup(FILE *file) {
+    fprintf(file,
+        "_start:\n"
+        "    ;initial boiler plate\n"
+        "    ; Ensure there are at least 2 arguments (argc >= 3)\n"
+        "    mov rax, [rsp]         ; Load argc\n"
+        "    cmp rax, 3\n"
+        "    jl _exit_bad_args          ; If less than 3 arguments, exit\n"
+        "\n"
+        "    ; Load the address of the first command-line argument (input file)\n"
+        "    mov rsi, [rsp+16]      ; First argument (input file)\n"
+        "    sub rsp, 32\n"
+        "    lea rdi, [rsp]         ; Return struct address\n"
+        "\n"
+        "    call ReadTape\n"
+        "\n"
+        "    ;!!!ACTUAL CODE: done boiler plate\n"
+
+    );
+}
+
+
+
+void print_O1_assembly_end_template(FILE *file) {
+    fprintf(file,
+        "    ;DONE:output boilerplate and exit;\n\n"
+        "    mov rsi, [rsp+32+24]   ; Second argument (output file) now shifted by 32\n"
+        "    lea rdi, [rsp]         ; Same struct pointer\n"
+        "\n"
+        "    call DumpTape\n"
+        "\n"
+        "    ; Exit the program\n"
+        "    mov rdi, 0\n"
+        "    call exit_turing\n"
+        "\n"
+        "\n"
+        "_exit_bad_args:\n"
+        "    mov rdi, 3\n"
+        "    call exit_turing\n"
+    );
 }
 
 
@@ -522,10 +587,10 @@ static void O1_move(FILE *file,RegisterData rd,TuringIR ir,int i,int k){
 
             break;
     }
-    }
+}
+
 
 void O1_IR_to_ASM(FILE *file,TuringIR ir){
-    
     RegisterData rd = {
         .address_register = "r14",             // this is also used in the assembly_end_template so dont mess with it.
         .bit_register = "r15d",
@@ -542,12 +607,17 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
     rd.tmp = "rcx";
     rd.tmp2 = "rax";
 
+    
+    
+    print_O1_assembly_start_template(file);
+    print_O1_assembly_setup(file);
     inilize_registers(file,rd);
     
-    fprintf(file,"%sjmp main_loop\n\n",spaces);
+    fprintf(file,"%sjmp main_loop\n",spaces);
 
-    rd.tmp = "rax";
     fprintf(file,"align 16\n");
+    
+    rd.tmp = "rax";
     fprintf(file,"function_extend_left:\n");
 
     O1_extend_left(file,rd,-1,-1);
@@ -555,15 +625,16 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
     fprintf(file,"%sret\n\n",spaces);
 
     rd.tmp = "rcx";//must be
-    fprintf(file,"align 16\n");
+    //fprintf(file,"align 16\n");
     fprintf(file,"function_extend_right:\n");
     
     O1_extend_right(file,rd,-1,-1);
 
     fprintf(file,"%sret\n\n",spaces);
     
-    fprintf(file,"align 16\n");
+    //start the program
     fprintf(file,"main_loop:\n");
+    fprintf(file,"align 16\n");
     for(int i=0;i<ir.len;i++){
 
         fprintf(file,"L%d:;%s\n",i,ir.names[i]);
@@ -674,4 +745,6 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
     fprintf(file,"%ssub %s,%s\n",spaces,rd.left_init_register,rd.tmp);
     fprintf(file, "%sshr %s, 2;move to int indexing like c\n", spaces,rd.left_init_register);
     fprintf(file, "%smov [rsp+24], dword %s \n", spaces, rd.small_left_init_register);//rd.tmp2_short);
+
+    print_O1_assembly_end_template(file);
 }
