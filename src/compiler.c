@@ -379,11 +379,11 @@ static void O1_extend_left(FILE *file,RegisterData rd,int i,int k){
     //rd.tmp = max(rd.tmp right_limit)
     fprintf(file, "%scmp %s,%s\n",spaces,rd.tmp,rd.left_limit_register);
     if(i<0){
-        fprintf(file, "%sjbe Extend_Left_internal\n", spaces);
+        fprintf(file, "%sjae Extend_Left_internal\n", spaces);
 
     }
     else{
-        fprintf(file, "%sjbe Extend_Left_internal_%d_%d\n", spaces,i,k);
+        fprintf(file, "%sjae Extend_Left_internal_%d_%d\n", spaces,i,k);
 
     }
 
