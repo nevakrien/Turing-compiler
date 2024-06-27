@@ -99,7 +99,8 @@ tests is where unit/integration tests can be found.
 it is recommended to add a small calling script into test.py for every test added.
 
 
-
+# Coding Style
+this is mostly a C project but as a learning exprince I am adding C++ for O2 we will see how it goes. 
 
 
 # TODO 

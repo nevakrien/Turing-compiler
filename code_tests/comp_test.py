@@ -142,12 +142,13 @@ def test_out_of_tape(task,compiler):
 if __name__=="__main__":
     import code_gen
 
+    compilers=['tmc0','tmc1']#['tmc1_bad_hop','tmc1']
 
     code_gen.main()
 
     futures={}
     with ProcessPoolExecutor() as ex:
-        for compiler in ['tmc0','tmc1']:
+        for compiler in compilers:
             tasks = [join('no_halt', d) for d in os.listdir('no_halt')]
             futures[compiler]=[ex.submit(test_no_halt,task,compiler) for task in tasks]
 
@@ -159,7 +160,7 @@ if __name__=="__main__":
             futures[compiler].extend([ex.submit(test_out_of_tape,task,compiler) for task in tasks])
 
 
-    for compiler in ['tmc0','tmc1']:
+    for compiler in compilers:
         print(f'results {compiler}:')
         for f in futures[compiler]:
             print(f.result())

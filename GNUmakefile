@@ -1,8 +1,9 @@
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
-#CXX = g++
+CXX = g++
 
 # Compiler flags
 CFLAGS = -g2 -march=native -Wall -Iinclude
+CXXFLAGS= $(CFLAGS) -std=c++17
 
 ##dirs:
 #include
@@ -11,8 +12,11 @@ CFLAGS = -g2 -march=native -Wall -Iinclude
 #bin
 
 # Default target
-all:bin/tmc1 bin/tmc0 bin/test_io bin/test_turing bin/test_parser bin/tape_tool bin/run_turing bin/compiler.o bin/test_compiler #bin/libio.so
+all: all_tools all_tests bin/compiler.o bin/O2.o  bin/tmc1_bad_hop#bin/libio.so
 	@echo "Compiler used: $(CC)"
+
+all_tools: bin/tape_tool bin/run_turing all_tools bin/tmc1 bin/tmc0
+all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree
 
 # Compile source files to object files
 bin/io.o: src/io.c
@@ -38,6 +42,9 @@ bin/parser.o: src/parser.c #bin/turing.o
 bin/compiler.o: src/compiler.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
+#c++ O2
+bin/O2.o: src/O2.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 # Build test executables
 # bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
@@ -56,11 +63,16 @@ bin/test_parser: tests/test_parser.c bin/parser.o bin/IR.o
 bin/test_compiler:tests/test_compiler.c bin/compiler.o 
 	$(CC) $(CFLAGS) $^ -o $@
 
+# bin/test_cpp: tests/test_cpp.cpp bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+# 	$(CXX) $(CXXFLAGS) $^ -o $@ -fpermissive
+
+bin/test_code_tree: tests/test_code_tree.cpp 
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 #tools
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-#tools
 bin/tmc1: src/tmc1.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
@@ -70,6 +82,10 @@ bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
 
 bin/run_turing: src/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
+
+
+bin/tmc1_bad_hop: old_versions/tmc1_bad_jump
+	cp old_versions/tmc1_bad_jump bin/tmc1_bad_hop
 
 # Cleanup
 clean:
@@ -99,4 +115,4 @@ comp_test:
 	make --assume-new=bin/compiler.o -j
 	python3 -c "from test import run_comp_test;run_comp_test()"
 
-.PHONY: all clean clean_io clean_turing test check comp_test bench
+.PHONY: all clean clean_io clean_turing test check comp_test bench all_tools all_tests

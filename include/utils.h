@@ -11,6 +11,25 @@
 
 #define MUTATEBLE 
 
+#if defined(CHECK_UNREACHABLE)
+
+#ifndef __cplusplus
+#include <assert.h>
+#else
+#include <cassert>
+#endif //__cplusplus
+
+#define UNREACHABLE() assert(0 && "Unreachable code reached")
+#elif defined(__GNUC__) || defined(__clang__)
+#define UNREACHABLE() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#define UNREACHABLE() __assume(0)
+#else
+//null pointer dereference to signal unreachability
+#define UNREACHABLE() (*(int*)0 = 0)
+#endif
+
+#ifndef __cplusplus
 static inline void* null_check(void* p){
 	if(p==NULL){
 		perror("went oom\n");
@@ -18,7 +37,6 @@ static inline void* null_check(void* p){
 	}
 	return p;
 }
-
 // Used the same way as atoi but does error checking.
 static inline int int_of_str(const char* str)
 {
@@ -33,18 +51,9 @@ static inline int int_of_str(const char* str)
 }
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#endif //__cplusplus
 
-#if defined(CHECK_UNREACHABLE)
-#include <assert.h>
-#define UNREACHABLE() assert(0 && "Unreachable code reached")
-#elif defined(__GNUC__) || defined(__clang__)
-#define UNREACHABLE() __builtin_unreachable()
-#elif defined(_MSC_VER)
-#define UNREACHABLE() __assume(0)
-#else
-//null pointer dereference to signal unreachability
-#define UNREACHABLE() (*(int*)0 = 0)
-#endif
+
 
 
 #endif// UTILS_H

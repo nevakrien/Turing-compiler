@@ -58,6 +58,16 @@ def time_tmc1(task):
 
         return end_time_ns - start_time_ns, compile_proc
 
+def time_tmc1_bad_hop(task):
+        gc.disable()
+        start_time_ns = time_ns()
+
+        compile_proc = subprocess.run([join(task, 'tmc1_bad_hop.out'), join(task, 'input.tape'), '/dev/null'], text=True, capture_output=True)
+
+        end_time_ns = time_ns()
+        gc.enable()
+
+        return end_time_ns - start_time_ns, compile_proc
 
 def measure(d):
         return d['program'](d['task'])
@@ -67,6 +77,8 @@ def main_timing(tasks):
     print("\nstarting timers...\n")
 
     #timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}#,'tmc1':time_tmc1}
+    # timers={'tmc1_bad_hop':time_tmc1_bad_hop,'tmc1':time_tmc1}
+    
     timers={'tmc0':time_tmc0,'tmc1':time_tmc1}
 
 

@@ -25,10 +25,14 @@ typedef struct{
 	const char** names;
 }TuringIR;
 
+TuringIR make_initial_ir (TuringMachineEncoding encode);
 static inline void free_TuringIR(TuringIR x){
 	free(x.states);
 	free(x.names);
 }
+
+#ifndef IGNORE_C_UTILS
+
 
 static inline int eq_TransIR(TransIR a,TransIR b){
 	if(a.write!=b.write){
@@ -54,7 +58,7 @@ static inline int SemiEq_noWrite_TransIR(TransIR a,TransIR b){
 }
 
 
-TuringIR make_initial_ir (TuringMachineEncoding encode);
+
 static inline TuringIR prone_ir (TuringIR ir,int warn){
 	int* new_ids=null_check(malloc(sizeof(int)*ir.len));
 	for(int i=0;i<ir.len;i++){
@@ -122,7 +126,7 @@ static inline TuringIR prone_ir (TuringIR ir,int warn){
 	ans.names=null_check(realloc(ans.names,sizeof(char*)*ans.len));
 	return ans;
 }
-
+#endif //IGNORE_C_UTILS
 
 
 
