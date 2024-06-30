@@ -13,10 +13,6 @@ bool validate_tree(CodeNode* node,std::unordered_set<CodeNode*>* visited){
 	
 	volatile TapeVal dump = node->read_value();//make sure that reading the value works
 
-	if(dynamic_cast<Exit*>(node)){
-		return true;
-	}
-
 	if(!visited->insert(node).second){
 		if(dynamic_cast<StateStart*>(node)){
 			return true;//only states are alowed to be reachble from more than 1 angle
@@ -24,14 +20,10 @@ bool validate_tree(CodeNode* node,std::unordered_set<CodeNode*>* visited){
 		return false;
 	}
 
-	if(!node->next_node(0)){
-		return false;
-	}
-
-	for(int i=0;;i++){
-		CodeNode* next=node->next_node(i);
+	for(int i=0;i<node->len_next();i++){
+		CodeNode* next=node->next_nodes()[i].get();
 		if(next==nullptr){
-			break;
+			return false;
 		}
 		if(!validate_tree(next,visited)){
 			return false;
@@ -63,22 +55,18 @@ std::unique_ptr<CodeNode> make_random_stuff(int len){
 
 CodeNode* get_random_pre_end(StateStart* start){
 	CodeNode* cur=start;
-	CodeNode* next=cur->next_node(0);
+	CodeNode* next=(cur->next_nodes())[0].get();
 	while(next){
 		if(dynamic_cast<StateEnd*>(next)){
 			return cur;
 		}
 		cur=next;
-		next=cur->next_node(0);
-		if(rng()%3<3){
-			CodeNode* tmp=cur->next_node(1);
-			if(tmp){
-				next=tmp;
-			}
+		if(!cur->len_next()){
+			return cur;
 		}
+		next=(cur->next_nodes())[rng()%cur->len_next()].get();
 	}
 	return cur;
-
 }
 
 int main_test() {
@@ -91,7 +79,7 @@ int main_test() {
     }
     visited.clear();
 
-    std::vector<std::unique_ptr<StateStart>> states={};
+    std::vector<std::unique_ptr<CodeNode>> states={};
     states.push_back(std::make_unique<StateStart>(make_random_stuff(32), 0));
 
     if (!validate_tree(states[0].get(), &visited)) {
@@ -104,7 +92,7 @@ int main_test() {
     	
 
     	int insert_state=rng()%states.size();
-    	CodeNode* insert_spot=get_random_pre_end(states[insert_state].get());
+    	CodeNode* insert_spot=get_random_pre_end(static_cast<StateStart*>(states[insert_state].get()));
     	//auto ref=std::make_unique<StateEnd>(&states[i],i,insert_spot);
 
     	auto t1=dynamic_cast<Write*>(insert_spot);

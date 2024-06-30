@@ -5,6 +5,8 @@ CXX = g++
 CFLAGS = -g2 -march=native -Wall -Iinclude
 CXXFLAGS= $(CFLAGS) -std=c++17
 
+TEST_FLAGS=#-fsanitize=address -fsanitize=undefined
+
 ##dirs:
 #include
 #src
@@ -67,7 +69,7 @@ bin/test_compiler:tests/test_compiler.c bin/compiler.o
 # 	$(CXX) $(CXXFLAGS) $^ -o $@ -fpermissive
 
 bin/test_code_tree: tests/test_code_tree.cpp 
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(TEST_FLAGS) $^ -o $@
 
 #tools
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
