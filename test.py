@@ -87,6 +87,18 @@ def run_test_compiler():
     else:
         print(f"\n!!!nasm ld Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
+def run_test_code_tree():
+    call_make('bin/test_code_tree')
+    print("test_code_tree Compilation Done")
+
+    test_proc = subprocess.run(['./bin/test_code_tree'], text=True, capture_output=True)
+    
+    # Check results
+    if test_proc.returncode == 0:
+        print("code tree IR test Passed")
+    else:
+        print(f"\n!!!code tree IR test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
+
 
 def run_comp_test():
     call_make('all')
@@ -100,10 +112,10 @@ def run_comp_test():
         
         # Run the comp_test.py script
         test_proc=subprocess.run(['python3', 'comp_test.py'], stderr=subprocess.STDOUT, text=True)
-        print('tmc0 test done')
+        #print('tmc0 test done')
         #print(test_proc.stderr)
     except:
-        print('tmc0 test Failed')
+        print('!!!!compiler test Failed')
 
     finally:
         # Change back to the original working directory
@@ -133,9 +145,12 @@ if __name__ == '__main__':
     run_test_compiler()
     print("")
     
+    run_test_code_tree()
+    print("")
+
     run_comp_test()
     print("")
-    
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     

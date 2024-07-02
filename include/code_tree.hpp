@@ -14,36 +14,53 @@ extern "C" {
 #include <memory>
 
 enum class TapeVal {
-    Unchanged=0,
+    Unchanged = 0,
     Always1,
     Always0,
     Flip,
     Unknown,
 };
 
+enum class NodeTypes {
+    Split = 0,
+    Write,
+    Move,
+    StateStart,
+    StateEnd,
+    Exit,
+};
+
 namespace CodeTree {
 
 struct CodeNode {
+    const NodeTypes node_type;
+    const int len_next_nodes;
+    const bool is_final_flag;
+
+    CodeNode(NodeTypes type, int len_next, bool is_final)
+        : node_type(type), len_next_nodes(len_next), is_final_flag(is_final) {}
+
     virtual ~CodeNode() = default;
-    virtual std::unique_ptr<CodeNode>* next_nodes()=0;
-    virtual int len_next()=0;
+
+    inline NodeTypes type() const { return node_type; }
+    inline int len_next() const { return len_next_nodes; }
+    inline bool is_final() const { return is_final_flag; }
+
+    virtual std::unique_ptr<CodeNode>* next_nodes() = 0;
     virtual TapeVal read_value() = 0;
 };
 
 struct Split : public CodeNode {
     std::array<std::unique_ptr<CodeNode>, 2> sides;
 
-    inline Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right) 
-        : sides{std::move(left), std::move(right)} {}
+    Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right)
+        : CodeNode(NodeTypes::Split, 2, false), sides{std::move(left), std::move(right)} {}
 
-    inline std::unique_ptr<CodeNode>* next_nodes() override{
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return sides.data();
     }
-    inline int len_next() override{
-        return 2;
-    }
 
-    inline TapeVal read_value() override {
+    TapeVal read_value() override {
         return TapeVal::Unchanged;
     }
 };
@@ -52,90 +69,83 @@ struct Write : public CodeNode {
     std::unique_ptr<CodeNode> next;
     TapeVal val;
 
-    inline Write(std::unique_ptr<CodeNode> next, TapeVal val) 
-        : next(std::move(next)), val(val) {}
+    Write(TapeVal value, std::unique_ptr<CodeNode> next_node)
+        : CodeNode(NodeTypes::Write, 1, false), next(std::move(next_node)), val(value) {}
 
-    inline std::unique_ptr<CodeNode>* next_nodes() override {
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
     }
-    inline int len_next() override{
-        return 1;
-    }
-    inline TapeVal read_value() override {
+
+    TapeVal read_value() override {
         return val;
     }
 };
 
 struct Move : public CodeNode {
     std::unique_ptr<CodeNode> next;
-    int val;
+    int move_value;
 
-    inline Move(std::unique_ptr<CodeNode> next, int val) 
-        : next(std::move(next)), val(val) {}
+    Move(int value, std::unique_ptr<CodeNode> next_node)
+        : CodeNode(NodeTypes::Move, 1, false), next(std::move(next_node)), move_value(value) {}
 
-    inline std::unique_ptr<CodeNode>* next_nodes() override {
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
     }
-    inline int len_next() override{
-        return 1;
-    }
-    inline TapeVal read_value() override {
+
+    TapeVal read_value() override {
         return TapeVal::Unknown;
     }
 };
 
+// Forward declare StateStart because StateEnd needs it
 struct StateStart;
+
 struct StateEnd : public CodeNode {
-    int StateID; // id=0 is the start
-    std::unique_ptr<CodeNode>* next; // always StateStart
+    int StateID;
+    std::unique_ptr<CodeNode>* next;
     std::unique_ptr<CodeNode>* replace_spot;
 
-    inline StateEnd(std::unique_ptr<CodeNode>* next, int StateID, std::unique_ptr<CodeNode>* replace_spot);
-    inline std::unique_ptr<CodeNode>* next_nodes() override {
+    StateEnd(int stateID, std::unique_ptr<CodeNode>* replace_spot, std::unique_ptr<CodeNode>* next_node);
+
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return next;
     }
-    inline int len_next() override {
-        return 1;
-    }
-    inline TapeVal read_value() override {
+
+    TapeVal read_value() override {
         return TapeVal::Unchanged;
     }
-    inline ~StateEnd();
+
+    ~StateEnd();
 };
 
 struct StateStart : public CodeNode {
-private:
     std::unordered_map<int, std::unordered_set<StateEnd*>> incoming;
-
-public:
     std::unique_ptr<CodeNode> next;
     int StateID;
 
-    inline StateStart(std::unique_ptr<CodeNode> next, int StateID)
-        : next(std::move(next)), StateID(StateID) {}
+    StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
+        : CodeNode(NodeTypes::StateStart, 1, false), next(std::move(next_node)), StateID(stateID) {}
 
-    inline std::unique_ptr<CodeNode>* next_nodes() override {
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
     }
-    inline int len_next() override {
-        return 1;
-    }
 
-    inline TapeVal read_value() override {
+    TapeVal read_value() override {
         return TapeVal::Unchanged;
     }
 
-    inline void insert(StateEnd* x) {
+    void insert(StateEnd* x) {
         incoming[x->StateID].insert(x);
     }
 
-    inline void erase(StateEnd* x) {
+    void erase(StateEnd* x) {
         incoming[x->StateID].erase(x);
     }
 };
 
-inline StateEnd::StateEnd(std::unique_ptr<CodeNode>* next, int StateID, std::unique_ptr<CodeNode>* replace_spot)
-    : StateID(StateID), next(next), replace_spot(replace_spot) {
+// Implement StateEnd's constructor and destructor after StateStart
+inline StateEnd::StateEnd(int StateID, std::unique_ptr<CodeNode>* replace_spot, std::unique_ptr<CodeNode>* next)
+    : CodeNode(NodeTypes::StateEnd, 1, true), StateID(StateID), replace_spot(replace_spot), next(next) {
     static_cast<StateStart*>(next->get())->insert(this);
 }
 
@@ -143,22 +153,17 @@ inline StateEnd::~StateEnd() {
     static_cast<StateStart*>(next->get())->erase(this);
 }
 
-
-
-
 struct Exit : public CodeNode {
     TuringDone code;
 
-    inline Exit(TuringDone code) : code(code) {}
+    Exit(TuringDone code_done)
+        : CodeNode(NodeTypes::Exit, 0, true), code(code_done) {}
 
-    inline std::unique_ptr<CodeNode>* next_nodes() override {
+    std::unique_ptr<CodeNode>* next_nodes() override {
         return nullptr;
     }
-    inline int len_next() override{
-        return 0;
-    }
 
-    inline TapeVal read_value() override {
+    TapeVal read_value() override {
         return TapeVal::Unchanged;
     }
 };
