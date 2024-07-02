@@ -35,16 +35,19 @@ namespace CodeTree {
 struct CodeNode {
     const NodeTypes node_type;
     const int len_next_nodes;
-    const bool is_final_flag;
+    std::unique_ptr<CodeNode>* owned_next;
+    const int owned_next_len;
 
-    CodeNode(NodeTypes type, int len_next, bool is_final)
-        : node_type(type), len_next_nodes(len_next), is_final_flag(is_final) {}
+    CodeNode(NodeTypes type, int len_next, std::unique_ptr<CodeNode>* owned_next_ptr, int owned_next_len)
+        : node_type(type), len_next_nodes(len_next), owned_next(owned_next_ptr), owned_next_len(owned_next_len) {}
 
     virtual ~CodeNode() = default;
 
     inline NodeTypes type() const { return node_type; }
     inline int len_next() const { return len_next_nodes; }
-    inline bool is_final() const { return is_final_flag; }
+    inline bool is_final() const { return owned_next_len == 0; }
+    inline std::unique_ptr<CodeNode>* get_owned_next() const { return owned_next; }
+    inline int get_owned_next_len() const { return owned_next_len; }
 
     virtual std::unique_ptr<CodeNode>* next_nodes() = 0;
     virtual TapeVal read_value() = 0;
@@ -54,7 +57,7 @@ struct Split : public CodeNode {
     std::array<std::unique_ptr<CodeNode>, 2> sides;
 
     Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right)
-        : CodeNode(NodeTypes::Split, 2, false), sides{std::move(left), std::move(right)} {}
+        : CodeNode(NodeTypes::Split, 2, sides.data(), 2), sides{std::move(left), std::move(right)} {}
 
     std::unique_ptr<CodeNode>* next_nodes() override {
         return sides.data();
@@ -70,7 +73,7 @@ struct Write : public CodeNode {
     TapeVal val;
 
     Write(TapeVal value, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::Write, 1, false), next(std::move(next_node)), val(value) {}
+        : CodeNode(NodeTypes::Write, 1, &next, 1), next(std::move(next_node)), val(value) {}
 
     std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
@@ -86,7 +89,7 @@ struct Move : public CodeNode {
     int move_value;
 
     Move(int value, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::Move, 1, false), next(std::move(next_node)), move_value(value) {}
+        : CodeNode(NodeTypes::Move, 1, &next, 1), next(std::move(next_node)), move_value(value) {}
 
     std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
@@ -124,7 +127,7 @@ struct StateStart : public CodeNode {
     int StateID;
 
     StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::StateStart, 1, false), next(std::move(next_node)), StateID(stateID) {}
+        : CodeNode(NodeTypes::StateStart, 1, &next, 1), next(std::move(next_node)), StateID(stateID) {}
 
     std::unique_ptr<CodeNode>* next_nodes() override {
         return &next;
@@ -145,7 +148,7 @@ struct StateStart : public CodeNode {
 
 // Implement StateEnd's constructor and destructor after StateStart
 inline StateEnd::StateEnd(int StateID, std::unique_ptr<CodeNode>* replace_spot, std::unique_ptr<CodeNode>* next)
-    : CodeNode(NodeTypes::StateEnd, 1, true), StateID(StateID), replace_spot(replace_spot), next(next) {
+    : CodeNode(NodeTypes::StateEnd, 1, next, 1), StateID(StateID), replace_spot(replace_spot), next(next) {
     static_cast<StateStart*>(next->get())->insert(this);
 }
 
@@ -157,7 +160,7 @@ struct Exit : public CodeNode {
     TuringDone code;
 
     Exit(TuringDone code_done)
-        : CodeNode(NodeTypes::Exit, 0, true), code(code_done) {}
+        : CodeNode(NodeTypes::Exit, 0, nullptr, 0), code(code_done) {}
 
     std::unique_ptr<CodeNode>* next_nodes() override {
         return nullptr;
