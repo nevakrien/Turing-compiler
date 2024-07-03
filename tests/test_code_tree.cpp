@@ -11,8 +11,8 @@ bool validate_tree(CodeNode* node, std::unordered_set<CodeNode*>* visited) {
     assert(node != nullptr);
     assert(visited != nullptr);
     
-    volatile TapeVal dump = node->read_value(); // make sure that reading the value works
-    volatile bool dump2 = node->is_final();
+    [[maybe_unused]]volatile TapeVal dump = node->read_value(); // make sure that reading the value works
+    [[maybe_unused]] volatile bool dump2 = node->is_final();
 
     if (!visited->insert(node).second) {
         if (node->type() == NodeTypes::StateStart) {
@@ -21,8 +21,16 @@ bool validate_tree(CodeNode* node, std::unordered_set<CodeNode*>* visited) {
         return false;
     }
 
-    for (int i = 0; i < node->len_next(); i++) {
-        CodeNode* next = node->next_nodes()[i].get();
+    if(node->type()==NodeTypes::StateEnd){
+    	StateStart* start=static_cast<StateEnd*>(node)->next;
+    	if(start==nullptr){
+    		return false;
+    	}
+    	return validate_tree((CodeNode*)start,visited);
+    }
+
+    for (int i = 0; i < node->get_owned_next_len(); i++) {
+        CodeNode* next = node->get_owned_next()[i].get();
         if (next == nullptr) {
             return false;
         }
@@ -56,16 +64,16 @@ std::unique_ptr<CodeNode> make_random_stuff(int len) {
 
 CodeNode* get_random_pre_end(StateStart* start) {
     CodeNode* cur = start;
-    CodeNode* next = (cur->next_nodes())[0].get();
+    CodeNode* next = (cur->get_owned_next())[0].get();
     while (next) {
         if (next->type() == NodeTypes::StateEnd) {
             return cur;
         }
         cur = next;
-        if (!cur->len_next()) {
+        if (!cur->get_owned_next_len()) {
             return cur;
         }
-        next = (cur->next_nodes())[rng() % cur->len_next()].get();
+        next = (cur->get_owned_next())[rng() % cur->get_owned_next_len()].get();
     }
     return cur;
 }
@@ -73,8 +81,8 @@ CodeNode* get_random_pre_end(StateStart* start) {
 bool validate_owned_tree_recursive(CodeNode* node) {
     assert(node != nullptr);
 
-    volatile TapeVal dump = node->read_value(); // make sure that reading the value works
-    volatile bool dump2 = node->is_final();
+    [[maybe_unused]] volatile TapeVal dump = node->read_value(); // make sure that reading the value works
+    [[maybe_unused]] volatile bool dump2 = node->is_final();
 
     for (int i = 0; i < node->get_owned_next_len(); i++) {
         CodeNode* next = node->get_owned_next()[i].get();
@@ -104,7 +112,7 @@ int main_test() {
     }
     visited.clear();
 
-    std::vector<std::unique_ptr<CodeNode>> states = {};
+    std::vector<std::unique_ptr<StateStart>> states = {};
     states.push_back(std::make_unique<StateStart>(0, make_random_stuff(32)));
 
     if (!validate_tree(states[0].get(), &visited)) {
@@ -126,13 +134,13 @@ int main_test() {
 
         auto t1 = dynamic_cast<Write*>(insert_spot);
         if (t1) {
-            t1->next = std::make_unique<StateEnd>(i, &t1->next, &states[i]);
+            t1->next = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
             continue;
         }
 
         auto t2 = dynamic_cast<Move*>(insert_spot);
         if (t2) {
-            t2->next = std::make_unique<StateEnd>(i, &t2->next, &states[i]);
+            t2->next = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
             continue;
         }
 
@@ -141,15 +149,15 @@ int main_test() {
             int selected = rng() % 2;
             CodeNode* check = t3->sides[selected].get();
             if (dynamic_cast<Exit*>(check) || dynamic_cast<StateEnd*>(check)) {
-                t3->sides[selected] = std::make_unique<StateEnd>(i, &t3->sides[selected], &states[i]);
+                t3->sides[selected] = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
             } else {
-                t3->sides[1 - selected] = std::make_unique<StateEnd>(i, &t3->sides[1 - selected], &states[i]);
+                t3->sides[1 - selected] = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
             }
             continue;
         }
     }
 
-    for (int i = 0; i < states.size(); i++) {
+    for (auto i = 0u; i < states.size(); i++) {
         visited.clear();
         if (!validate_tree(states[i].get(), &visited)) {
             std::cerr << "Error with tree case\n";
@@ -157,7 +165,7 @@ int main_test() {
         }
     }
 
-    for (int i = 0; i < states.size(); i++) {
+    for (auto i = 0u; i < states.size(); i++) {
         if (!validate_owned_tree_recursive(states[i].get())) {
             std::cerr << "Error with tree case (owned next)\n";
             return 1;

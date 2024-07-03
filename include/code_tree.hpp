@@ -33,23 +33,28 @@ enum class NodeTypes {
 namespace CodeTree {
 
 struct CodeNode {
+protected:
     const NodeTypes node_type;
-    const int len_next_nodes;
-    std::unique_ptr<CodeNode>* owned_next;
+    std::unique_ptr<CodeNode>* const owned_next;
     const int owned_next_len;
+public:
+    //we want to hold valid pointers to memory locations, thus copying is not alowed.
+    //if A holds a pointer to B then B owns A. 
+    //OR B's destructor handles all the A pointers pointing to B (see StateStart)
+    CodeNode(const CodeNode&) = delete;
+    CodeNode& operator=(const CodeNode&) = delete;
+    //~~~~
 
-    CodeNode(NodeTypes type, int len_next, std::unique_ptr<CodeNode>* owned_next_ptr, int owned_next_len)
-        : node_type(type), len_next_nodes(len_next), owned_next(owned_next_ptr), owned_next_len(owned_next_len) {}
+    CodeNode(NodeTypes type, std::unique_ptr<CodeNode>* owned_next_ptr, int owned_next_len)
+        : node_type(type),  owned_next(owned_next_ptr), owned_next_len(owned_next_len) {}
 
     virtual ~CodeNode() = default;
 
     inline NodeTypes type() const { return node_type; }
-    inline int len_next() const { return len_next_nodes; }
     inline bool is_final() const { return owned_next_len == 0; }
     inline std::unique_ptr<CodeNode>* get_owned_next() const { return owned_next; }
     inline int get_owned_next_len() const { return owned_next_len; }
 
-    virtual std::unique_ptr<CodeNode>* next_nodes() = 0;
     virtual TapeVal read_value() = 0;
 };
 
@@ -57,11 +62,7 @@ struct Split : public CodeNode {
     std::array<std::unique_ptr<CodeNode>, 2> sides;
 
     Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right)
-        : CodeNode(NodeTypes::Split, 2, sides.data(), 2), sides{std::move(left), std::move(right)} {}
-
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return sides.data();
-    }
+        : CodeNode(NodeTypes::Split, sides.data(), 2), sides{std::move(left), std::move(right)} {}
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;
@@ -73,11 +74,8 @@ struct Write : public CodeNode {
     TapeVal val;
 
     Write(TapeVal value, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::Write, 1, &next, 1), next(std::move(next_node)), val(value) {}
+        : CodeNode(NodeTypes::Write, &next, 1), next(std::move(next_node)), val(value) {}
 
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return &next;
-    }
 
     TapeVal read_value() override {
         return val;
@@ -89,11 +87,8 @@ struct Move : public CodeNode {
     int move_value;
 
     Move(int value, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::Move, 1, &next, 1), next(std::move(next_node)), move_value(value) {}
+        : CodeNode(NodeTypes::Move, &next, 1), next(std::move(next_node)), move_value(value) {}
 
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return &next;
-    }
 
     TapeVal read_value() override {
         return TapeVal::Unknown;
@@ -105,14 +100,10 @@ struct StateStart;
 
 struct StateEnd : public CodeNode {
     int StateID;
-    std::unique_ptr<CodeNode>* next;
-    std::unique_ptr<CodeNode>* replace_spot;
+    CodeNode* owner;//safe to hold since if owner is deleted we are deleted
+    StateStart* next;//safe to hold because of custom behivior of StateStart
 
-    StateEnd(int stateID, std::unique_ptr<CodeNode>* replace_spot, std::unique_ptr<CodeNode>* next_node);
-
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return next;
-    }
+    StateEnd(int stateID, CodeNode* owner, StateStart* next_node);
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;
@@ -121,17 +112,14 @@ struct StateEnd : public CodeNode {
     ~StateEnd();
 };
 
+
 struct StateStart : public CodeNode {
     std::unordered_map<int, std::unordered_set<StateEnd*>> incoming;
     std::unique_ptr<CodeNode> next;
     int StateID;
 
     StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::StateStart, 1, &next, 1), next(std::move(next_node)), StateID(stateID) {}
-
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return &next;
-    }
+        : CodeNode(NodeTypes::StateStart, &next, 1), next(std::move(next_node)), StateID(stateID) {}
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;
@@ -144,27 +132,34 @@ struct StateStart : public CodeNode {
     void erase(StateEnd* x) {
         incoming[x->StateID].erase(x);
     }
+    ~StateStart(){
+        //StateEnd holds a pointer to us we must reset.
+        next=nullptr; //remove all possible incoming[StateID]
+
+        for (const auto& pair : incoming) {
+            const std::unordered_set<StateEnd*>& set = pair.second;
+            for (StateEnd* x : set) {
+                x->next=nullptr;
+            }
+        }
+    }
 };
 
 // Implement StateEnd's constructor and destructor after StateStart
-inline StateEnd::StateEnd(int StateID, std::unique_ptr<CodeNode>* replace_spot, std::unique_ptr<CodeNode>* next)
-    : CodeNode(NodeTypes::StateEnd, 1, next, 1), StateID(StateID), replace_spot(replace_spot), next(next) {
-    static_cast<StateStart*>(next->get())->insert(this);
+inline StateEnd::StateEnd(int StateID, CodeNode* owner, StateStart* next)
+    : CodeNode(NodeTypes::StateEnd, nullptr, 0), StateID(StateID), owner(owner), next(next) {
+    next->insert(this);
 }
 
 inline StateEnd::~StateEnd() {
-    static_cast<StateStart*>(next->get())->erase(this);
+    next->erase(this);
 }
 
 struct Exit : public CodeNode {
     TuringDone code;
 
     Exit(TuringDone code_done)
-        : CodeNode(NodeTypes::Exit, 0, nullptr, 0), code(code_done) {}
-
-    std::unique_ptr<CodeNode>* next_nodes() override {
-        return nullptr;
-    }
+        : CodeNode(NodeTypes::Exit, nullptr, 0), code(code_done) {}
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;

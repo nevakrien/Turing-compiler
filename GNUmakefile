@@ -1,5 +1,5 @@
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
-CXX = g++
+CXX = g++#clang fails... but nicer error messages
 
 # Compiler flags
 CFLAGS = -g2 -march=native -Wall -Iinclude
