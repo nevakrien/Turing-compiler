@@ -8,7 +8,7 @@ CFLAGS = $(BASE_FLAGS) -std=gnu99
 CXXFLAGS= $(BASE_FLAGS) -std=c++17
 
 
-TEST_FLAGS=#-fsanitize=address -fsanitize=undefined
+TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
 
 ##dirs:
 #include
