@@ -11,12 +11,12 @@ extern "C"{
 #include <vector>
 
 using IRNode=std::unique_ptr<CodeTree::CodeNode>;
-using TreeIR = std::vector<IRNode>; //must be StateStart
+using TreeIR = std::vector<std::unique_ptr<CodeTree::StateStart>>;
 
 TreeIR make_inital_tree(TuringIR ir);
 void Tree_IR_to_ASM(FILE *file,TreeIR ir);
 
-static inline IRNode append_node(IRNode prev,IRNode next){
+static inline IRNode merge_nodes(IRNode prev,IRNode next){
     if(prev==nullptr){
         return next;
     }

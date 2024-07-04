@@ -6,6 +6,8 @@ static TapeVal translate_write_val(Bit w){
 			return TapeVal::Allways0;
 		case Bit_1:
 			return TapeVal::Allways1;
+		default:
+			UNREACHABLE();
 	}
 }
 
@@ -19,99 +21,159 @@ static TapeVal translate_dual_write_val(Bit w0,Bit w1){
 	return TapeVal::Unchanged;
 }
 
-static IRNode make_write(Bit w,Bit read){
-	if(w==read){
-		return nullptr;
-	}	
-	return std::make_unique<CodeTree::Write>(translate_write_val(w),nullptr);
+static std::unique_ptr<CodeTree::StateStart> make_state_start(int id){
+	return std::make_unique<CodeTree::StateStart>(id,nullptr);
 }
 
-static IRNode make_write(TapeVal x){
-	if(x==TapeVal::Unchanged){
-		return nullptr;
-	}	
-	return std::make_unique<CodeTree::Write>(x,nullptr);
-}
-
-static IRNode make_move(Dir m){
-	if(m==Stay){
-		return nullptr;
+static IRNode maybe_write(TapeVal val,IRNode next){
+	if(val==TapeVal::Unchanged){
+		return next;
 	}
-	return std::make_unique<CodeTree::Move>(m,nullptr);
+	return std::make_unique<CodeTree::Write>(val,std::move(next));
 }
 
-static inline IRNode make_jump(int cur_id,int next_id,TreeIR tree){
-	if(next_id==-1){
+static IRNode maybe_move(Dir m,IRNode next){
+	if(m==Stay){
+		return next;
+	}
+	return std::make_unique<CodeTree::Move>(m,std::move(next));
+}
+
+//the next code has just ungodly long parameters... 
+//look at make_inital_tree first and this would make sense
+//~~~
+
+
+//may need to make the state and add it to our map
+//this can only triger once per state so no state would be added twice to todo
+static CodeTree::StateStart* get_state(unsigned int id,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+	int maped_id=maping[id];
+	if(maped_id==-1){
+		maped_id=tree.size();
+		
+		maping[id]=maped_id;
+		tree.push_back(make_state_start(id));
+		todo.push_back(id);
+	}
+
+	return tree[maped_id].get();
+}
+
+static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+	if(id_next==-1){
 		return std::make_unique<CodeTree::Exit>(HALT);
 	}
-	return std::make_unique<CodeTree::StateEnd>(cur_id,tree.data()+cur_id,tree.data()+next_id);
+
+	ASSERT(id_next>0);
+	return std::make_unique<CodeTree::StateEnd>(id_cur,owner,
+		get_state(
+				(unsigned int) id_next,
+				tree,
+				maping,
+				todo
+		)
+	);
 }
 
-//needs rework
-
-static int map_id_maybe_extend(int id,std::vector<int> &maping,TreeIR &tree,std::vector<int> &next_todo){
-	if(id==-1){
-		return -1;
+static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* owner,int next_id,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+	IRNode start= maybe_write(w,maybe_move(m,nullptr));
+	CodeTree::CodeNode* end_owner;
+	if(start==nullptr){
+		end_owner=owner;
 	}
-
-	if(maping[id]==-1){
-		maping[id]=tree.size();
-		tree.push_back(nullptr);
-		next_todo.push_back(id);
+	else{
+		end_owner=start.get();
+		if(end_owner->get_owned_next()[0]){
+			end_owner=end_owner->get_owned_next()->get();
+		}
 	}
-	return maping[id];
+	IRNode end=make_end(
+					state_id,next_id,end_owner,
+					tree,maping,todo
+				);
+
+	return merge_nodes(std::move(start),std::move(end));
 }
 
-static void add_state_base(int add_id,const TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<int> &next_todo){
+static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* owner,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+	return make_trans_body(
+		state_id,
+		translate_write_val(trans.write),
+		trans.move,
+		owner,
+		trans.nextState,
+
+		//now the boiler plate
+		tree,maping,todo
+	);
+}
+
+static void add_state_base(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
 	StateIR state=ir.states[maping[add_id]];
-	IRNode ans[2]={nullptr,nullptr};
+	
+	CodeTree::StateStart* ans = get_state(add_id,tree,maping,next_todo);
+	ans->next=std::make_unique<CodeTree::Split>(nullptr,nullptr);
+
+	CodeTree::Split* split=(CodeTree::Split*) (ans->next.get());
+
 	for(int i=0;i<2;i++){
-		TransIR trans=state.trans[i];
+		split->sides[i]=translate_trans(
+							add_id,state.trans[i],
+							(CodeTree::CodeNode*) split,
+							
+							tree,maping,next_todo
+						);
 	}
+	
 }
 
-static void add_state_no_split(int add_id,const TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<int> &next_todo){
+static void add_state_no_split(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
 	StateIR state=ir.states[maping[add_id]];
-	TapeVal w=translate_dual_write_val(state.trans[0].write,state.trans[1].write);
-	Dir m = state.trans[0].move;
+	
+	CodeTree::StateStart* ans = get_state(add_id,tree,maping,next_todo);
+	
+	ans->next=make_trans_body(
+		add_id,
+		translate_dual_write_val(state.trans[0].write,state.trans[1].write),
+		state.trans[0].move,
+		(CodeTree::CodeNode*) ans,
+		state.trans[0].nextState,
 
-	int my_id=maping[add_id];
-	int next_id=map_id_maybe_extend(state.trans[0].nextState,maping,tree,next_todo);
-
-	IRNode b=append_node(make_write(w),make_move(m));
-	tree[my_id]=append_node(std::move(b),make_jump(my_id,next_id,tree));
+		//now the boiler plate
+		tree,maping,next_todo
+	);
 }
 
-static void add_state(int add_id,const TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<int> &next_todo){
+static void add_state(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
 	StateIR state=ir.states[maping[add_id]];
 	
 	if(SemiEq_noWrite_TransIR(state.trans[0],state.trans[1])){
-		return add_state_no_split(cur,ir,ans,maping,next_todo);
+		return add_state_no_split(add_id,ir,tree,maping,next_todo);
 	}
 
-	add_state_base(cur,ir,ans,maping,next_todo);
+	return add_state_base(add_id,ir,tree,maping,next_todo);
 }
+
+
 
 TreeIR make_inital_tree(TuringIR ir){
 	TreeIR ans={};
+	ans.push_back((make_state_start(0)));//only way gcc wont think I am copying
 
 	std::vector<int> maping={};
 	maping.reserve(ir.len);
-	for(int i=0;i<ir.len;i++){
+
+	maping.push_back(0);
+	for(int i=1;i<ir.len;i++){
 		maping.push_back(-1);
 	}
 
-	std::vector<int> todo = {0};
-	std::vector<int> next_todo={};
+	std::vector<unsigned int> todo = {0};
+	std::vector<unsigned int> next_todo={};
 
 	while(todo.size()){
 		while(todo.size()){
 			int cur=todo.back(); todo.pop_back();
-
-			if(ans[maping[cur]]!=nullptr){
-				continue;
-			}
-
 			add_state(cur,ir,ans,maping,next_todo);
 			
 		}
@@ -121,4 +183,3 @@ TreeIR make_inital_tree(TuringIR ir){
 
 	return ans;
 }
-

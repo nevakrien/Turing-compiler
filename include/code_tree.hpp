@@ -99,7 +99,7 @@ struct Move : public CodeNode {
 struct StateStart;
 
 struct StateEnd : public CodeNode {
-    int StateID;
+    int StateID;//parent state
     CodeNode* owner;//safe to hold since if owner is deleted we are deleted
     StateStart* next;//safe to hold because of custom behivior of StateStart
 

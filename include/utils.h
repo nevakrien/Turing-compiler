@@ -20,13 +20,23 @@
 #endif //__cplusplus
 
 #define UNREACHABLE() assert(0 && "Unreachable code reached")
+
+#define ASSERT(x) assert(x) 
+
 #elif defined(__GNUC__) || defined(__clang__)
 #define UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
+
 #define UNREACHABLE() __assume(0)
+#define ASSERT(x) __assume(x)
+
 #else
 //null pointer dereference to signal unreachability
 #define UNREACHABLE() (*(int*)0 = 0)
+#endif
+
+#ifndef ASSERT
+#define ASSERT(x) if(!x){UNREACHABLE();}
 #endif
 
 static inline void* null_check(void* p){
