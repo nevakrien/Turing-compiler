@@ -15,8 +15,8 @@ extern "C" {
 
 enum class TapeVal {
     Unchanged = 0,
-    Always1,
-    Always0,
+    Allways1,
+    Allways0,
     Flip,
     Unknown,
 };

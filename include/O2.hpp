@@ -3,8 +3,8 @@
 
 #include "code_tree.hpp"
 extern "C"{
-    #define IGNORE_C_UTILS
     #include "IR.h"
+    #include "turing.h"
 }
 
 #include <cassert>
@@ -23,8 +23,8 @@ static inline IRNode append_node(IRNode prev,IRNode next){
     if(next==nullptr){
         return prev;
     }
-    assert(prev->len_next()==1);
-    *prev->next_nodes()=std::move(next);
+    assert(prev->get_owned_next_len()==1);
+    *prev->get_owned_next()=std::move(next);
     return prev;
 }
 

@@ -1,9 +1,11 @@
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
-CXX = g++#clang fails... but nicer error messages
+CXX = g++ #clang fails... but nicer error messages
+
 
 # Compiler flags
-CFLAGS = -g2 -march=native -Wall -Iinclude
-CXXFLAGS= $(CFLAGS) -std=c++17
+CFLAGS = -Wall -g2 -march=native -Iinclude
+CXXFLAGS= $(CFLAGS) -Ipch -std=c++17
+
 
 TEST_FLAGS=#-fsanitize=address -fsanitize=undefined
 
@@ -45,6 +47,9 @@ bin/compiler.o: src/compiler.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 #c++ O2
+pch/O2.hpp.gch: include/O2.hpp
+	$(CXX) $(CXXHEADERFLAGS) -fpermissive -x c++-header include/O2.hpp -o pch/O2.hpp.gch
+
 bin/O2.o: src/O2.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
@@ -68,7 +73,7 @@ bin/test_compiler:tests/test_compiler.c bin/compiler.o
 # bin/test_cpp: tests/test_cpp.cpp bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 # 	$(CXX) $(CXXFLAGS) $^ -o $@ -fpermissive
 
-bin/test_code_tree: tests/test_code_tree.cpp 
+bin/test_code_tree: tests/test_code_tree.cpp
 	$(CXX) $(CXXFLAGS) $(TEST_FLAGS) $^ -o $@
 
 #tools
@@ -103,7 +108,7 @@ clean_turing:
 # Check
 check: clean
 	make all -j
-	#rm -rf bin/*
+
 
 test: clean
 	time make all -j

@@ -31,9 +31,6 @@ static inline void free_TuringIR(TuringIR x){
 	free(x.names);
 }
 
-#ifndef IGNORE_C_UTILS
-
-
 static inline int eq_TransIR(TransIR a,TransIR b){
 	if(a.write!=b.write){
 		return 0;
@@ -58,17 +55,17 @@ static inline int SemiEq_noWrite_TransIR(TransIR a,TransIR b){
 }
 
 
-
+//can be used in c++ so must be handled withc care
 static inline TuringIR prone_ir (TuringIR ir,int warn){
-	int* new_ids=null_check(malloc(sizeof(int)*ir.len));
+	int* new_ids=(int *)null_check(malloc(sizeof(int)*ir.len));
 	for(int i=0;i<ir.len;i++){
 		new_ids[i]=-2;
 	}
 
 	TuringIR ans;
 	ans.len=1;
-	ans.states=null_check(malloc(sizeof(StateIR)*ir.len));
-	ans.names=null_check(malloc(sizeof(char*)*ir.len));
+	ans.states=(StateIR*)null_check(malloc(sizeof(StateIR)*ir.len));
+	ans.names=(const char**)null_check(malloc(sizeof(char*)*ir.len));
 
 	int cur_handle=0;
 	new_ids[0]=0;
@@ -122,12 +119,9 @@ static inline TuringIR prone_ir (TuringIR ir,int warn){
 	}
 	free(new_ids);
 
-	ans.states=null_check(realloc(ans.states,sizeof(StateIR)*ans.len));
-	ans.names=null_check(realloc(ans.names,sizeof(char*)*ans.len));
+	ans.states=(StateIR*)null_check(realloc(ans.states,sizeof(StateIR)*ans.len));
+	ans.names=(const char**)null_check(realloc(ans.names,sizeof(char*)*ans.len));
 	return ans;
 }
-#endif //IGNORE_C_UTILS
-
-
 
 #endif // IR_H

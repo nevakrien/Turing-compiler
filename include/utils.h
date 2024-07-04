@@ -29,7 +29,6 @@
 #define UNREACHABLE() (*(int*)0 = 0)
 #endif
 
-#ifndef __cplusplus
 static inline void* null_check(void* p){
 	if(p==NULL){
 		perror("went oom\n");
@@ -37,6 +36,9 @@ static inline void* null_check(void* p){
 	}
 	return p;
 }
+
+
+#ifndef __cplusplus
 // Used the same way as atoi but does error checking.
 static inline int int_of_str(const char* str)
 {
