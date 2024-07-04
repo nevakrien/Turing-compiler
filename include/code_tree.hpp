@@ -152,7 +152,9 @@ inline StateEnd::StateEnd(int StateID, CodeNode* owner, StateStart* next)
 }
 
 inline StateEnd::~StateEnd() {
-    next->erase(this);
+    if(next){//could be StateStart was deleted, only happens rarely
+        next->erase(this);
+    }   
 }
 
 struct Exit : public CodeNode {
