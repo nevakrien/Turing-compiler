@@ -3,8 +3,9 @@ CXX = g++ #clang fails... but nicer error messages
 
 
 # Compiler flags
-CFLAGS = -Wall -g2 -march=native -Iinclude
-CXXFLAGS= $(CFLAGS) -Ipch -std=c++17
+BASE_FLAGS=-Wall -g2 -march=native -Iinclude
+CFLAGS = $(BASE_FLAGS) -std=gnu99
+CXXFLAGS= $(BASE_FLAGS) -std=c++17
 
 
 TEST_FLAGS=#-fsanitize=address -fsanitize=undefined
