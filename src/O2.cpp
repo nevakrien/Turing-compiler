@@ -1,5 +1,26 @@
 #include "O2.hpp"
 
+void warn_unreachble(TreeIR &tree,TuringIR ir){
+	printf("total size dif %ld\n",ir.len-tree.size());
+
+	bool* seen = new bool[ir.len];
+	for(int i=0;i<ir.len;i++){
+		seen[i]=0;
+	}
+	for(auto i=0u;i<tree.size();i++){
+		seen[tree[i]->StateID]=true;
+	}
+	
+
+	for(int i=0;i<ir.len;i++){
+		if(!seen[i]){
+			printf("warning state \"%s\" is unsused\n",ir.names[i] );
+		}
+	}
+
+	delete[] seen;
+}
+
 static TapeVal translate_write_val(Bit w){
 	switch(w){
 		case Bit_0:
@@ -43,6 +64,13 @@ static IRNode maybe_move(Dir m,IRNode next){
 //look at make_inital_tree first and this would make sense
 //~~~
 
+//need to pull global vars into here
+struct GlobalVars final {
+	TreeIR &tree;
+	std::vector<int> &maping;
+	std::vector<unsigned int> &todo;
+	TuringIR ir;
+};
 
 //may need to make the state and add it to our map
 //this can only triger once per state so no state would be added twice to todo
@@ -181,5 +209,6 @@ TreeIR make_inital_tree(TuringIR ir){
 		next_todo={};
 	}
 
+	ans.shrink_to_fit();
 	return ans;
 }

@@ -21,7 +21,7 @@ all: all_tools all_tests bin/compiler.o bin/O2.o  bin/tmc1_bad_hop#bin/libio.so
 	@echo "Compiler used: $(CC)"
 
 all_tools: bin/tape_tool bin/run_turing all_tools bin/tmc1 bin/tmc0
-all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree
+all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files
 bin/io.o: src/io.c
@@ -76,6 +76,10 @@ bin/test_compiler:tests/test_compiler.c bin/compiler.o
 
 bin/test_code_tree: tests/test_code_tree.cpp
 	$(CXX) $(CXXFLAGS) $(TEST_FLAGS) $^ -o $@
+
+bin/test_tree_parse: tests/test_tree_parse.cpp bin/O2.o bin/cli.o bin/IR.o bin/parser.o 
+	$(CXX) $(CXXFLAGS) $(TEST_FLAGS) $^ -o $@
+
 
 #tools
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
