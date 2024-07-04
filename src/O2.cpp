@@ -70,24 +70,30 @@ struct GlobalVars final {
 	std::vector<int> &maping;
 	std::vector<unsigned int> &todo;
 	TuringIR ir;
+
+	// Constructor
+    GlobalVars(TreeIR& tree, std::vector<int>& maping, std::vector<unsigned int>& todo, const TuringIR& ir)
+        : tree(tree), maping(maping), todo(todo), ir(ir) {
+    }
 };
 
 //may need to make the state and add it to our map
 //this can only triger once per state so no state would be added twice to todo
-static CodeTree::StateStart* get_state(unsigned int id,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
-	int maped_id=maping[id];
+static CodeTree::StateStart* get_state(unsigned int id,GlobalVars vars){
+	int maped_id=vars.maping[id];
 	if(maped_id==-1){
-		maped_id=tree.size();
+		maped_id=vars.tree.size();
 		
-		maping[id]=maped_id;
-		tree.push_back(make_state_start(id));
-		todo.push_back(id);
+		vars.maping[id]=maped_id;
+		vars.tree.push_back(make_state_start(id));
+		vars.todo.push_back(id);
+		//printf("adding state \"%s\" maped %d=>%d\n",vars.ir.names[id],id,maped_id);
 	}
 
-	return tree[maped_id].get();
+	return vars.tree[maped_id].get();
 }
 
-static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVars vars){
 	if(id_next==-1){
 		return std::make_unique<CodeTree::Exit>(HALT);
 	}
@@ -96,14 +102,12 @@ static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,TreeIR &
 	return std::make_unique<CodeTree::StateEnd>(id_cur,owner,
 		get_state(
 				(unsigned int) id_next,
-				tree,
-				maping,
-				todo
+				vars
 		)
 	);
 }
 
-static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* owner,int next_id,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* owner,int next_id,GlobalVars vars){
 	IRNode start= maybe_write(w,maybe_move(m,nullptr));
 	CodeTree::CodeNode* end_owner;
 	if(start==nullptr){
@@ -117,13 +121,13 @@ static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* 
 	}
 	IRNode end=make_end(
 					state_id,next_id,end_owner,
-					tree,maping,todo
+					vars
 				);
 
 	return merge_nodes(std::move(start),std::move(end));
 }
 
-static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* owner,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &todo){
+static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* owner,GlobalVars vars){
 	return make_trans_body(
 		state_id,
 		translate_write_val(trans.write),
@@ -132,14 +136,16 @@ static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* own
 		trans.nextState,
 
 		//now the boiler plate
-		tree,maping,todo
+		vars
 	);
 }
 
-static void add_state_base(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
-	StateIR state=ir.states[maping[add_id]];
+static void add_state_base(unsigned int add_id,GlobalVars vars){
+	//printf("state \"%s\" handled normaly\n",vars.ir.names[add_id] );
+
+	StateIR state=vars.ir.states[add_id];
 	
-	CodeTree::StateStart* ans = get_state(add_id,tree,maping,next_todo);
+	CodeTree::StateStart* ans = get_state(add_id,vars);
 	ans->next=std::make_unique<CodeTree::Split>(nullptr,nullptr);
 
 	CodeTree::Split* split=(CodeTree::Split*) (ans->next.get());
@@ -149,16 +155,18 @@ static void add_state_base(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vec
 							add_id,state.trans[i],
 							(CodeTree::CodeNode*) split,
 							
-							tree,maping,next_todo
+							vars
 						);
 	}
 	
 }
 
-static void add_state_no_split(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
-	StateIR state=ir.states[maping[add_id]];
+static void add_state_no_split(unsigned int add_id,GlobalVars vars){
+	//printf("state \"%s\" handled with no split\n",vars.ir.names[add_id] );
+
+	StateIR state=vars.ir.states[add_id];
 	
-	CodeTree::StateStart* ans = get_state(add_id,tree,maping,next_todo);
+	CodeTree::StateStart* ans = get_state(add_id,vars);
 	
 	ans->next=make_trans_body(
 		add_id,
@@ -168,18 +176,18 @@ static void add_state_no_split(unsigned int add_id,TuringIR ir,TreeIR &tree,std:
 		state.trans[0].nextState,
 
 		//now the boiler plate
-		tree,maping,next_todo
+		vars
 	);
 }
 
-static void add_state(unsigned int add_id,TuringIR ir,TreeIR &tree,std::vector<int> &maping,std::vector<unsigned int> &next_todo){
-	StateIR state=ir.states[maping[add_id]];
+static void add_state(unsigned int add_id,GlobalVars vars){
+	StateIR state=vars.ir.states[add_id];
 	
 	if(SemiEq_noWrite_TransIR(state.trans[0],state.trans[1])){
-		return add_state_no_split(add_id,ir,tree,maping,next_todo);
+		return add_state_no_split(add_id,vars);
 	}
 
-	return add_state_base(add_id,ir,tree,maping,next_todo);
+	return add_state_base(add_id,vars);
 }
 
 
@@ -199,14 +207,21 @@ TreeIR make_inital_tree(TuringIR ir){
 	std::vector<unsigned int> todo = {0};
 	std::vector<unsigned int> next_todo={};
 
+	GlobalVars vars=GlobalVars(ans,maping,next_todo,ir);
+
 	while(todo.size()){
+		//printf("run start:\n");
 		while(todo.size()){
 			int cur=todo.back(); todo.pop_back();
-			add_state(cur,ir,ans,maping,next_todo);
+			//printf("resolving state \"%s\"\n",vars.ir.names[cur] );
+			add_state(cur,vars);
+			//printf("done with state \"%s\"\n",vars.ir.names[cur] );
 			
 		}
+		//printf("run end: updating todo\n!!!!!!!!!!!!!\n\n");
 		todo=std::move(next_todo);
 		next_todo={};
+		vars.todo=next_todo;
 	}
 
 	ans.shrink_to_fit();

@@ -40,6 +40,10 @@ int main(int argc, char* argv[]){
 		validate_owned_tree((CodeNode*)tree[i].get());
 	}
 
+	// printf("our IR is:\n");
+	// for(int i=0;i<comp.ir.len;i++){
+	// 	printf("\"%s\"\n",comp.ir.names[i]);
+	// }
 	warn_unreachble(tree,comp.ir);
 
 	//no need to free anything.
