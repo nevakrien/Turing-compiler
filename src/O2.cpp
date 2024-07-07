@@ -95,15 +95,17 @@ static CodeTree::StateStart* get_state(unsigned int id,GlobalVars vars){
 
 static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVars vars){
 	if(id_next==-1){
-		return std::make_unique<CodeTree::Exit>(HALT);
+		return std::make_unique<CodeTree::Exit>(
+				HALT,
+				get_state((unsigned int) id_cur,vars)
+			);
 	}
 
 	ASSERT(id_next>0);
-	return std::make_unique<CodeTree::StateEnd>(id_cur,owner,
-		get_state(
-				(unsigned int) id_next,
-				vars
-		)
+	return std::make_unique<CodeTree::StateEnd>(
+		get_state((unsigned int) id_cur,vars)
+		,owner,
+		get_state((unsigned int) id_next,vars)
 	);
 }
 

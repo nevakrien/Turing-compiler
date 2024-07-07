@@ -45,19 +45,19 @@ bool validate_tree(CodeNode* node, std::unordered_set<CodeNode*>* visited) {
 std::random_device rd;
 std::mt19937 rng(rd());
 
-std::unique_ptr<CodeNode> make_random_stuff(int len) {
+std::unique_ptr<CodeNode> make_random_stuff(int len,StateStart* owner) {
     if (len <= 0) {
-        return std::make_unique<Exit>(HALT);
+        return std::make_unique<Exit>(HALT,owner);
     }
     switch (rng() % 4) {
         case 0:
-            return std::make_unique<Split>(make_random_stuff(len - 4), make_random_stuff(len - 4));
+            return std::make_unique<Split>(make_random_stuff(len - 4,owner), make_random_stuff(len - 4,owner));
         case 1:
-            return std::make_unique<Write>((TapeVal)(rng() % 4), make_random_stuff(len - 1));
+            return std::make_unique<Write>((TapeVal)(rng() % 4), make_random_stuff(len - 1,owner));
         case 2:
-            return std::make_unique<Move>((int)rng() % 10 - 5, make_random_stuff(len - 1));
+            return std::make_unique<Move>((int)rng() % 10 - 5, make_random_stuff(len - 1,owner));
         case 3:
-            return std::make_unique<Exit>(HALT);
+            return std::make_unique<Exit>(HALT,owner);
     }
     return nullptr;
 }
@@ -97,7 +97,9 @@ bool validate_owned_tree_recursive(CodeNode* node) {
 }
 
 int main_test() {
-    std::unique_ptr<StateStart> root = std::make_unique<StateStart>(0, std::make_unique<Exit>(HALT));
+    std::unique_ptr<StateStart> root = std::make_unique<StateStart>(0, nullptr);
+    root->next=std::make_unique<Exit>(HALT,root.get());
+    
     std::unordered_set<CodeNode*> visited;
 
     if (!validate_tree(root.get(), &visited)) {
@@ -113,7 +115,8 @@ int main_test() {
     visited.clear();
 
     std::vector<std::unique_ptr<StateStart>> states = {};
-    states.push_back(std::make_unique<StateStart>(0, make_random_stuff(32)));
+    states.push_back(std::make_unique<StateStart>(0, nullptr));
+    states[0]->next=make_random_stuff(32,states[0].get());
 
     if (!validate_tree(states[0].get(), &visited)) {
         std::cerr << "Error with tree case\n";
@@ -127,20 +130,21 @@ int main_test() {
     }
 
     for (int i = 1; i < 100; i++) {
-        states.push_back(std::make_unique<StateStart>(i, make_random_stuff(8)));
+        states.push_back(std::make_unique<StateStart>(i, nullptr));
+        states[i]->next=make_random_stuff(8,states[i].get());
 
         int insert_state = rng() % states.size();
         CodeNode* insert_spot = get_random_pre_end(static_cast<StateStart*>(states[insert_state].get()));
 
         auto t1 = dynamic_cast<Write*>(insert_spot);
         if (t1) {
-            t1->next = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
+            t1->next = std::make_unique<StateEnd>(states[i].get(), insert_spot, states[i].get());
             continue;
         }
 
         auto t2 = dynamic_cast<Move*>(insert_spot);
         if (t2) {
-            t2->next = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
+            t2->next = std::make_unique<StateEnd>(states[i].get(), insert_spot, states[i].get());
             continue;
         }
 
@@ -149,9 +153,9 @@ int main_test() {
             int selected = rng() % 2;
             CodeNode* check = t3->sides[selected].get();
             if (dynamic_cast<Exit*>(check) || dynamic_cast<StateEnd*>(check)) {
-                t3->sides[selected] = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
+                t3->sides[selected] = std::make_unique<StateEnd>(states[i].get(), insert_spot, states[i].get());
             } else {
-                t3->sides[1 - selected] = std::make_unique<StateEnd>(i, insert_spot, states[i].get());
+                t3->sides[1 - selected] = std::make_unique<StateEnd>(states[i].get(), insert_spot, states[i].get());
             }
             continue;
         }

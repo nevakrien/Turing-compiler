@@ -99,11 +99,12 @@ struct Move : public CodeNode {
 struct StateStart;
 
 struct StateEnd : public CodeNode {
-    int StateID;//parent state
+    StateStart* owning_state;
+    //int StateID;//parent state
     CodeNode* owner;//safe to hold since if owner is deleted we are deleted
     StateStart* next;//safe to hold because of custom behivior of StateStart
 
-    StateEnd(int stateID, CodeNode* owner, StateStart* next_node);
+    inline StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* next);
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;
@@ -114,8 +115,11 @@ struct StateEnd : public CodeNode {
 
 
 struct StateStart : public CodeNode {
-    std::unordered_map<int, std::unordered_set<StateEnd*>> incoming;
+    std::unordered_map<StateStart*, std::unordered_set<StateEnd*>> incoming;
+    std::unordered_map<StateStart*, std::unordered_set<StateEnd*>> outgoing;
     std::unique_ptr<CodeNode> next;
+
+    int exit_counts[3]={0};
     int StateID;
 
     StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
@@ -125,17 +129,26 @@ struct StateStart : public CodeNode {
         return TapeVal::Unchanged;
     }
 
-    void insert(StateEnd* x) {
-        incoming[x->StateID].insert(x);
+    void insert_outgoing(StateEnd* x) {
+        outgoing[x->next].insert(x);
     }
 
-    void erase(StateEnd* x) {
-        incoming[x->StateID].erase(x);
+    void erase_outgoing(StateEnd* x) {
+        outgoing[x->next].erase(x);
+    }
+
+    void insert_incoming(StateEnd* x) {
+        incoming[x->owning_state].insert(x);
+    }
+
+    void erase_incoming(StateEnd* x) {
+        incoming[x->owning_state].erase(x);
     }
     ~StateStart(){
         //StateEnd holds a pointer to us we must reset.
-        next=nullptr; //remove all possible incoming[StateID]
+        next=nullptr; //triger ower owned StateEnd*/Exit* destructors before we die
 
+        //make sure other StateEnds that hold us dont cause UB
         for (const auto& pair : incoming) {
             const std::unordered_set<StateEnd*>& set = pair.second;
             for (StateEnd* x : set) {
@@ -146,22 +159,31 @@ struct StateStart : public CodeNode {
 };
 
 // Implement StateEnd's constructor and destructor after StateStart
-inline StateEnd::StateEnd(int StateID, CodeNode* owner, StateStart* next)
-    : CodeNode(NodeTypes::StateEnd, nullptr, 0), StateID(StateID), owner(owner), next(next) {
-    next->insert(this);
+inline StateEnd::StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* next)
+    : CodeNode(NodeTypes::StateEnd, nullptr, 0),owning_state(owning_state),owner(owner), next(next) {
+    next->insert_incoming(this);
+    owning_state->insert_outgoing(this);
 }
 
 inline StateEnd::~StateEnd() {
+    owning_state->erase_outgoing(this); //our onwer deleted us before deleting itself. this is safe
     if(next){//could be StateStart was deleted, only happens rarely
-        next->erase(this);
-    }   
+        next->erase_incoming(this);
+    } 
 }
 
 struct Exit : public CodeNode {
     TuringDone code;
+    StateStart* owner;
 
-    Exit(TuringDone code_done)
-        : CodeNode(NodeTypes::Exit, nullptr, 0), code(code_done) {}
+    Exit(TuringDone code_done,StateStart* owner)
+        : CodeNode(NodeTypes::Exit, nullptr, 0), code(code_done),owner(owner) {
+            owner->exit_counts[code]++;
+        }
+
+    ~Exit(){
+         owner->exit_counts[code]--;
+    }
 
     TapeVal read_value() override {
         return TapeVal::Unchanged;

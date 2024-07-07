@@ -1,5 +1,5 @@
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
-CXX = g++ #clang fails... but nicer error messages
+CXX =$(shell which g++-14 || echo g++) #clang fails... but nicer error messages
 
 
 # Compiler flags
@@ -17,10 +17,10 @@ TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
 #bin
 
 # Default target
-all: all_tools all_tests bin/compiler.o bin/O2.o  bin/tmc1_bad_hop#bin/libio.so
+all: all_tools all_tests bin/compiler.o bin/O2.o  #bin/tmc1_bad_hop#bin/libio.so
 	@echo "Compiler used: $(CC)"
 
-all_tools: bin/tape_tool bin/run_turing all_tools bin/tmc1 bin/tmc0
+all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0
 all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files
