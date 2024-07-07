@@ -54,6 +54,9 @@ pch/O2.hpp.gch: include/O2.hpp
 bin/O2.o: src/O2.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
+bin/asm_O2.o: src/asm_O2.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
 # Build test executables
 # bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
 # 	$(CC) $(CFLAGS) $^ -o $@

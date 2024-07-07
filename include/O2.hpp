@@ -5,6 +5,7 @@
 extern "C"{
     #include "IR.h"
     #include "turing.h"
+    #include "utils.h"
 }
 
 #include <cassert>
@@ -15,7 +16,7 @@ using TreeIR = std::vector<std::unique_ptr<CodeTree::StateStart>>;
 
 TreeIR make_inital_tree(TuringIR ir);
 void warn_unreachble(TreeIR &tree,TuringIR ir);
-// void Tree_IR_to_ASM(FILE *file,TreeIR ir);
+void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names);
 
 static inline IRNode merge_nodes(IRNode prev,IRNode next){
     if(prev==nullptr){

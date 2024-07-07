@@ -11,8 +11,11 @@ bool validate_tree(CodeNode* node, std::unordered_set<CodeNode*>* visited) {
     assert(node != nullptr);
     assert(visited != nullptr);
     
-    [[maybe_unused]]volatile TapeVal dump = node->read_value(); // make sure that reading the value works
+    // make sure that reading the values works
+    [[maybe_unused]] volatile TapeVal dump = node->read_value(); 
+    [[maybe_unused]] volatile int dump1=node->read_move();
     [[maybe_unused]] volatile bool dump2 = node->is_final();
+
 
     if (!visited->insert(node).second) {
         if (node->type() == NodeTypes::StateStart) {

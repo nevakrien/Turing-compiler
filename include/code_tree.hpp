@@ -56,6 +56,9 @@ public:
     inline int get_owned_next_len() const { return owned_next_len; }
 
     virtual TapeVal read_value() = 0;
+    virtual int read_move(){
+        return 0;
+    }
 };
 
 struct Split : public CodeNode {
@@ -92,6 +95,9 @@ struct Move : public CodeNode {
 
     TapeVal read_value() override {
         return TapeVal::Unknown;
+    }
+    int read_move() override {
+        return move_value;
     }
 };
 
@@ -148,6 +154,14 @@ struct StateStart : public CodeNode {
         //StateEnd holds a pointer to us we must reset.
         next=nullptr; //triger ower owned StateEnd*/Exit* destructors before we die
 
+        for(const auto& pair : incoming) {
+            const std::unordered_set<StateEnd*>& set = pair.second;
+            ASSERT(set.size()==0);
+        }
+        for(int i=0;i<3;i++){
+            ASSERT(exit_counts[i]==0);
+        }
+
         //make sure other StateEnds that hold us dont cause UB
         for (const auto& pair : incoming) {
             const std::unordered_set<StateEnd*>& set = pair.second;
@@ -182,6 +196,7 @@ struct Exit : public CodeNode {
         }
 
     ~Exit(){
+        //owner allways removes us before dying, this is safe
          owner->exit_counts[code]--;
     }
 
