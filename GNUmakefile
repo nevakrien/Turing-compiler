@@ -85,6 +85,9 @@ bin/test_tree_parse: tests/test_tree_parse.cpp bin/O2.o bin/cli.o bin/IR.o bin/p
 
 
 #tools
+bin/treemc: src/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 

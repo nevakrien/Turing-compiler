@@ -233,10 +233,10 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 		case TapeVal::Unchanged:
 			break;
 		case TapeVal::Allways1:
-			fprintf(file,"%smov [%s],double 1\n",_,reg.address.Double());
+			fprintf(file,"%smov [%s],dword 1\n",_,reg.address.Double());
 			break;
 		case TapeVal::Allways0:
-			fprintf(file,"%smov [%s],double 0\n",_,reg.address.Double());
+			fprintf(file,"%smov [%s],dword 0\n",_,reg.address.Double());
 			break;
 
 		case TapeVal::Flip:
