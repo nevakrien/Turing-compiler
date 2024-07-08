@@ -95,6 +95,22 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 
+	if(strcmp(argv[1],"cmp")==0){
+		if(argc!=4){
+			printf("incorect usage %s cmp A B\n",argv[0]);
+			return 1;
+		}
+		
+		int eq=tapes_are_equal(ReadTape(argv[2]),ReadTape(argv[3]));
+		if(eq){
+			printf("yes\n");
+		}
+		else{
+			printf("no\n");
+		}
+		return 0;
+	}
+
 	if(strcmp(argv[1],"new")==0){
 		if(argc!=7){
 			printf("incorect usage %s new filename left_limit right_limit left_init rigt_init\n",argv[0]);

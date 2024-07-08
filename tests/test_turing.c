@@ -277,7 +277,222 @@ void test_NO_STOP_n_state_left_movement() {
 }
 
 
+void test_tapes_are_equal() {
+    int tape_size = 256;
+    Tape tape1, tape2;
+
+    // Helper function to allocate tapes without initializing memory
+    void allocate_tapes() {
+        tape1.base = malloc(tape_size * sizeof(Bit));
+        tape2.base = malloc(tape_size * sizeof(Bit));
+    }
+
+    // Helper function to set memory for initialized part
+    void initialize_tape(Tape *tape, int left_init, int right_init) {
+        memset(tape->base + left_init, 0, (right_init - left_init + 1) * sizeof(Bit));
+    }
+
+    // Test 1: Identical tapes with no initialization, non-zero left limit
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = tape2.left_limit = 50;
+    tape1.right_limit = tape2.right_limit = 200;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+
+    if (!tapes_are_equal(tape1, tape2)) {
+        printf("Test 1 failed: tapes should be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 2: Different cur positions but same initialized areas
+    allocate_tapes();
+    tape1.cur = tape1.base + 120;
+    tape2.cur = tape2.base + 130;
+    tape1.left_limit = tape2.left_limit = 50;
+    tape1.right_limit = tape2.right_limit = 200;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+
+    if (tapes_are_equal(tape1, tape2)) {
+        printf("Test 2 failed: tapes should not be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 3: Different left limits
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = 60;
+    tape2.left_limit = 70;
+    tape1.right_limit = tape2.right_limit = 200;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+
+    if (tapes_are_equal(tape1, tape2)) {
+        printf("Test 3 failed: tapes should not be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 4: Different right limits
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = tape2.left_limit = 50;
+    tape1.right_limit = 190;
+    tape2.right_limit = 210;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+
+    if (tapes_are_equal(tape1, tape2)) {
+        printf("Test 4 failed: tapes should not be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 5: Identical tapes with Bit_1 values in initialized areas
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = tape2.left_limit = 50;
+    tape1.right_limit = tape2.right_limit = 200;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[120] = Bit_1;
+    tape2.base[120] = Bit_1;
+
+    if (!tapes_are_equal(tape1, tape2)) {
+        printf("Test 5 failed: tapes should be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 6: Identical tapes with non-zero left limit, partial initialization
+    allocate_tapes();
+    tape1.cur = tape1.base + 150;
+    tape2.cur = tape2.base + 150;
+    tape1.left_limit = tape2.left_limit = 30;
+    tape1.right_limit = tape2.right_limit = 220;
+    tape1.left_init = tape2.left_init = 100;
+    tape1.right_init = tape2.right_init = 200;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[160] = Bit_1;
+    tape2.base[160] = Bit_1;
+
+    if (!tapes_are_equal(tape1, tape2)) {
+        printf("Test 6 failed: tapes should be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 7: Identical tapes with different cur positions
+    allocate_tapes();
+    tape1.cur = tape1.base + 100;
+    tape2.cur = tape2.base + 120;
+    tape1.left_limit = tape2.left_limit = 50;
+    tape1.right_limit = tape2.right_limit = 180;
+    tape1.left_init = tape2.left_init = 70;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[130] = Bit_1;
+    tape2.base[130] = Bit_1;
+
+    if (tapes_are_equal(tape1, tape2)) {
+        printf("Test 7 failed: tapes should not be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 8: Identical tapes with partial initialization, different limits
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = 40;
+    tape2.left_limit = 50;
+    tape1.right_limit = 210;
+    tape2.right_limit = 220;
+    tape1.left_init = tape2.left_init = 60;
+    tape1.right_init = tape2.right_init = 180;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[160] = Bit_1;
+    tape2.base[160] = Bit_1;
+
+    if (tapes_are_equal(tape1, tape2)) {
+        printf("Test 8 failed: tapes should not be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 9: Identical tapes with cur positions at the edges
+    allocate_tapes();
+    tape1.cur = tape1.base + 50;
+    tape2.cur = tape2.base + 50;
+    tape1.left_limit = tape2.left_limit = 0;
+    tape1.right_limit = tape2.right_limit = tape_size - 1;
+    tape1.left_init = tape2.left_init = 50;
+    tape1.right_init = tape2.right_init = 200;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[100] = Bit_1;
+    tape2.base[100] = Bit_1;
+
+    if (!tapes_are_equal(tape1, tape2)) {
+        printf("Test 9 failed: tapes should be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    // Test 10: Identical tapes diffrent initialization
+    allocate_tapes();
+    tape1.cur = tape1.base + 128;
+    tape2.cur = tape2.base + 128;
+    tape1.left_limit = tape2.left_limit = 60;
+    tape1.right_limit = tape2.right_limit = 190;
+    tape1.left_init = tape2.left_init = 70;
+    tape1.right_init = tape2.right_init = 150;
+    initialize_tape(&tape1, tape1.left_init, tape1.right_init);
+    initialize_tape(&tape2, tape2.left_init, tape2.right_init);
+    tape1.base[140] = Bit_1;
+    tape2.base[140] = Bit_1;
+
+    if (!tapes_are_equal(tape1, tape2)) {
+        printf("Test 10 failed: tapes should be equal.\n");
+        exit(1);
+    }
+    free(tape1.base);
+    free(tape2.base);
+
+    printf("All tape equality tests passed!\n");
+}
+
 int main() {
+    test_tapes_are_equal();
     test_stationary_turing_machine();
     test_infinite_right_flip();
     test_n_state_left_movement();

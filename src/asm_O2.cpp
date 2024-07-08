@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+static const BIT_SIZE=4;
+
 // Enum to represent the different general registers
 enum GeneralRegister {
     RAX, RBX, RCX, RDX,
@@ -105,8 +107,17 @@ struct RegisterState{
 	BoundsDir left;
 	BoundsDir right;
 	std::vector<Register> tmp={};
+
+	int cur_state=0;
+	int cur_split=0;
+
 	RegisterState(Register read,BoundsDir left,BoundsDir right) 
 		:adress(Register(RDI)), read(read) , left(left), right(right) {}
+
+	void update_state(int new_state){
+		cur_state=new_state;
+		cur_split=0;
+	}
 
 };
 
@@ -115,7 +126,7 @@ const char* spaces="    ";
 //every node type has its own translation, we declare them ahead of time here
 
 #define DECLARE_WRITE(NodeType) \
-		static void write_asm(FILE *file, RegisterState &reg,const char** names, CodeTree::NodeType* x);
+		static void write_asm(FILE *file, RegisterState &reg,const char** names, CodeTree::NodeType* x)
 
 #define HANDLE_CASE(NodeType) \
     case NodeTypes::NodeType: \
@@ -160,9 +171,10 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 }
 
 static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::StateStart* x){
-	fprintf(file,"L%d:",x->StateID);
+	reg.update_state(x->StateID);
+	fprintf(file,"L%d:",reg.cur_state);
 	if(names){
-		fprintf(file," ;%s",names[x->StateID]);
+		fprintf(file," ;%s",names[reg.cur_state]);
 	}
 	fprintf(file,"\n");
 	write_genral(file,reg,names,x->next.get());
@@ -174,32 +186,20 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 		case TapeVal::Unchanged:
 			break;
 		case TapeVal::Allways1:
-			fprintf(file,"%smove [%s],double 1\n",spaces,reg.adress.Double());
+			fprintf(file,"%smov [%s],double 1\n",spaces,reg.adress.Double());
 			break;
 		case TapeVal::Allways0:
-			fprintf(file,"%smove [%s],double 0\n",spaces,reg.adress.Double());
+			fprintf(file,"%smov [%s],double 0\n",spaces,reg.adress.Double());
 			break;
 
 		case TapeVal::Flip:
-			fprintf(file,"%smove [%s], %s\n",spaces,reg.read.Double(),reg.adress.Double());
-			fprintf(file,"%smove %s, 1;simple flip\n",spaces,reg.adress.Double());
-			fprintf(file,"%smove [%s], %s\n",spaces,reg.adress.Double(),reg.read.Double());
+			fprintf(file,"%smov [%s], %s\n",spaces,reg.read.Double(),reg.adress.Double());
+			fprintf(file,"%smov %s, 1;simple flip\n",spaces,reg.adress.Double());
+			fprintf(file,"%smov [%s], %s\n",spaces,reg.adress.Double(),reg.read.Double());
 			break;
 		default:
 			UNREACHABLE();
 	}
-	write_genral(file,reg,names,x->next.get());
-}
-
-static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Move* x){
-	int move=x->move_value;
-	if(move<0){
-		//TODO
-	}
-	else if(move>0){
-		//TODO	
-	}
-	
 	write_genral(file,reg,names,x->next.get());
 }
 
@@ -210,13 +210,38 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 
 static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Split* x){
 	fprintf(file,"%s;spliting\n",spaces);
-	fprintf(file,"%smove [%s], %s\n",spaces,reg.read.Double(),reg.adress.Double());
+	fprintf(file,"%smov [%s], %s\n",spaces,reg.read.Double(),reg.adress.Double());
 	fprintf(file,"%stest %s, %s\n",spaces,reg.read.Quad(),reg.read.Quad());
-	//TODO: figure the name out //fprintf(file,"%sjnz L%d_1\n\n",spaces,i); 
+	
+	fprintf(file,"%sjnz L%d_%d\n\n",spaces,reg.cur_state,++reg.cur_split); 
+	//TODO: figure the name out //
 	write_genral(file,reg,names,x->sides[0].get());
-	//Name
+	
+	fprintf(file,"L%d_%d:\n",reg.cur_state,++reg.cur_split);
 	write_genral(file,reg,names,x->sides[1].get());
 
+}
+
+static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Move* x){
+	int move=(x->move_value)*BIT_SIZE;
+	
+	if(move!=0){
+		fprintf(file,"%sadd %s, %d\n",spaces,reg.adress.Quad(),move);
+		fprintf(file,"%scmp %s, %d\n",spaces,reg.adress.Quad(),reg.left.init.Quad());
+	}
+	if(move<0){
+		fprintf(file,"%sjae L%d_%d\n\n",spaces,reg.cur_state,++reg.cur_split);
+		//TODO
+	}
+	else if(move>0){
+		fprintf(file,"%sjbe L%d_%d\n\n",spaces,reg.cur_state,++reg.cur_split);
+		//TODO	
+	}
+	
+	if(move!=0){
+		fprintf(file,"L%d_%d:\n\n",reg.cur_state,++reg.cur_split);
+	}
+	write_genral(file,reg,names,x->next.get());
 }
 
 void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){

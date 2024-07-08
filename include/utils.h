@@ -63,6 +63,7 @@ static inline int int_of_str(const char* str)
 }
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 #endif //__cplusplus
 
 

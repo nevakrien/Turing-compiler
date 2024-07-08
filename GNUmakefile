@@ -92,7 +92,7 @@ bin/tmc1: src/tmc1.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 
-bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
+bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 bin/run_turing: src/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o

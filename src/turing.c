@@ -132,3 +132,40 @@ TuringResult run_turing_no_stop(Tape* tape, const TuringMachine machine, int sta
         }
     }
 }
+
+int tapes_are_equal(Tape a,Tape b){
+    if(a.left_limit!=b.left_limit){
+        return 0;
+    }
+    if(a.right_limit!=b.right_limit){
+        return 0;
+    }
+    if(a.cur-a.base!=b.cur-b.base){
+        return 0;
+    }
+
+    for(int i=a.left_limit;i<=a.right_limit;i++){
+        Bit val_a;
+        Bit val_b;
+        
+        if(i<a.left_init || i>a.right_init){
+            val_a=Bit_0;
+        }
+        else{
+            val_a=a.base[i];
+        }
+
+        if(i<b.left_init || i>b.right_init){
+            val_b=Bit_0;
+        }
+        else{
+            val_b=b.base[i];
+        }
+
+        if(val_a!=val_b){
+            return 0;
+        }
+    }
+
+    return 1;
+}
