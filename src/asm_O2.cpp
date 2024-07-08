@@ -260,10 +260,12 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 	fprintf(file,"%smov [%s], %s\n",_,reg.read.Double(),reg.address.Double());
 	fprintf(file,"%stest %s, %s\n",_,reg.read.Quad(),reg.read.Quad());
 	
-	fprintf(file,"%sjnz L%d_%d\n\n",_,reg.cur_state,++reg.cur_split); 
+	int ret_spot=++reg.cur_split;
+
+	fprintf(file,"%sjnz L%d_%d\n\n",_,reg.cur_state,ret_spot); 
 	write_genral(file,reg,names,x->sides[0].get());
 	
-	fprintf(file,"L%d_%d:\n",reg.cur_state,++reg.cur_split);
+	fprintf(file,"L%d_%d:\n",reg.cur_state,ret_spot);
 	write_genral(file,reg,names,x->sides[1].get());
 
 }
@@ -357,11 +359,11 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 		fprintf(file,"%slea rdi,[%s-%d+4]\n",_,bounds.init.Quad(),extend);
 
 		fprintf(file,"%s;rcx=limit-prev_bound\n",_);
-		fprintf(file,"%slea rcx,[rdi+extend-4]\n",_);
+		fprintf(file,"%slea rcx,[rdi+%d-4]\n",_,extend);
 		fprintf(file,"%ssub rcx,%s\n",_,bounds.limit.Quad());
 	}
 
-	fprintf(file,"%slea shr rcx,2;we move in groups of 4\n",_);
+	fprintf(file,"%sshr rcx,2;we move in groups of 4\n",_);
 
 	//fix init and bounce
 	fprintf(file,"%smov %s,%s\n",_,bounds.init.Quad(),bounds.limit.Quad());

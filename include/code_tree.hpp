@@ -119,8 +119,7 @@ struct StateEnd : public CodeNode {
     ~StateEnd();
 };
 
-
-struct StateStart : public CodeNode {
+struct StateStart final: public CodeNode {
     std::unordered_map<StateStart*, std::unordered_set<StateEnd*>> incoming;
     std::unordered_map<StateStart*, std::unordered_set<StateEnd*>> outgoing;
     std::unique_ptr<CodeNode> next;
@@ -140,7 +139,8 @@ struct StateStart : public CodeNode {
     }
 
     void erase_outgoing(StateEnd* x) {
-        outgoing[x->next].erase(x);
+        outgoing[x->next].erase(x); //if x is null we have issues...
+
     }
 
     void insert_incoming(StateEnd* x) {
@@ -150,29 +150,30 @@ struct StateStart : public CodeNode {
     void erase_incoming(StateEnd* x) {
         incoming[x->owning_state].erase(x);
     }
-    ~StateStart(){
-        //StateEnd holds a pointer to us we must reset.
-        next=nullptr; //triger ower owned StateEnd*/Exit* destructors before we die
 
-        for(const auto& pair : incoming) {
-            const std::unordered_set<StateEnd*>& set = pair.second;
-            ASSERT(set.size()==0);
-        }
-        for(int i=0;i<3;i++){
-            ASSERT(exit_counts[i]==0);
-        }
+    //time wasted: 2 hours.
+    /*
+    note on testing this function:
+    when states are in their destruction phase
+    a lot of their data is invalid
+    which means checking things about them causes UB
+    its better to test this by checking that no UB occured
+    */
+    ~StateStart(){
+        //triger all our destructors
+        //StateEnd/Exit holds a pointer to us so it must die first
+        next=nullptr;
 
         //make sure other StateEnds that hold us dont cause UB
         for (const auto& pair : incoming) {
             const std::unordered_set<StateEnd*>& set = pair.second;
             for (StateEnd* x : set) {
-                x->next=nullptr;
+                x->next=nullptr;//hazard pointer
             }
         }
     }
 };
 
-// Implement StateEnd's constructor and destructor after StateStart
 inline StateEnd::StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* next)
     : CodeNode(NodeTypes::StateEnd, nullptr, 0),owning_state(owning_state),owner(owner), next(next) {
     next->insert_incoming(this);
@@ -181,7 +182,10 @@ inline StateEnd::StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* 
 
 inline StateEnd::~StateEnd() {
     owning_state->erase_outgoing(this); //our onwer deleted us before deleting itself. this is safe
-    if(next){//could be StateStart was deleted, only happens rarely
+    
+    //could be next was deleted 
+    //if it was its table does not matter
+    if(next){
         next->erase_incoming(this);
     } 
 }

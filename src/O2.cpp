@@ -101,7 +101,7 @@ static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVa
 			);
 	}
 
-	ASSERT(id_next>0);
+	ASSERT(0<=id_next);
 	return std::make_unique<CodeTree::StateEnd>(
 		get_state((unsigned int) id_cur,vars)
 		,owner,
