@@ -32,42 +32,16 @@ _start:
     movsxd rax, dword [rsp+28]
     lea r10, [rbx + 4*rax] ;right initilized
 L0: ;Write1_L1
+;Write
     mov [r14],dword 1
-    jmp L1
-L1: ;NoOp1
-    jmp L2
-L2: ;Write1_L2
-    mov [r14],dword 1
-    jmp L3
-L3: ;FlipBack1
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L3_1
-
-    mov [r14],dword 1
-    jmp L4
-L3_1:
-    mov [r14],dword 0
-    jmp L5
-L4: ;FlipAgain1
-    jmp L5
-L5: ;Write1_L3
-    mov [r14],dword 1
-    jmp L6
-L6: ;NoOp2
-    jmp L7
-L7: ;Write1_L4
-    mov [r14],dword 1
-    jmp L8
-L8: ;MoveBack1
+;Move
     add r14, -4
     cmp r14, r11;bounds check init
-    jae L8_1
+    jae L0_1
 
     add r11, -1;optimistic new bounds
     cmp r14, r9
-    jae L8_2
+    jae L0_2
 
     cmp r14, r9
     jae exit_out_of_tape
@@ -77,19 +51,277 @@ L8: ;MoveBack1
     sub rcx,rdi
     shr rcx,2;we move in groups of 4
     mov r11,r9
+    jmp L0_3
+
+L0_2:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L0_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L0_1:;done bounds check
+
+;StateEnd
+    jmp L1
+L1: ;Write1_L2
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L1_1
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L1_2
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L1_3
+
+L1_2:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L1_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L1_1:;done bounds check
+
+;StateEnd
+    jmp L2
+L2: ;Write1_L3
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L2_1
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L2_2
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L2_3
+
+L2_2:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L2_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L2_1:;done bounds check
+
+;StateEnd
+    jmp L3
+L3: ;Write1_L4
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L3_1
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L3_2
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L3_3
+
+L3_2:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L3_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L3_1:;done bounds check
+
+;StateEnd
+    jmp L4
+L4: ;Write1_L5
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L4_1
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L4_2
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L4_3
+
+L4_2:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L4_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L4_1:;done bounds check
+
+;StateEnd
+    jmp L5
+L5: ;Return_R1
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L5_1
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L5_2
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L5_3
+
+L5_2:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L5_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L5_1:;done bounds check
+
+;StateEnd
+    jmp L6
+L6: ;Return_R2
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L6_1
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L6_2
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L6_3
+
+L6_2:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L6_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L6_1:;done bounds check
+
+;StateEnd
+    jmp L7
+L7: ;Return_R3
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L7_1
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L7_2
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L7_3
+
+L7_2:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L7_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L7_1:;done bounds check
+
+;StateEnd
+    jmp L8
+L8: ;Return_R4
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L8_1
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L8_2
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
     jmp L8_3
 
 L8_2:;easy case no re-adjustment
     mov rcx,0
-    mov rdi,r11
+    lea rdi,[r10-1+4]
 L8_3:;joined logic
 
     xor rax,rax
     rep stosd
 L8_1:;done bounds check
 
+;StateEnd
     jmp L9
-L9: ;MoveForward1
+L9: ;Return_R5
+;Move
     add r14, 4
     cmp r14, r10;bounds check init
     jbe L9_1
@@ -117,11 +349,43 @@ L9_3:;joined logic
     rep stosd
 L9_1:;done bounds check
 
+;StateEnd
     jmp L10
-L10: ;Write1_L5
-    mov [r14],dword 1
+L10: ;Initialize_Right
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L10_1
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L10_2
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L10_3
+
+L10_2:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L10_3:;joined logic
+
+    xor rax,rax
+    rep stosd
+L10_1:;done bounds check
+
+;StateEnd
     jmp L11
-L11: ;Return_R1
+L11: ;Start_Copy
+;Write
+    mov [r14],dword 1
+;Move
     add r14, 4
     cmp r14, r10;bounds check init
     jbe L11_1
@@ -149,59 +413,214 @@ L11_3:;joined logic
     rep stosd
 L11_1:;done bounds check
 
+;StateEnd
     jmp L12
-L12: ;NoOp3
-    jmp L13
-L13: ;Return_R2
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L13_1
+L12: ;Decrement_Left
+;Split
+    ;spliting
+    mov r15d, [r14]
+    test r15, r15
+    jnz L12_1
 
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L13_2
+;Write
+    mov [r14],dword 0
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L12_2
 
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L12_3
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
     shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L13_3
+    mov r11,r9
+    jmp L12_4
 
-L13_2:;easy case no re-adjustment
+L12_3:;easy case no re-adjustment
     mov rcx,0
-    lea rdi,[r10-1+4]
-L13_3:;joined logic
+    mov rdi,r11
+L12_4:;joined logic
 
     xor rax,rax
     rep stosd
-L13_1:;done bounds check
+L12_2:;done bounds check
 
+;StateEnd
+    jmp L13
+L12_1:
+;Write
+    mov [r14],dword 0
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L12_5
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L12_6
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L12_7
+
+L12_6:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L12_7:;joined logic
+
+    xor rax,rax
+    rep stosd
+L12_5:;done bounds check
+
+;StateEnd
     jmp L14
-L14: ;FlipBack2
+L13: ;Halt_Check
+;Split
+    ;spliting
+    mov r15d, [r14]
+    test r15, r15
+    jnz L13_1
+
+;Write
+    mov [r14],dword 0
+;Exit
+    jmp exit_good
+
+L13_1:
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L13_2
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L13_3
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L13_4
+
+L13_3:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L13_4:;joined logic
+
+    xor rax,rax
+    rep stosd
+L13_2:;done bounds check
+
+;StateEnd
+    jmp L14
+L14: ;Move_Left
+;Split
     ;spliting
     mov r15d, [r14]
     test r15, r15
     jnz L14_1
 
-    mov [r14],dword 1
+;Write
+    mov [r14],dword 0
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L14_2
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L14_3
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L14_4
+
+L14_3:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L14_4:;joined logic
+
+    xor rax,rax
+    rep stosd
+L14_2:;done bounds check
+
+;StateEnd
     jmp L15
 L14_1:
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
+    jae L14_5
+
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L14_6
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L14_7
+
+L14_6:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L14_7:;joined logic
+
+    xor rax,rax
+    rep stosd
+L14_5:;done bounds check
+
+;StateEnd
+    jmp L14
+L15: ;Find_Right_Tape
+;Split
+    ;spliting
+    mov r15d, [r14]
+    test r15, r15
+    jnz L15_1
+
+;Write
     mov [r14],dword 0
-    jmp L16
-L15: ;FlipAgain2
-    jmp L16
-L16: ;Return_R3
+;Move
     add r14, 4
     cmp r14, r10;bounds check init
-    jbe L16_1
+    jbe L15_2
 
     add r10, 1;optimistic new bounds
     cmp r14, r8
-    jbe L16_2
+    jbe L15_3
 
     cmp r14, r8
     jbe exit_out_of_tape
@@ -211,27 +630,142 @@ L16: ;Return_R3
     sub rcx,r8
     shr rcx,2;we move in groups of 4
     mov r10,r8
-    jmp L16_3
+    jmp L15_4
 
-L16_2:;easy case no re-adjustment
+L15_3:;easy case no re-adjustment
     mov rcx,0
     lea rdi,[r10-1+4]
-L16_3:;joined logic
+L15_4:;joined logic
 
     xor rax,rax
     rep stosd
-L16_1:;done bounds check
+L15_2:;done bounds check
 
-    jmp L17
-L17: ;MoveBack2
+;StateEnd
+    jmp L16
+L15_1:
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L15_5
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L15_6
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L15_7
+
+L15_6:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L15_7:;joined logic
+
+    xor rax,rax
+    rep stosd
+L15_5:;done bounds check
+
+;StateEnd
+    jmp L15
+L16: ;Write_One
+;Split
+    ;spliting
+    mov r15d, [r14]
+    test r15, r15
+    jnz L16_1
+
+;Write
+    mov [r14],dword 1
+;Move
     add r14, -4
     cmp r14, r11;bounds check init
-    jae L17_1
+    jae L16_2
 
     add r11, -1;optimistic new bounds
     cmp r14, r9
+    jae L16_3
+
+    cmp r14, r9
+    jae exit_out_of_tape
+    mov rdi,r9
+    ;rcx=prev_bound-rdi
+    lea rcx,[r11+1]
+    sub rcx,rdi
+    shr rcx,2;we move in groups of 4
+    mov r11,r9
+    jmp L16_4
+
+L16_3:;easy case no re-adjustment
+    mov rcx,0
+    mov rdi,r11
+L16_4:;joined logic
+
+    xor rax,rax
+    rep stosd
+L16_2:;done bounds check
+
+;StateEnd
+    jmp L17
+L16_1:
+;Write
+    mov [r14],dword 1
+;Move
+    add r14, 4
+    cmp r14, r10;bounds check init
+    jbe L16_5
+
+    add r10, 1;optimistic new bounds
+    cmp r14, r8
+    jbe L16_6
+
+    cmp r14, r8
+    jbe exit_out_of_tape
+    lea rdi,[r10-1+4]
+    ;rcx=limit-prev_bound
+    lea rcx,[rdi+1-4]
+    sub rcx,r8
+    shr rcx,2;we move in groups of 4
+    mov r10,r8
+    jmp L16_7
+
+L16_6:;easy case no re-adjustment
+    mov rcx,0
+    lea rdi,[r10-1+4]
+L16_7:;joined logic
+
+    xor rax,rax
+    rep stosd
+L16_5:;done bounds check
+
+;StateEnd
+    jmp L16
+L17: ;Return_Left
+;Split
+    ;spliting
+    mov r15d, [r14]
+    test r15, r15
+    jnz L17_1
+
+;Write
+    mov [r14],dword 0
+;Move
+    add r14, -4
+    cmp r14, r11;bounds check init
     jae L17_2
 
+    add r11, -1;optimistic new bounds
+    cmp r14, r9
+    jae L17_3
+
     cmp r14, r9
     jae exit_out_of_tape
     mov rdi,r9
@@ -240,220 +774,30 @@ L17: ;MoveBack2
     sub rcx,rdi
     shr rcx,2;we move in groups of 4
     mov r11,r9
-    jmp L17_3
+    jmp L17_4
 
-L17_2:;easy case no re-adjustment
+L17_3:;easy case no re-adjustment
     mov rcx,0
     mov rdi,r11
-L17_3:;joined logic
+L17_4:;joined logic
 
     xor rax,rax
     rep stosd
-L17_1:;done bounds check
+L17_2:;done bounds check
 
-    jmp L18
-L18: ;MoveForward2
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L18_1
-
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L18_2
-
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
-    shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L18_3
-
-L18_2:;easy case no re-adjustment
-    mov rcx,0
-    lea rdi,[r10-1+4]
-L18_3:;joined logic
-
-    xor rax,rax
-    rep stosd
-L18_1:;done bounds check
-
-    jmp L19
-L19: ;Return_R4
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L19_1
-
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L19_2
-
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
-    shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L19_3
-
-L19_2:;easy case no re-adjustment
-    mov rcx,0
-    lea rdi,[r10-1+4]
-L19_3:;joined logic
-
-    xor rax,rax
-    rep stosd
-L19_1:;done bounds check
-
-    jmp L20
-L20: ;NoOp4
-    jmp L21
-L21: ;Return_R5
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L21_1
-
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L21_2
-
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
-    shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L21_3
-
-L21_2:;easy case no re-adjustment
-    mov rcx,0
-    lea rdi,[r10-1+4]
-L21_3:;joined logic
-
-    xor rax,rax
-    rep stosd
-L21_1:;done bounds check
-
-    jmp L22
-L22: ;Initialize_Right
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L22_1
-
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L22_2
-
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
-    shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L22_3
-
-L22_2:;easy case no re-adjustment
-    mov rcx,0
-    lea rdi,[r10-1+4]
-L22_3:;joined logic
-
-    xor rax,rax
-    rep stosd
-L22_1:;done bounds check
-
-    jmp L23
-L23: ;Start_Copy
+;StateEnd
+    jmp L12
+L17_1:
+;Write
     mov [r14],dword 1
-    jmp L24
-L24: ;FlipBack3
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L24_1
-
-    mov [r14],dword 1
-    jmp L25
-L24_1:
-    mov [r14],dword 0
-    jmp L26
-L25: ;FlipAgain3
-    jmp L26
-L26: ;Decrement_Left
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L26_1
-
-    mov [r14],dword 0
-    jmp L28
-L26_1:
-    mov [r14],dword 0
-    jmp L27
-L28: ;Halt_Check
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L28_1
-
-    mov [r14],dword 0
-    jmp exit_good
-
-L28_1:
-    mov [r14],dword 1
-    jmp L29
-L27: ;NoOp5
-    jmp L29
-L29: ;Move_Left
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L29_1
-
-    mov [r14],dword 0
-    jmp L30
-L29_1:
-    mov [r14],dword 1
-    jmp L29
-L30: ;NoOp6
-    jmp L31
-L31: ;Find_Right_Tape
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L31_1
-
-    mov [r14],dword 0
-    jmp L34
-L31_1:
-    mov [r14],dword 1
-    jmp L32
-L34: ;Write_One
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L34_1
-
-    mov [r14],dword 1
-    jmp L37
-L34_1:
-    mov [r14],dword 1
-    jmp L35
-L32: ;MoveBack3
+;Move
     add r14, -4
     cmp r14, r11;bounds check init
-    jae L32_1
+    jae L17_5
 
     add r11, -1;optimistic new bounds
     cmp r14, r9
-    jae L32_2
+    jae L17_6
 
     cmp r14, r9
     jae exit_out_of_tape
@@ -463,71 +807,19 @@ L32: ;MoveBack3
     sub rcx,rdi
     shr rcx,2;we move in groups of 4
     mov r11,r9
-    jmp L32_3
+    jmp L17_7
 
-L32_2:;easy case no re-adjustment
+L17_6:;easy case no re-adjustment
     mov rcx,0
     mov rdi,r11
-L32_3:;joined logic
+L17_7:;joined logic
 
     xor rax,rax
     rep stosd
-L32_1:;done bounds check
+L17_5:;done bounds check
 
-    jmp L33
-L33: ;MoveForward3
-    add r14, 4
-    cmp r14, r10;bounds check init
-    jbe L33_1
-
-    add r10, 1;optimistic new bounds
-    cmp r14, r8
-    jbe L33_2
-
-    cmp r14, r8
-    jbe exit_out_of_tape
-    lea rdi,[r10-1+4]
-    ;rcx=limit-prev_bound
-    lea rcx,[rdi+1-4]
-    sub rcx,r8
-    shr rcx,2;we move in groups of 4
-    mov r10,r8
-    jmp L33_3
-
-L33_2:;easy case no re-adjustment
-    mov rcx,0
-    lea rdi,[r10-1+4]
-L33_3:;joined logic
-
-    xor rax,rax
-    rep stosd
-L33_1:;done bounds check
-
-    jmp L34
-L37: ;Return_Left
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L37_1
-
-    mov [r14],dword 0
-    jmp L26
-L37_1:
-    mov [r14],dword 1
-    jmp L37
-L35: ;FlipBack4
-    ;spliting
-    mov r15d, [r14]
-    test r15, r15
-    jnz L35_1
-
-    mov [r14],dword 1
-    jmp L36
-L35_1:
-    mov [r14],dword 0
-    jmp L34
-L36: ;FlipAgain4
-    jmp L34
+;StateEnd
+    jmp L17
 exit_good:
     mov [rsp],qword r14;writing current adress
     mov rax, qword [rsp+8];loading base

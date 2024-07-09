@@ -77,6 +77,44 @@ struct GlobalVars final {
     }
 };
 
+static void print_node(const CodeTree::CodeNode* node,const TuringIR ir, int depth = 0) {
+    if (!node) return;
+
+    const char* indent = "  ";
+    for (int i = 0; i < depth; ++i) printf("%s", indent);
+
+    switch (node->type()) {
+        case NodeTypes::Split:
+            printf("Split\n");
+            for (int i = 0; i < 2; ++i) {
+                print_node(((const CodeTree::Split*)node)->sides[i].get(),ir, depth + 1);
+            }
+            break;
+        case NodeTypes::Write:
+            printf("Write (val: %d)\n", ((int)((const CodeTree::Write*)node)->read_value()));
+            print_node(((const CodeTree::Write*)node)->next.get(),ir, depth + 1);
+            break;
+        case NodeTypes::Move:
+            printf("Move (move_value: %d)\n", ((const CodeTree::Move*)node)->read_move());
+            print_node(((const CodeTree::Move*)node)->next.get(),ir, depth + 1);
+            break;
+        case NodeTypes::StateStart:
+            printf("StateStart (%s)\n", ir.names[((const CodeTree::StateStart*)node)->StateID]);
+            print_node(((const CodeTree::StateStart*)node)->next.get(),ir, depth + 1);
+            break;
+        case NodeTypes::StateEnd:
+            printf("StateEnd TO(%s)\n",ir.names[((const CodeTree::StateEnd*)node)->next->StateID]);
+            break;
+        case NodeTypes::Exit:
+            printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
+            break;
+        default:
+            printf("Unknown NodeType\n");
+            break;
+    }
+}
+
+
 //may need to make the state and add it to our map
 //this can only triger once per state so no state would be added twice to todo
 static CodeTree::StateStart* get_state(unsigned int id,GlobalVars vars){
@@ -126,7 +164,12 @@ static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* 
 					vars
 				);
 
-	return merge_nodes(std::move(start),std::move(end));
+	if(start==nullptr){
+		return end;
+	}
+	
+	end_owner->get_owned_next()[0]=std::move(end);
+	return start;
 }
 
 static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* owner,GlobalVars vars){
@@ -225,6 +268,10 @@ TreeIR make_inital_tree(TuringIR ir){
 		next_todo={};
 		vars.todo=next_todo;
 	}
+
+	// for(auto i=0u;i<ans.size();i++){
+	// 	print_node(ans[i].get(),ir);
+	// }
 
 	ans.shrink_to_fit();
 	return ans;

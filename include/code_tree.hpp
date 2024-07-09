@@ -55,8 +55,8 @@ public:
     inline std::unique_ptr<CodeNode>* get_owned_next() const { return owned_next; }
     inline int get_owned_next_len() const { return owned_next_len; }
 
-    virtual TapeVal read_value() = 0;
-    virtual int read_move(){
+    virtual TapeVal read_value() const= 0;
+    virtual int read_move() const{
         return 0;
     }
 };
@@ -67,7 +67,7 @@ struct Split : public CodeNode {
     Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right)
         : CodeNode(NodeTypes::Split, sides.data(), 2), sides{std::move(left), std::move(right)} {}
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return TapeVal::Unchanged;
     }
 };
@@ -80,7 +80,7 @@ struct Write : public CodeNode {
         : CodeNode(NodeTypes::Write, &next, 1), next(std::move(next_node)), val(value) {}
 
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return val;
     }
 };
@@ -93,10 +93,10 @@ struct Move : public CodeNode {
         : CodeNode(NodeTypes::Move, &next, 1), next(std::move(next_node)), move_value(value) {}
 
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return TapeVal::Unknown;
     }
-    int read_move() override {
+    int read_move() const override {
         return move_value;
     }
 };
@@ -112,7 +112,7 @@ struct StateEnd : public CodeNode {
 
     inline StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* next);
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return TapeVal::Unchanged;
     }
 
@@ -130,7 +130,7 @@ struct StateStart final: public CodeNode {
     StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
         : CodeNode(NodeTypes::StateStart, &next, 1), next(std::move(next_node)), StateID(stateID) {}
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return TapeVal::Unchanged;
     }
 
@@ -205,11 +205,13 @@ struct Exit : public CodeNode {
          owner->exit_counts[code]--;
     }
 
-    TapeVal read_value() override {
+    TapeVal read_value() const override {
         return TapeVal::Unchanged;
     }
 };
 
+
 } // namespace CodeTree
+
 
 #endif // CODE_TREE_HPP

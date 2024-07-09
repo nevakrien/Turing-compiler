@@ -32,6 +32,7 @@ int main(int argc, char* argv[]){
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
 	TreeIR tree=make_inital_tree(comp.ir);
+	warn_unreachble(tree,comp.ir);
 	CompData data={&tree,comp.ir.names};
 
 	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,&data);
