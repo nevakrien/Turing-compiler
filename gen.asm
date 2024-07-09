@@ -1,31 +1,64 @@
+section .text
+    global _start
+    extern ReadTape
+    extern DumpTape
+    extern exit_turing
+exit_out_of_tape:
+    mov rdi, 2
+    call exit_turing
+_start:
+    ;initial boiler plate
+    ; Ensure there are at least 2 arguments (argc >= 3)
+    mov rax, [rsp]         ; Load argc
+    cmp rax, 3
+    jl _exit_bad_args          ; If less than 3 arguments, exit
+
+    ; Load the address of the first command-line argument (input file)
+    mov rsi, [rsp+16]      ; First argument (input file)
+    sub rsp, 32
+    lea rdi, [rsp]         ; Return struct address
+
+    call ReadTape
+
+    ;!!!ACTUAL CODE: done boiler plate
+    mov r14, qword [rsp] ;cur
+    mov rbx, qword [rsp+8] ;base
+    movsxd rax, dword [rsp+20]
+    lea r8, [rbx + 4*rax] ;right limit
+    movsxd rax, dword [rsp+16]
+    lea r9, [rbx + 4*rax] ;left limit
+    movsxd rax, dword [rsp+24]
+    lea r11, [rbx + 4*rax] ;left initilized
+    movsxd rax, dword [rsp+28]
+    lea r10, [rbx + 4*rax] ;right initilized
 L0: ;Write1_L1
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L1
 L1: ;NoOp1
     jmp L2
 L2: ;Write1_L2
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L3
 L3: ;FlipBack1
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L3_1
 
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L4
 L3_1:
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L5
 L4: ;FlipAgain1
     jmp L5
 L5: ;Write1_L3
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L6
 L6: ;NoOp2
     jmp L7
 L7: ;Write1_L4
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L8
 L8: ;MoveBack1
     add r14, -4
@@ -86,7 +119,7 @@ L9_1:;done bounds check
 
     jmp L10
 L10: ;Write1_L5
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L11
 L11: ;Return_R1
     add r14, 4
@@ -150,14 +183,14 @@ L13_1:;done bounds check
     jmp L14
 L14: ;FlipBack2
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L14_1
 
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L15
 L14_1:
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L16
 L15: ;FlipAgain2
     jmp L16
@@ -338,80 +371,80 @@ L22_1:;done bounds check
 
     jmp L23
 L23: ;Start_Copy
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L24
 L24: ;FlipBack3
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L24_1
 
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L25
 L24_1:
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L26
 L25: ;FlipAgain3
     jmp L26
 L26: ;Decrement_Left
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L26_1
 
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L28
 L26_1:
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L27
 L28: ;Halt_Check
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L28_1
 
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp exit_good
 
 L28_1:
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L29
 L27: ;NoOp5
     jmp L29
 L29: ;Move_Left
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L29_1
 
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L30
 L29_1:
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L29
 L30: ;NoOp6
     jmp L31
 L31: ;Find_Right_Tape
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L31_1
 
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L34
 L31_1:
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L32
 L34: ;Write_One
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L34_1
 
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L37
 L34_1:
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L35
 L32: ;MoveBack3
     add r14, -4
@@ -473,25 +506,51 @@ L33_1:;done bounds check
     jmp L34
 L37: ;Return_Left
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L37_1
 
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L26
 L37_1:
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L37
 L35: ;FlipBack4
     ;spliting
-    mov [r15d], r14d
+    mov r15d, [r14]
     test r15, r15
     jnz L35_1
 
-    mov [r14d],dword 1
+    mov [r14],dword 1
     jmp L36
 L35_1:
-    mov [r14d],dword 0
+    mov [r14],dword 0
     jmp L34
 L36: ;FlipAgain4
     jmp L34
+exit_good:
+    mov [rsp],qword r14;writing current adress
+    mov rax, qword [rsp+8];loading base
+    ;moving right_init to int index
+    sub r10,rax
+    shr r10, 2
+    mov [rsp+28], dword r10d ;storing it
+    ;moving left_init to int index
+    sub r11,rax
+    shr r11, 2
+    mov [rsp+24], dword r11d 
+    ;DONE:output boilerplate and exit;
+
+    mov rsi, [rsp+32+24]   ; Second argument (output file) now shifted by 32
+    lea rdi, [rsp]         ; Same struct pointer
+
+    call DumpTape
+
+    ; Exit the program
+    mov rdi, 0
+    call exit_turing
+
+
+_exit_bad_args:
+    mov rdi, 3
+    call exit_turing

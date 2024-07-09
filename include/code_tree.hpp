@@ -181,7 +181,8 @@ inline StateEnd::StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* 
 }
 
 inline StateEnd::~StateEnd() {
-    owning_state->erase_outgoing(this); //our onwer deleted us before deleting itself. this is safe
+    //our onwer deleted us before deleting itself. this is safe
+    owning_state->erase_outgoing(this); 
     
     //could be next was deleted 
     //if it was its table does not matter

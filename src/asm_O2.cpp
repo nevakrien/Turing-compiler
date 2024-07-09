@@ -111,6 +111,7 @@ struct BoundsDir{
 	}
 };
 
+//dont hold rsp here...
 class RegisterState {
 public:
     Register address; // always RDI
@@ -170,6 +171,9 @@ public:
 //_ char, used a lot without a real meaning so I am making it this way
 const char* _="    ";
 
+#define Debug_Asm_Print(x) \
+	fprintf(file, ";%s\n", x);
+
 //every node type has its own translation, we declare them ahead of time here
 
 #define DECLARE_WRITE(NodeType) \
@@ -177,6 +181,7 @@ const char* _="    ";
 
 #define HANDLE_CASE(NodeType) \
     case NodeTypes::NodeType: \
+    	Debug_Asm_Print(#NodeType); \
         write_asm(file, reg,names, static_cast<CodeTree::NodeType*>(x)); \
         break;
 
@@ -199,6 +204,8 @@ static void write_genral(FILE *file, RegisterState &reg, const char** names, Cod
             UNREACHABLE();
     }
 }
+
+
 
 static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Exit* x){
 	switch(x->code){
@@ -233,16 +240,16 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 		case TapeVal::Unchanged:
 			break;
 		case TapeVal::Allways1:
-			fprintf(file,"%smov [%s],dword 1\n",_,reg.address.Double());
+			fprintf(file,"%smov [%s],dword 1\n",_,reg.address.Quad());
 			break;
 		case TapeVal::Allways0:
-			fprintf(file,"%smov [%s],dword 0\n",_,reg.address.Double());
+			fprintf(file,"%smov [%s],dword 0\n",_,reg.address.Quad());
 			break;
 
 		case TapeVal::Flip:
-			fprintf(file,"%smov [%s], %s\n",_,reg.read.Double(),reg.address.Double());
-			fprintf(file,"%smov %s, 1;simple flip\n",_,reg.address.Double());
-			fprintf(file,"%smov [%s], %s\n",_,reg.address.Double(),reg.read.Double());
+			fprintf(file,"%smov %s, [%s]\n",_,reg.read.Double(),reg.address.Quad());
+			fprintf(file,"%sxor %s, 1;simple flip\n",_,reg.read.Double());
+			fprintf(file,"%smov [%s], %s\n",_,reg.address.Quad(),reg.read.Double());
 			break;
 		default:
 			UNREACHABLE();
@@ -257,7 +264,7 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 
 static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Split* x){
 	fprintf(file,"%s;spliting\n",_);
-	fprintf(file,"%smov [%s], %s\n",_,reg.read.Double(),reg.address.Double());
+	fprintf(file,"%smov %s, [%s]\n",_,reg.read.Double(),reg.address.Quad());
 	fprintf(file,"%stest %s, %s\n",_,reg.read.Quad(),reg.read.Quad());
 	
 	int ret_spot=++reg.cur_split;
@@ -403,6 +410,55 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 	write_genral(file,reg,names,x->next.get());
 }
 
+void load_tape_from_stack(FILE *file,RegisterState reg){
+	ASSERT(reg.contains(RSP));
+	Register tmp=reg.add_tmp();
+	Register base=reg.add_tmp();
+
+	fprintf(file, "%smov %s, qword [rsp] ;cur\n", _, reg.address.Quad());
+
+	fprintf(file, "%smov %s, qword [rsp+8] ;base\n", _, base.Quad());
+	// right_limit
+    fprintf(file, "%smovsxd %s, dword [rsp+20]\n", _,tmp.Quad()); 
+    fprintf(file, "%slea %s, [%s + 4*%s] ;right limit\n", _, reg.right.limit.Quad(), base.Quad(),tmp.Quad());
+
+    // left_limit
+    fprintf(file, "%smovsxd %s, dword [rsp+16]\n", _,tmp.Quad());
+    fprintf(file, "%slea %s, [%s + 4*%s] ;left limit\n", _, reg.left.limit.Quad(), base.Quad(),tmp.Quad());
+
+    // right_init
+    fprintf(file, "%smovsxd %s, dword [rsp+24]\n", _,tmp.Quad()); 
+    fprintf(file, "%slea %s, [%s + 4*%s] ;left initilized\n", _, reg.left.init.Quad(), base.Quad(),tmp.Quad());
+
+    // left_init
+    fprintf(file, "%smovsxd %s, dword [rsp+28]\n", _,tmp.Quad()); 
+    fprintf(file, "%slea %s, [%s + 4*%s] ;right initilized\n", _, reg.right.init.Quad(), base.Quad(),tmp.Quad());
+}
+
+void store_tape_to_stack(FILE *file,RegisterState reg){
+	ASSERT(reg.contains(RSP));
+	Register base=reg.add_tmp();
+
+	fprintf(file,"%smov [rsp],qword %s;writing current adress\n",_,reg.address.Quad());
+
+    // Load base address into tmp
+    fprintf(file, "%smov %s, qword [rsp+8];loading base\n", _, base.Quad());
+
+    //not handeling the sign right
+
+    //right init
+    fprintf(file,"%s;moving right_init to int index\n",_);
+    fprintf(file,"%ssub %s,%s\n",_,reg.right.init.Quad(),base.Quad());
+    fprintf(file, "%sshr %s, 2\n", _,reg.right.init.Quad());
+    fprintf(file, "%smov [rsp+28], dword %s ;storing it\n", _, reg.right.init.Double());
+
+    //left init
+    fprintf(file,"%s;moving left_init to int index\n",_);
+    fprintf(file,"%ssub %s,%s\n",_,reg.left.init.Quad(),base.Quad());
+    fprintf(file, "%sshr %s, 2\n", _,reg.left.init.Quad());
+    fprintf(file, "%smov [rsp+24], dword %s \n", _, reg.left.init.Double());
+}
+
 void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	RegisterState reg=RegisterState(
 		Register(R14),
@@ -411,9 +467,21 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 		(BoundsDir){Register(R10),Register(R8)}
 	);
 
+	reg.add_tmp(RSP);//we need rsp for things
+	
+	fprintf(file,O0_assembly_start_template);
+
+	load_tape_from_stack(file,reg);
+	ASSERT(reg.tmp.size()==1);
+
 	//TODO: add missing global functions
 
 	for(auto i=0u;i<ir.size();i++){
 		write_asm(file,reg,names,ir[i].get());
 	}
+
+	fprintf(file,"exit_good:\n");
+	store_tape_to_stack(file,reg);
+
+	fprintf(file,O0_assembly_end_template);
 }

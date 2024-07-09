@@ -142,7 +142,7 @@ def test_out_of_tape(task,compiler):
 if __name__=="__main__":
     import code_gen
 
-    compilers=['tmc0','tmc1']#['tmc1_bad_hop','tmc1']
+    compilers=['tmc0','tmc1']#,'treemc']#['tmc1_bad_hop','tmc1']
 
     code_gen.main()
 

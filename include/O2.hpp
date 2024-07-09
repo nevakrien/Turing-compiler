@@ -6,6 +6,7 @@ extern "C"{
     #include "IR.h"
     #include "turing.h"
     #include "utils.h"
+    #include "compiler.h"
 }
 
 #include <cassert>
