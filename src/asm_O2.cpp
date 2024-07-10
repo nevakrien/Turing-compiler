@@ -6,7 +6,8 @@
 #include <vector>
 
 static const int BIT_SIZE=4;
-static const int EXTEND_SIZE=256*BIT_SIZE;
+static const int EXTEND_STEPS=256;
+static const int EXTEND_SIZE=EXTEND_STEPS*BIT_SIZE;
 
 // Enum to represent the different general registers
 enum GeneralRegister {
@@ -337,7 +338,7 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 
 
 	//moving the bounds
-	int extend=(abs(move)+EXTEND_SIZE-1)/EXTEND_SIZE;
+	int extend=((abs(move)+EXTEND_STEPS-1)/EXTEND_STEPS)*EXTEND_SIZE;
 	int step=extend*move/abs(move);
 
 	fprintf(file,"%sadd %s, %d;optimistic new bounds\n",_,bounds.init.Quad(),step);
@@ -378,7 +379,7 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 	
 	//easy case
 	fprintf(file,"L%d_%d:;easy case no re-adjustment\n",reg.cur_state,easy_case);
-	fprintf(file,"%smov rcx,%d\n",_,extend/BIT_SIZE);
+	fprintf(file,"%smov rcx,%d\n",_,extend);
 
 	if(move<0){
 		fprintf(file,"%smov rdi,%s\n",_,bounds.init.Quad());
