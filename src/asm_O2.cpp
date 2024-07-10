@@ -328,6 +328,7 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 	//useful globals
 	BoundsDir bounds = move > 0 ? reg.right : reg.left;
 	const char* jump=(move > 0 ? "jbe" : "jae");
+	const char* tape_jump=(move > 0 ? "ja" : "jb");
 
 
 
@@ -346,12 +347,12 @@ static void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree:
 	//second check (maybe easy case)
 	int easy_case=++reg.cur_split;
 	int joined_code=++reg.cur_split;
-	fprintf(file,"%scmp %s, %s\n",_,reg.address.Quad(),bounds.limit.Quad());
+	fprintf(file,"%scmp %s, %s\n",_,bounds.init.Quad(),bounds.limit.Quad());
 	fprintf(file, "%s%s L%d_%d\n\n", _, jump, reg.cur_state, easy_case);
 
 	//hard case: checking for exit
 	fprintf(file,"%scmp %s, %s\n",_,reg.address.Quad(),bounds.limit.Quad());
-	fprintf(file, "%s%s exit_out_of_tape\n", _, jump);
+	fprintf(file, "%s%s exit_out_of_tape\n", _, tape_jump);
 
 	
 	//hard case body
