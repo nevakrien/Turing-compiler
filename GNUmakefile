@@ -57,6 +57,9 @@ bin/O2.o: src/O2.cpp
 bin/asm_O2.o: src/asm_O2.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
+bin/fuse.o: src/fuse.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
 # Build test executables
 # bin/test_io: tests/test_io.c bin/io.o #bin/cli.o bin/IR.o bin/parser.o
 # 	$(CC) $(CFLAGS) $^ -o $@
@@ -85,7 +88,7 @@ bin/test_tree_parse: tests/test_tree_parse.cpp bin/O2.o bin/cli.o bin/IR.o bin/p
 
 
 #tools
-bin/treemc: src/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o
+bin/treemc: src/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/fuse.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o

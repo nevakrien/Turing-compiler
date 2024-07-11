@@ -90,8 +90,9 @@ def main_timing(tasks):
 
     #timers={'run_turing_no_stop':time_run_turing_no_stop,'run_turing':time_run_turing,'tmc0':time_tmc0}#,'tmc1':time_tmc1}
     # timers={'tmc1_bad_hop':time_tmc1_bad_hop,'tmc1':time_tmc1}
-    
-    timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}
+    #{'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}
+
+    timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}#{'tmc1':time_tmc1,'treemc':time_treemc}
 
 
     jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(3_000)]

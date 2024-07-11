@@ -14,8 +14,17 @@ extern "C"{
 
 using IRNode=std::unique_ptr<CodeTree::CodeNode>;
 using TreeIR = std::vector<std::unique_ptr<CodeTree::StateStart>>;
+#define IRNODE_CAST(node)\
+    UNIQUE_POINTER_CAST(CodeTree::CodeNode,node)
 
 TreeIR make_inital_tree(TuringIR ir);
+TreeIR initial_fuse(TreeIR tree);
+bool maybe_inline(std::unique_ptr<CodeTree::StateStart>& state);
+
+void removeEmptyEntries(std::unordered_map<CodeTree::StateStart*, std::unordered_set<CodeTree::StateEnd*>>& stateMap);
+
+
+
 void warn_unreachble(TreeIR &tree,TuringIR ir);
 void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names);
 

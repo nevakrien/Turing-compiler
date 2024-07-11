@@ -63,6 +63,10 @@ static inline int int_of_str(const char* str)
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+
+#else
+#define UNIQUE_POINTER_CAST(DerivedType, basePtr) \
+    std::unique_ptr<DerivedType>(static_cast<DerivedType*>(basePtr.release()))
 #endif //__cplusplus
 
 

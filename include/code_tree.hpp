@@ -21,6 +21,70 @@ enum class TapeVal {
     Unknown,
 };
 
+static inline TapeVal combine_tapevals(TapeVal original,TapeVal op){
+    
+    //uname spacing tapeval
+    constexpr TapeVal Unchanged = TapeVal::Unchanged;
+    constexpr TapeVal Allways1=TapeVal::Allways1;
+    constexpr TapeVal Allways0=TapeVal::Allways0;
+    constexpr TapeVal Flip=TapeVal::Flip;
+    constexpr TapeVal Unknown = TapeVal::Unknown;
+
+    switch(op){
+        case TapeVal::Unchanged:
+            return original;
+
+        case TapeVal::Allways1:
+        case TapeVal::Allways0:
+        case TapeVal::Unknown:
+            return op;
+        case Flip:
+            break;
+    }
+
+    switch(original){
+        case Allways1:
+            return Allways0;
+        case Allways0:
+            return Allways1;
+        case Flip:
+            return Unchanged;
+        case Unchanged:
+            return Flip;
+        case Unknown:
+            return Unknown;
+        default:
+            UNREACHABLE();
+    }
+}
+
+enum class RunTimeVal{
+    Unknown=-1,
+    Zero=0,
+    One
+};
+static inline RunTimeVal run_tapeval(RunTimeVal val, TapeVal tape){
+    switch(tape){
+        case TapeVal::Unchanged:
+            return val;
+        case TapeVal::Allways1:
+            return RunTimeVal::One;
+        case TapeVal::Allways0:
+            return RunTimeVal::Zero;
+        case TapeVal::Flip:
+            if(val==RunTimeVal::Unknown){
+                return val;
+            }
+            return (RunTimeVal)(1-(int)val);
+            
+        case TapeVal::Unknown:
+            return RunTimeVal::Unknown;
+        default: 
+            UNREACHABLE();
+    }
+    return RunTimeVal::Unknown;
+}
+
 enum class NodeTypes {
     Split = 0,
     Write,
@@ -61,7 +125,7 @@ public:
     }
 };
 
-struct Split : public CodeNode {
+struct Split final: public CodeNode {
     std::array<std::unique_ptr<CodeNode>, 2> sides;
 
     Split(std::unique_ptr<CodeNode> left, std::unique_ptr<CodeNode> right)
@@ -72,7 +136,7 @@ struct Split : public CodeNode {
     }
 };
 
-struct Write : public CodeNode {
+struct Write final: public CodeNode {
     std::unique_ptr<CodeNode> next;
     TapeVal val;
 
@@ -85,7 +149,7 @@ struct Write : public CodeNode {
     }
 };
 
-struct Move : public CodeNode {
+struct Move final: public CodeNode {
     std::unique_ptr<CodeNode> next;
     int move_value;
 
@@ -104,7 +168,7 @@ struct Move : public CodeNode {
 // Forward declare StateStart because StateEnd needs it
 struct StateStart;
 
-struct StateEnd : public CodeNode {
+struct StateEnd final: public CodeNode {
     StateStart* owning_state;
     //int StateID;//parent state
     CodeNode* owner;//safe to hold since if owner is deleted we are deleted
@@ -140,7 +204,6 @@ struct StateStart final: public CodeNode {
 
     void erase_outgoing(StateEnd* x) {
         outgoing[x->next].erase(x); //if x is null we have issues...
-
     }
 
     void insert_incoming(StateEnd* x) {
@@ -191,7 +254,7 @@ inline StateEnd::~StateEnd() {
     } 
 }
 
-struct Exit : public CodeNode {
+struct Exit final: public CodeNode {
     TuringDone code;
     StateStart* owner;
 

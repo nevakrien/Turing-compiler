@@ -21,6 +21,16 @@ void warn_unreachble(TreeIR &tree,TuringIR ir){
 	delete[] seen;
 }
 
+void removeEmptyEntries(std::unordered_map<CodeTree::StateStart*, std::unordered_set<CodeTree::StateEnd*>>& stateMap) {
+    for (auto it = stateMap.begin(); it != stateMap.end(); ) {
+        if (it->second.empty()) {
+            it = stateMap.erase(it); // erase returns the iterator to the next element
+        } else {
+            ++it;
+        }
+    }
+}
+
 static TapeVal translate_write_val(Bit w){
 	switch(w){
 		case Bit_0:
