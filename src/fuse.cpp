@@ -115,24 +115,24 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 	
 	auto size=state->incoming.size();
 	if(size==0){
-		// state=nullptr;
-		// return true;
-		return false;
+		state=nullptr;
+		return true;
+
 	}
 
 	if(size==1){
 		//check for self refrence
 		StateStart* calling_state=state->incoming.begin()->first;
 		if(calling_state==state.get()){
-			// state=nullptr;
-			// return true;
-			return false;
+			state=nullptr;
+			return true;
 		}
 
 		auto set=state->incoming.begin()->second;
 		if(set.size()==1){
 			StateEnd* caller_end=*set.begin();
 			CodeNode* caller=caller_end->owner;
+
 
 			ASSERT(caller!=nullptr);
 
@@ -142,10 +142,34 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 				child++;
 			}
 
-			// *child=std::move(state->next);
-			// state=nullptr;
-			// return true;
-			return false;
+			//replace pointers to us
+			if(state->next->type()==NodeTypes::StateEnd){
+				StateEnd* out = static_cast<StateEnd*>(state->next.get());
+				out->owner=caller;
+				out->move_owner_state(caller_end->owning_state);
+
+			}
+
+			else {
+			    //move outgoing to another container
+			    std::vector<StateEnd*> state_end_vec;
+			    for (const auto& pair : state->outgoing) {
+			        const std::unordered_set<StateEnd*>& set = pair.second;
+			        for (StateEnd* x : set) {
+			            state_end_vec.push_back(x);
+			        }
+			    }
+
+			    //now we can modify it
+			    for (StateEnd* x : state_end_vec) {
+			        x->move_owner_state(caller_end->owning_state);
+			    }
+			}
+
+	        //compelte the transfer
+			*child=std::move(state->next);
+			state=nullptr;
+			return true;
 		}
 	}
 

@@ -85,7 +85,7 @@ static inline RunTimeVal run_tapeval(RunTimeVal val, TapeVal tape){
     return RunTimeVal::Unknown;
 }
 
-enum class NodeTypes {
+enum class NodeTypes{
     Split = 0,
     Write,
     Move,
@@ -175,6 +175,8 @@ struct StateEnd final: public CodeNode {
     StateStart* next;//safe to hold because of custom behivior of StateStart
 
     inline StateEnd(StateStart* owning_state,CodeNode* owner, StateStart* next);
+    inline void move_owner_state(StateStart* state);
+    inline void move_target_state(StateStart* state);
 
     TapeVal read_value() const override {
         return TapeVal::Unchanged;
@@ -253,6 +255,26 @@ inline StateEnd::~StateEnd() {
         next->erase_incoming(this);
     } 
 }
+
+inline void StateEnd::move_owner_state(StateStart* new_owning_state) {
+    ASSERT(new_owning_state!=nullptr);
+
+    owning_state->erase_outgoing(this);
+    owning_state = new_owning_state;
+    owning_state->insert_outgoing(this);
+    
+}
+
+inline void StateEnd::move_target_state(StateStart* new_next_state) {
+    if (next) {
+        next->erase_incoming(this);
+    }
+    next = new_next_state;
+    if (next) {
+        next->insert_incoming(this);
+    }
+}
+
 
 struct Exit final: public CodeNode {
     TuringDone code;
