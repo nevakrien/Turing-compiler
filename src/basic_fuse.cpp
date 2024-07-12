@@ -52,7 +52,8 @@ static IRNode fuse(bool &changed,RunTimeVal val,std::unique_ptr<CodeTree::Split>
 		
 		case RunTimeVal::Unknown:
 			for(int i=0;i<2;i++){
-				node->sides[i]=fuse(changed,val,std::move(node->sides[i]),node.get());
+				//we know what the val is because we check for it
+				node->sides[i]=fuse(changed,(RunTimeVal)i,std::move(node->sides[i]),node.get());
 			}
 			return node;
 		default:
@@ -87,6 +88,11 @@ static inline IRNode fuse(bool &changed,RunTimeVal val,std::unique_ptr<CodeTree:
 static inline IRNode fuse(bool &changed,RunTimeVal runtime_val,std::unique_ptr<CodeTree::Write> node,CodeTree::CodeNode* owner){
 	if(node->next==nullptr){
 		UNREACHABLE();
+	}
+
+	if(node->val==TapeVal::Unchanged){
+		changed=true;
+		return fuse(changed,runtime_val,std::move(node->next),owner);
 	}
 
 	if(node->next->type()!=NodeTypes::Write){
@@ -192,7 +198,7 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 
 	return false;
 }
-TreeIR initial_fuse(TreeIR tree){
+TreeIR basic_fuse(TreeIR tree){
 	bool changed=true;
 	while(changed){
 		changed=false;

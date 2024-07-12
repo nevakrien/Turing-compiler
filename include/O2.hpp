@@ -18,15 +18,15 @@ using TreeIR = std::vector<std::unique_ptr<CodeTree::StateStart>>;
     UNIQUE_POINTER_CAST(CodeTree::CodeNode,node)
 
 TreeIR make_inital_tree(TuringIR ir);
-TreeIR initial_fuse(TreeIR tree);
-bool maybe_inline(std::unique_ptr<CodeTree::StateStart>& state);
-
-void removeEmptyEntries(std::unordered_map<CodeTree::StateStart*, std::unordered_set<CodeTree::StateEnd*>>& stateMap);
-
-
+TreeIR basic_fuse(TreeIR tree);
+TreeIR linear_fuse(TreeIR tree);
 
 void warn_unreachble(TreeIR &tree,TuringIR ir);
 void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names);
+
+
+bool maybe_inline(std::unique_ptr<CodeTree::StateStart>& state);
+void removeEmptyEntries(std::unordered_map<CodeTree::StateStart*, std::unordered_set<CodeTree::StateEnd*>>& stateMap);
 
 static inline IRNode merge_nodes(IRNode prev,IRNode next){
     if(prev==nullptr){

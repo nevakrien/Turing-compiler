@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
 	TreeIR tree=make_inital_tree(comp.ir);
-	tree=initial_fuse(std::move(tree));
+	tree=basic_fuse(std::move(tree));
 
 	warn_unreachble(tree,comp.ir);
 	CompData data={&tree,comp.ir.names};

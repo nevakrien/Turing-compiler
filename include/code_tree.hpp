@@ -92,6 +92,8 @@ enum class NodeTypes{
     StateStart,
     StateEnd,
     Exit,
+
+    LinearFuse,//defined in linear_fuse.hpp
 };
 
 namespace CodeTree {
