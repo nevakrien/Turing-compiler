@@ -16,9 +16,9 @@ DECLARE_FUSE(StateEnd);
 
 //need this so StateEnd refrences stay valid
 static inline IRNode fuse(bool &changed,RunTimeVal val,std::unique_ptr<CodeTree::StateEnd> node,CodeTree::CodeNode* owner){
-	[[maybe_unused]] volatile auto dump0=node->owner->get_owned_next();
+	//[[maybe_unused]] volatile auto dump0=node->owner->get_owned_next();
 	node->owner=owner;
-	[[maybe_unused]] volatile auto dump=owner->get_owned_next();
+	//[[maybe_unused]] volatile auto dump=owner->get_owned_next();
 	return node;
 }
 
@@ -91,8 +91,25 @@ static inline IRNode fuse(bool &changed,RunTimeVal runtime_val,std::unique_ptr<C
 	}
 
 	if(node->val==TapeVal::Unchanged){
+	skip_me:
 		changed=true;
 		return fuse(changed,runtime_val,std::move(node->next),owner);
+	}
+	
+	//check for useless write	
+	switch(runtime_val){
+		case RunTimeVal::One:
+			if(node->val==TapeVal::Allways1){
+				goto skip_me;
+			}
+			break;
+		case RunTimeVal::Zero:
+			if(node->val==TapeVal::Allways0){
+				goto skip_me;
+			}
+			break;
+		default:
+			break;
 	}
 
 	if(node->next->type()!=NodeTypes::Write){
@@ -106,15 +123,11 @@ static inline IRNode fuse(bool &changed,RunTimeVal runtime_val,std::unique_ptr<C
 	auto next=static_cast<CodeTree::Write*>(node->next.get());
 	node->val=combine_tapevals(node->val,next->val);
 	node->next=std::move(next->next);
-	//runtime val will be updated next cakk
+	//runtime val will be updated next call
 	return fuse(changed,runtime_val,IRNODE_CAST(node),owner); 
 }
 
 
-//for now this is simply a no op
-//the commented out parts are all changes that SHOULD happen
-//but since they invalidate StateEnd I cant do them
-//need to add an update here
 bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 	using namespace CodeTree;
 	removeEmptyEntries(state->incoming);
