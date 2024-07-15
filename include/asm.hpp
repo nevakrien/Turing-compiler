@@ -4,6 +4,10 @@
 #include "O2.hpp"
 #include <stdexcept>
 
+//_ char, used a lot without a real meaning so I am making it this way
+[[maybe_unused]]static const char* _="    ";
+
+
 static const int BIT_SIZE=4;
 static const int EXTEND_STEPS=256;
 static const int EXTEND_SIZE=EXTEND_STEPS*BIT_SIZE;
@@ -168,16 +172,26 @@ public:
     }
 };
 
-//_ char, used a lot without a real meaning so I am making it this way
-static const char* _="    ";
 
 #define Debug_Asm_Print(x) \
 	fprintf(file, ";%s\n", x);
 
+//this function should be defined in the translation unit used.
+//exmple can be find in tree_asm.cpp. 
+//the core idea is to not check for non existing cases
+void write_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x);
+
 //every node type has its own translation, we declare them ahead of time here
 
 #define DECLARE_WRITE(NodeType) \
-    static void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::NodeType* x)
+    void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::NodeType* x);
+
+DECLARE_WRITE(Split);
+DECLARE_WRITE(Write);
+DECLARE_WRITE(Move);
+DECLARE_WRITE(StateStart);
+DECLARE_WRITE(StateEnd);
+DECLARE_WRITE(Exit);
 
 #define HANDLE_CASE(NodeType) \
     case NodeTypes::NodeType: \
