@@ -109,8 +109,10 @@ this is mostly a C project but as a learning exprince I am adding C++ for O2 we 
 1. add a way to benchmark old+new version of the compiler to asses changes
 
 ## general
-1. add a hex dump feature to tape_tool
-2. unify the cli tools
+1. unify the cli tools
 
 ## parser
 1. add better error handeling with a dedicated struct.
+
+# BUGS
+maybe_inline causes UB... need to look into it.
