@@ -103,6 +103,9 @@ bin/test_tree_parse: tests/test_tree_parse.cpp bin/O2.o bin/cli.o bin/IR.o bin/p
 bin/treemc: src/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/history_maps.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+bin/tmc2: src/tmc2.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/linear_fuse.o bin/history_maps.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 

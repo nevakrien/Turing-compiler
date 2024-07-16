@@ -40,4 +40,5 @@ static inline IRNode merge_nodes(IRNode prev,IRNode next){
     return prev;
 }
 
+
 #endif //O2_HPP

@@ -107,3 +107,14 @@ int RunTimeValMap::maxKey() const {
     }
     return _maxKey;
 }
+
+// //COPY STUFF
+
+TapeValMap TapeValMap::copy() const {
+    return *this; // Use the implicitly defined copy constructor
+}
+
+// RunTimeValMap copy method
+RunTimeValMap RunTimeValMap::copy() const {
+    return *this; // Use the implicitly defined copy constructor
+}
