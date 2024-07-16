@@ -14,6 +14,7 @@ DECLARE_FUSE(Write);
 DECLARE_FUSE(Move);
 DECLARE_FUSE(StateEnd);
 
+
 //need this so StateEnd refrences stay valid
 static inline IRNode fuse(bool &changed,RunTimeVal val,std::unique_ptr<CodeTree::StateEnd> node,CodeTree::CodeNode* owner){
 	//[[maybe_unused]] volatile auto dump0=node->owner->get_owned_next();
@@ -149,6 +150,8 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 
 		auto set=state->incoming.begin()->second;
 		if(set.size()==1){
+			printf("inlining state %d\n",state->StateID);
+
 			StateEnd* caller_end=*set.begin();
 			CodeNode* caller=caller_end->owner;
 
@@ -161,6 +164,8 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 				child++;
 			}
 
+			ASSERT(child->get()==(CodeTree::CodeNode*)caller_end);
+
 			//replace pointers to us
 			if(state->next->type()==NodeTypes::StateEnd){
 				StateEnd* out = static_cast<StateEnd*>(state->next.get());
@@ -170,6 +175,7 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 			}
 
 			else {
+				printf("expecting error...\n");
 			    //move outgoing to another container
 			    std::vector<StateEnd*> state_end_vec;
 			    for (const auto& pair : state->outgoing) {
@@ -183,10 +189,46 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 			    for (StateEnd* x : state_end_vec) {
 			        x->move_owner_state(caller_end->owning_state);
 			    }
+
 			}
 
-	        //compelte the transfer
+			removeEmptyEntries(state->outgoing);
+			ASSERT(state->outgoing.size()==0);
+
+			printf("our caller %p\n",caller_end);
+			ASSERT(state->incoming.size()==1);
+			for (const auto& pair : state->incoming) {
+			        const std::unordered_set<StateEnd*>& set = pair.second;
+			        printf("at the start[");
+			        for (StateEnd* x : set) {
+			            printf("%p,",x);
+			        }
+
+			        printf("]\n");
+			    }
+			ASSERT(caller_end->next==state.get());
+			caller_end->move_target_state(nullptr);
+			removeEmptyEntries(state->incoming);
+			for (const auto& pair : state->incoming) {
+			        const std::unordered_set<StateEnd*>& set = pair.second;
+			        printf("found this [");
+			        for (StateEnd* x : set) {
+			            printf("%p,",x);
+			        }
+			        printf("]\n");
+			    }
+			// ASSERT(state->incoming.size()==0);
+
+
+			//compelte the transfer
 			*child=std::move(state->next);
+
+			ASSERT(state->next==nullptr);
+			
+			
+			
+			// ASSERT(state->incoming.size()==0);
+			state->unsafe_clear_incoming();
 			state=nullptr;
 			return true;
 		}

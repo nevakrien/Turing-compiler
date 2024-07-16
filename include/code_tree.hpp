@@ -139,7 +139,22 @@ struct StateStart final: public CodeNode {
     }
 
     void erase_outgoing(StateEnd* x) {
-        outgoing[x->next].erase(x); //if x is null we have issues...
+        // ASSERT(outgoing[x->next].erase(x)); //if x is null we have issues...
+        if(outgoing[x->owning_state].erase(x)==1){
+            return;
+        }
+        printf("ERROR non existing state to remove!!!\n");
+        printf("ordered (%p)[ID%d](next %p)\n",x,x->next->StateID,x->next);
+
+        for (const auto& pair : outgoing) {
+            const std::unordered_set<StateEnd*>& set = pair.second;
+            printf("found this(%p) :[",pair.first);
+            for (StateEnd* x : set) {
+                printf("(%p)[ID%d],",x,x->next->StateID);
+            }
+            printf("]\n");
+        }
+        UNREACHABLE();
     }
 
     void insert_incoming(StateEnd* x) {
@@ -147,9 +162,13 @@ struct StateStart final: public CodeNode {
     }
 
     void erase_incoming(StateEnd* x) {
-        incoming[x->owning_state].erase(x);
+        ASSERT(incoming[x->owning_state].erase(x));
     }
 
+
+    void unsafe_clear_incoming(){
+        incoming={};
+    }
     //time wasted: 2 hours.
     /*
     note on testing this function:

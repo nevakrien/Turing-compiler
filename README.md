@@ -116,3 +116,5 @@ this is mostly a C project but as a learning exprince I am adding C++ for O2 we 
 
 # BUGS
 maybe_inline causes UB... need to look into it.
+
+our Exit nodes cause ub when freed after they have moved away from the original state...

@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
+	//comp.ir=prone_ir(comp.ir,1);
 	TreeIR tree=make_inital_tree(comp.ir);
 	tree=basic_fuse(std::move(tree));
 
