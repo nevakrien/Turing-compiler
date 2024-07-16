@@ -1,6 +1,8 @@
 #ifndef TAPE_ENUMS_HPP
 #define TAPE_ENUMS_HPP
 
+#include "utils.h"
+
 enum class TapeVal {
     Unchanged = 0,
     Allways1,

@@ -54,8 +54,8 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap &read_map){
 		CaseStart(LinearFuse)
 			const TapeValMap& map=node->write_ops;
 			for(int i=map.getMinKey();i<map.getMaxKey();i++){
-				write_map[i]=combine_tapevals(write_map[i],map[i]);
 				read_map[i]=run_tapeval(read_map[i],map[i]);
+				write_map[i]=combine_tapevals(write_map[i],map[i]);
 			}
 
 			input_node=std::move(node->next);

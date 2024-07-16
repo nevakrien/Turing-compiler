@@ -2,7 +2,7 @@
 #define LINEAR_FUSE_HPP
 
 #include "code_tree.hpp"
-
+#include "history_maps.hpp"
 
 
 struct LinearFuse final: public CodeTree::CodeNode{

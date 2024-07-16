@@ -2,6 +2,7 @@
 #define ASM_HPP
 
 #include "O2.hpp"
+#include "linear_fuse.hpp"
 #include <stdexcept>
 
 //_ char, used a lot without a real meaning so I am making it this way
@@ -147,7 +148,7 @@ public:
     }
 
     Register add_tmp() {
-        for (int i = 0; i < 16; i++) {
+        for (int i = 15; i >0; i--) {
             Register reg = Register((GeneralRegister)i);
             if (!contains(reg.name)) {
                 tmp.push_back(reg);
@@ -193,13 +194,28 @@ DECLARE_WRITE(StateStart);
 DECLARE_WRITE(StateEnd);
 DECLARE_WRITE(Exit);
 
+void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x);
+void write_asm(FILE *file, RegisterState &reg, const char** names, HistoryNode* x);
+
+
 #define HANDLE_CASE(NodeType) \
     case NodeTypes::NodeType: \
     	Debug_Asm_Print(#NodeType); \
         write_asm(file, reg,names, static_cast<CodeTree::NodeType*>(x)); \
         break;
 
+#define HANDLE_SCOPED_CASE(NodeType) \
+    case NodeTypes::NodeType: \
+        Debug_Asm_Print(#NodeType); \
+        write_asm(file, reg,names, static_cast<NodeType*>(x)); \
+        break;
+
+void save_registers(FILE *file, RegisterState &reg, std::vector<Register> &registers_to_save, std::vector<Register> &temp_registers);
+void restore_registers(FILE *file, const std::vector<Register> &registers_to_save, const std::vector<Register> &temp_registers);
+
 void load_tape_from_stack(FILE *file,RegisterState reg);
 void store_tape_to_stack(FILE *file,RegisterState reg);
+
+void unsafe_bounds_check_asm(FILE *file, RegisterState &reg, Register address, int move);
 
 #endif //ASM_HPP
