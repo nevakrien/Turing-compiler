@@ -14,20 +14,21 @@ private:
     int _minKey;
     int _maxKey;
 
-    void updateMinMaxKey(int key, TapeVal value);
+    void updateMinMaxKey(int key);
 
 public:
     TapeValMap();
-    void insert(int key, TapeVal value);
+    
     void removeUnchangedEntries();
-    TapeVal operator[](int key) const;
+    const TapeVal operator[](int key) const;
     TapeVal& operator[](int key);
     int minKey() const;
     int maxKey() const;
 
     int size() const;
 
-    TapeValMap copy() const; // Declare the copy method
+    TapeValMap copy() const;
+    TapeValMap offset_copy(int offset) const;
 };
 
 struct RunTimeValMap {
@@ -36,19 +37,20 @@ private:
     int _minKey;
     int _maxKey;
 
-    void updateMinMaxKey(int key, RunTimeVal value);
+    void updateMinMaxKey(int key);
 
 public:
     RunTimeValMap();
-    void insert(int key, RunTimeVal value);
-    RunTimeVal operator[](int key) const;
+
+    const RunTimeVal operator[](int key) const;
     RunTimeVal& operator[](int key);
     int minKey() const;
     int maxKey() const;
 
     int size() const;
 
-    RunTimeValMap copy() const; // Declare the copy method
+    RunTimeValMap copy() const;
+    RunTimeValMap offset_copy(int offset) const;
 };
 
 

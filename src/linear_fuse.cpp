@@ -11,6 +11,14 @@
 #define CaseEnd() \
 	}break
 
+static inline void show_writes(TapeValMap map){
+	printf("map changed to:\n");
+	for(int i= map.minKey();i<=map.maxKey();i++){
+		printf("[(%d) %d]",i,(int)map[i]);
+	}
+	putchar('\n');
+}
+
 //need to add an offset on the read map when passing it recursivly
 IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 	TapeValMap write_map;
@@ -26,6 +34,8 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 				read_map[i]=run_tapeval(read_map[i],map[i]);
 				write_map[i]=combine_tapevals(write_map[i],map[i]);
 			}
+
+			move+=node->move_offset;
 
 			input_node=std::move(node->next);
 			continue;
@@ -66,6 +76,8 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 			write_map[move]=combine_tapevals(write_map[move],node->val);
 			read_map[move]=run_tapeval(read_map[move],node->val);
 
+			//show_writes(write_map);
+
 			input_node=std::move(node->next);
 			continue;
 		CaseEnd();
@@ -74,9 +86,10 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 			//like default but no history
 			if(read_map[move]==RunTimeVal::Unknown){
 				for(int i=0;i<2;i++){
+					printf("Split side [%d]\n",i);
 					node->sides[i]=make_linear_nodes(
 										std::move(node->sides[i]),
-										read_map.copy()
+										read_map.offset_copy(-move)
 									);
 				}
 				if(write_map.size()==0){
@@ -84,19 +97,27 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 				}
 				return std::make_unique<LinearFuse>(write_map,move,std::move(input_node));
 			}
-
+			
 			//remove branching
 			int side=(int)read_map[move];
+
+			printf("Found a knowen split, allways %d\n",side);
+
 			input_node=std::move(node->sides[side]);
 			continue;
 		CaseEnd();
 		
-
+		// //just for printing
+		// case NodeTypes::StateStart: 
+		// {
+		// auto node =static_cast<CodeTree::StateStart*>(input_node.get());
+		// printf("starting State (%d)\n",node->StateID);
+		// }
 		default:
 			for(int i=0;i<input_node->get_owned_next_len();i++){
 					input_node->get_owned_next()[i]=make_linear_nodes(
 										std::move(input_node->get_owned_next()[i]),
-										read_map.copy()
+										read_map.offset_copy(-move)
 									);
 				}
 			if(write_map.size()==0){
@@ -209,9 +230,19 @@ static void print_node(const CodeTree::CodeNode* node, int depth = 0) {
             printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
             break;
         case NodeTypes::LinearFuse:
-            printf("LinearFuse (move_offset: %d)\n", ((const LinearFuse*)node)->move_offset);
+        {
+        	auto n = static_cast<const LinearFuse*>(node);
+            printf("LinearFuse (move_offset: %d)", (n->move_offset));
+
+            for(int i =n->write_ops.minKey();i<=n->write_ops.maxKey();i++){
+            	printf("[(%d) %d]",i,(int)n->write_ops[i]);
+            }
+           	printf("\n");
+        }
+           
             print_node(((const LinearFuse*)node)->next.get(), depth + 1);
             break;
+        
         case NodeTypes::HistoryNode:
             printf("HistoryNode\n");
             print_node(((const HistoryNode*)node)->next.get(), depth + 1);
@@ -274,6 +305,7 @@ TreeIR linear_fuse(TreeIR tree){
 		changed=false;		
 		
 		for(auto i=0u;i<tree.size();i++){
+			printf("starting State (%d)\n",i);
 			if(tree[i]==nullptr){
 				continue;
 			}

@@ -2,21 +2,16 @@
 //tapeval
 TapeValMap::TapeValMap() : _minKey(std::numeric_limits<int>::max()), _maxKey(std::numeric_limits<int>::min()) {}
 
-void TapeValMap::updateMinMaxKey(int key, TapeVal value) {
-    if (value != TapeVal::Unchanged) {
-        if (key < _minKey) {
-            _minKey = key;
-        }
-        if (key > _maxKey) {
-            _maxKey = key;
-        }
+void TapeValMap::updateMinMaxKey(int key) {
+    if (key < _minKey) {
+        _minKey = key;
     }
+    if (key > _maxKey) {
+        _maxKey = key;
+    }
+
 }
 
-void TapeValMap::insert(int key, TapeVal value) {
-    map[key] = value;
-    updateMinMaxKey(key, value);
-}
 
 void TapeValMap::removeUnchangedEntries() {
     for (auto it = map.begin(); it != map.end(); ) {
@@ -31,11 +26,11 @@ void TapeValMap::removeUnchangedEntries() {
     _minKey = std::numeric_limits<int>::max();
     _maxKey = std::numeric_limits<int>::min();
     for (const auto& kvp : map) {
-        updateMinMaxKey(kvp.first, kvp.second);
+        updateMinMaxKey(kvp.first);
     }
 }
 
-TapeVal TapeValMap::operator[](int key) const {
+const TapeVal TapeValMap::operator[](int key) const {
     auto it = map.find(key);
     if (it != map.end()) {
         return it->second;
@@ -45,6 +40,7 @@ TapeVal TapeValMap::operator[](int key) const {
 }
 
 TapeVal& TapeValMap::operator[](int key) {
+    updateMinMaxKey(key);
     return map[key];
 }
 
@@ -65,23 +61,17 @@ int TapeValMap::maxKey() const {
 //runtimeval
 RunTimeValMap::RunTimeValMap() : _minKey(std::numeric_limits<int>::max()), _maxKey(std::numeric_limits<int>::min()) {}
 
-void RunTimeValMap::updateMinMaxKey(int key, RunTimeVal value) {
-    if (value != RunTimeVal::Unknown) {
-        if (key < _minKey) {
-            _minKey = key;
-        }
-        if (key > _maxKey) {
-            _maxKey = key;
-        }
+void RunTimeValMap::updateMinMaxKey(int key) {
+    if (key < _minKey) {
+        _minKey = key;
+    }
+    if (key > _maxKey) {
+        _maxKey = key;
     }
 }
 
-void RunTimeValMap::insert(int key, RunTimeVal value) {
-    map[key] = value;
-    updateMinMaxKey(key, value);
-}
 
-RunTimeVal RunTimeValMap::operator[](int key) const {
+const RunTimeVal RunTimeValMap::operator[](int key) const {
     auto it = map.find(key);
     if (it != map.end()) {
         return it->second;
@@ -91,6 +81,10 @@ RunTimeVal RunTimeValMap::operator[](int key) const {
 }
 
 RunTimeVal& RunTimeValMap::operator[](int key) {
+    if(key<_minKey||key>_maxKey){
+        map[key]=RunTimeVal::Unknown;
+        updateMinMaxKey(key);
+    }
     return map[key];
 }
 
@@ -112,6 +106,52 @@ int RunTimeValMap::maxKey() const {
 
 TapeValMap TapeValMap::copy() const {
     return *this; // Use the implicitly defined copy constructor
+}
+
+TapeValMap TapeValMap::offset_copy(int offset) const {
+    TapeValMap newMap;
+    for (const auto& kvp : map) {
+        int newKey = kvp.first + offset;
+        newMap.map[newKey] = kvp.second;
+    }
+    
+    // Adjust min and max keys with the offset
+    if (_minKey != std::numeric_limits<int>::max()) {
+        newMap._minKey = _minKey + offset;
+    } else {
+        newMap._minKey = std::numeric_limits<int>::max();
+    }
+    
+    if (_maxKey != std::numeric_limits<int>::min()) {
+        newMap._maxKey = _maxKey + offset;
+    } else {
+        newMap._maxKey = std::numeric_limits<int>::min();
+    }
+    
+    return newMap;
+}
+
+RunTimeValMap RunTimeValMap::offset_copy(int offset) const {
+    RunTimeValMap newMap;
+    for (const auto& kvp : map) {
+        int newKey = kvp.first + offset;
+        newMap.map[newKey] = kvp.second;
+    }
+    
+    // Adjust min and max keys with the offset
+    if (_minKey != std::numeric_limits<int>::max()) {
+        newMap._minKey = _minKey + offset;
+    } else {
+        newMap._minKey = std::numeric_limits<int>::max();
+    }
+    
+    if (_maxKey != std::numeric_limits<int>::min()) {
+        newMap._maxKey = _maxKey + offset;
+    } else {
+        newMap._maxKey = std::numeric_limits<int>::min();
+    }
+    
+    return newMap;
 }
 
 // RunTimeValMap copy method
