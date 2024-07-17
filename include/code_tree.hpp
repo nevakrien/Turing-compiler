@@ -124,7 +124,6 @@ struct StateStart final: public CodeNode {
     std::unordered_map<StateStart*, std::unordered_set<StateEnd*>> outgoing;
     std::unique_ptr<CodeNode> next;
 
-    int exit_counts[3]={0};
     int StateID;
 
     StateStart(int stateID, std::unique_ptr<CodeNode> next_node)
@@ -270,20 +269,12 @@ inline void StateEnd::move_target_state(StateStart* new_next_state) {
     owning_state->insert_outgoing(this);
 }
 
-
+//for counting how many exits a StateStart has we can make them as part of the same terminal state
 struct Exit final: public CodeNode {
     TuringDone code;
-    StateStart* owner;
 
-    Exit(TuringDone code_done,StateStart* owner)
-        : CodeNode(NodeTypes::Exit, nullptr, 0), code(code_done),owner(owner) {
-            owner->exit_counts[code]++;
-        }
-
-    ~Exit(){
-        //owner allways removes us before dying, this is safe
-         owner->exit_counts[code]--;
-    }
+    Exit(TuringDone code_done)
+        : CodeNode(NodeTypes::Exit, nullptr, 0), code(code_done){}
 
     TapeVal read_value() const override {
         return TapeVal::Unchanged;

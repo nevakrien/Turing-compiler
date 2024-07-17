@@ -22,7 +22,7 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 		{
 			auto node =static_cast<LinearFuse*>(input_node.get());
 			const TapeValMap& map=node->write_ops;
-			for(int i=map.minKey();i<map.maxKey();i++){
+			for(int i=map.minKey();i<=map.maxKey();i++){
 				read_map[i]=run_tapeval(read_map[i],map[i]);
 				write_map[i]=combine_tapevals(write_map[i],map[i]);
 			}
@@ -39,11 +39,18 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 		}
 
 		CaseStart(StateEnd)
-			IRNode ans= std::make_unique<LinearFuse>(write_map,move,
+			IRNode ans;
+			if(write_map.size()!=0){
+				ans= std::make_unique<LinearFuse>(write_map,move,
 					std::make_unique<HistoryNode>(read_map,std::move(input_node)
 						)
 					);
-			node->owner=ans->get_owned_next()[0].get();
+				node->owner=ans->get_owned_next()[0].get();
+			}
+			else{
+				ans = std::make_unique<HistoryNode>(read_map,std::move(input_node));
+				node->owner=ans.get();
+			} 
 			return ans;
 		CaseEnd();
 
@@ -71,6 +78,9 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 										read_map.copy()
 									);
 				}
+				if(write_map.size()==0){
+					return input_node;
+				}
 				return std::make_unique<LinearFuse>(write_map,move,std::move(input_node));
 			}
 
@@ -86,6 +96,9 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 										std::move(input_node->get_owned_next()[i]),
 										read_map.copy()
 									);
+				}
+			if(write_map.size()==0){
+					return std::make_unique<HistoryNode>(read_map,std::move(input_node));
 				}
 			return std::make_unique<LinearFuse>(write_map,move,
 						std::make_unique<HistoryNode>(read_map,std::move(input_node))
@@ -255,7 +268,7 @@ TreeIR linear_fuse(TreeIR tree){
 			validate(x,x);
 			print_node(x);
 		}
-		
+
 		for(auto i=1u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;

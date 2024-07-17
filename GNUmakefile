@@ -20,7 +20,7 @@ TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
 all: all_tools all_tests bin/compiler.o bin/O2.o  #bin/tmc1_bad_hop#bin/libio.so
 	@echo "Compiler used: $(CC)"
 
-all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc
+all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc bin/tmc2
 all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files

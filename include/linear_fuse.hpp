@@ -11,7 +11,9 @@ struct LinearFuse final: public CodeTree::CodeNode{
 	std::unique_ptr<CodeNode> next;
 
 	LinearFuse(TapeValMap write_ops,int move_offset, std::unique_ptr<CodeNode> next_node)
-        : CodeNode(NodeTypes::LinearFuse, &next, 1), write_ops(write_ops),move_offset(move_offset),next(std::move(next_node)) {}
+        : CodeNode(NodeTypes::LinearFuse, &next, 1), write_ops(write_ops),move_offset(move_offset),next(std::move(next_node)) {
+        	ASSERT(write_ops.size()!=0);
+        }
 
 	TapeVal read_value() const override {
         return write_ops[0];

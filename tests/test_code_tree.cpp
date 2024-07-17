@@ -50,7 +50,7 @@ std::mt19937 rng(rd());
 
 std::unique_ptr<CodeNode> make_random_stuff(int len,StateStart* owner) {
     if (len <= 0) {
-        return std::make_unique<Exit>(HALT,owner);
+        return std::make_unique<Exit>(HALT);
     }
     switch (rng() % 4) {
         case 0:
@@ -60,7 +60,7 @@ std::unique_ptr<CodeNode> make_random_stuff(int len,StateStart* owner) {
         case 2:
             return std::make_unique<Move>((int)rng() % 10 - 5, make_random_stuff(len - 1,owner));
         case 3:
-            return std::make_unique<Exit>(HALT,owner);
+            return std::make_unique<Exit>(HALT);
     }
     return nullptr;
 }
@@ -101,7 +101,7 @@ bool validate_owned_tree_recursive(CodeNode* node) {
 
 int main_test() {
     std::unique_ptr<StateStart> root = std::make_unique<StateStart>(0, nullptr);
-    root->next=std::make_unique<Exit>(HALT,root.get());
+    root->next=std::make_unique<Exit>(HALT);
     
     std::unordered_set<CodeNode*> visited;
 

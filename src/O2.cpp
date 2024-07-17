@@ -145,8 +145,8 @@ static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVa
 
 	if(id_next==-1){
 		return std::make_unique<CodeTree::Exit>(
-				HALT,
-				get_state((unsigned int) id_cur,vars)
+				HALT
+				// get_state((unsigned int) id_cur,vars)
 			);
 	}
 

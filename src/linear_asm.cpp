@@ -66,7 +66,8 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 		need_move=false;
 		fprintf(file, "%sadd %s, %d\n", _, reg.address.Quad(), move);
 	}
-
+	
+	
 	fprintf(file,"%s;write ops\n",_);
 	for(int i=x->write_ops.minKey();i<=x->write_ops.maxKey(); i++){
 		int relative = (i - x->move_offset)*BIT_SIZE;

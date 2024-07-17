@@ -25,6 +25,8 @@ public:
     int minKey() const;
     int maxKey() const;
 
+    int size() const;
+
     TapeValMap copy() const; // Declare the copy method
 };
 
@@ -43,6 +45,8 @@ public:
     RunTimeVal& operator[](int key);
     int minKey() const;
     int maxKey() const;
+
+    int size() const;
 
     RunTimeValMap copy() const; // Declare the copy method
 };

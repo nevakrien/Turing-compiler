@@ -49,16 +49,16 @@ TapeVal& TapeValMap::operator[](int key) {
 }
 
 int TapeValMap::minKey() const {
-    if (_minKey == std::numeric_limits<int>::max()) {
-        throw std::runtime_error("No valid keys in the map.");
-    }
+    // if (_minKey == std::numeric_limits<int>::max()) {
+    //     throw std::runtime_error("No valid keys in the map.");
+    // }
     return _minKey;
 }
 
 int TapeValMap::maxKey() const {
-    if (_maxKey == std::numeric_limits<int>::min()) {
-        throw std::runtime_error("No valid keys in the map.");
-    }
+    // if (_maxKey == std::numeric_limits<int>::min()) {
+    //     throw std::runtime_error("No valid keys in the map.");
+    // }
     return _maxKey;
 }
 
@@ -117,4 +117,14 @@ TapeValMap TapeValMap::copy() const {
 // RunTimeValMap copy method
 RunTimeValMap RunTimeValMap::copy() const {
     return *this; // Use the implicitly defined copy constructor
+}
+
+// SIZE 
+int TapeValMap::size() const {
+    return map.size(); // Use the implicitly defined copy constructor
+}
+
+// RunTimeValMap copy method
+int RunTimeValMap::size() const {
+    return map.size(); // Use the implicitly defined copy constructor
 }
