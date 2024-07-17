@@ -5,6 +5,8 @@ code_tests/__pycache__/
 code_tests/__pycache__/*
 
 *.html
+r000hs
+r000hs/*
 
 code_tests/out_of_tape/*
 code_tests/no_halt/*

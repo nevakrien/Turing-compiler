@@ -58,8 +58,9 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
     printf("Assembly completed successfully.\n");
 
     // Step 3: Link the object file with io.o to create the final executable
-    const char* cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2";
-    char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)));
+    const char* cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2\0";
+    
+    char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)+strlen(dirname)));
     sprintf(ld,cld,filename,filename,dirname);
     
     result = system(ld);

@@ -175,7 +175,7 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 			}
 
 			else {
-				printf("expecting error...\n");
+				// printf("expecting error...\n");
 			    //move outgoing to another container
 			    std::vector<StateEnd*> state_end_vec;
 			    for (const auto& pair : state->outgoing) {
@@ -192,31 +192,31 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 
 			}
 
-			removeEmptyEntries(state->outgoing);
-			ASSERT(state->outgoing.size()==0);
+			// removeEmptyEntries(state->outgoing);	
+			// ASSERT(state->outgoing.size()==0);
 
-			printf("our caller %p\n",caller_end);
-			ASSERT(state->incoming.size()==1);
-			for (const auto& pair : state->incoming) {
-			        const std::unordered_set<StateEnd*>& set = pair.second;
-			        printf("at the start[");
-			        for (StateEnd* x : set) {
-			            printf("%p,",x);
-			        }
+			// printf("our caller %p\n",caller_end);
+			// ASSERT(state->incoming.size()==1);
+			// for (const auto& pair : state->incoming) {
+			//         const std::unordered_set<StateEnd*>& set = pair.second;
+			//         printf("at the start[");
+			//         for (StateEnd* x : set) {
+			//             printf("%p,",x);
+			//         }
 
-			        printf("]\n");
-			    }
-			ASSERT(caller_end->next==state.get());
+			//         printf("]\n");
+			//     }
+			// ASSERT(caller_end->next==state.get());
 			caller_end->move_target_state(nullptr);
-			removeEmptyEntries(state->incoming);
-			for (const auto& pair : state->incoming) {
-			        const std::unordered_set<StateEnd*>& set = pair.second;
-			        printf("found this [");
-			        for (StateEnd* x : set) {
-			            printf("%p,",x);
-			        }
-			        printf("]\n");
-			    }
+			// removeEmptyEntries(state->incoming);
+			// for (const auto& pair : state->incoming) {
+			//         const std::unordered_set<StateEnd*>& set = pair.second;
+			//         printf("found this [");
+			//         for (StateEnd* x : set) {
+			//             printf("%p,",x);
+			//         }
+			//         printf("]\n");
+			//     }
 			// ASSERT(state->incoming.size()==0);
 
 
@@ -278,9 +278,9 @@ TreeIR basic_fuse(TreeIR tree){
 
 			// validate_tree(tree);
 
-			// if(i!=0){
-			// 	changed|=maybe_inline(tree[i]);
-			// }
+			if(i!=0){
+				changed|=maybe_inline(tree[i]);
+			}
 		}
 	}
 	//prune null states

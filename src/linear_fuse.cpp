@@ -71,6 +71,7 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 		CaseEnd();
 
 		CaseStart(Split)
+			//like default but no history
 			if(read_map[move]==RunTimeVal::Unknown){
 				for(int i=0;i<2;i++){
 					node->sides[i]=make_linear_nodes(
@@ -84,6 +85,7 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 				return std::make_unique<LinearFuse>(write_map,move,std::move(input_node));
 			}
 
+			//remove branching
 			int side=(int)read_map[move];
 			input_node=std::move(node->sides[side]);
 			continue;
@@ -188,7 +190,7 @@ static void print_node(const CodeTree::CodeNode* node, int depth = 0) {
 			for (const auto& pair : n->outgoing) {
 			        const std::unordered_set<CodeTree::StateEnd*>& set = pair.second;
 			        for (CodeTree::StateEnd* x : set) {
-			            printf("going [%d] ", x->owning_state->StateID);
+			            printf("going [%d] ", x->next->StateID);
 			        }
 			    }
 			printf("\n");
@@ -197,8 +199,12 @@ static void print_node(const CodeTree::CodeNode* node, int depth = 0) {
             print_node(((const CodeTree::StateStart*)node)->next.get(), depth + 1);
             break;
         case NodeTypes::StateEnd:
-            printf("StateEnd\n");
+        {	
+        	auto n = static_cast<const CodeTree::StateEnd*>(node);
+        	printf("StateEnd TO(%d)\n",n->next->StateID);
+        }
             break;
+        
         case NodeTypes::Exit:
             printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
             break;
@@ -230,7 +236,7 @@ static void validate(CodeTree::CodeNode* node,CodeTree::StateStart* start) {
     		{
     			auto x = static_cast<CodeTree::StateEnd*>(node);
     			assert(x->owning_state==start);
-    			printf("yes we got the right end\n");
+    			// printf("yes we got the right end\n");
     		}
     	default:
     		break;
@@ -243,13 +249,30 @@ static void validate(CodeTree::CodeNode* node,CodeTree::StateStart* start) {
     return;
 }
 
+static void show(TreeIR &tree){
+	printf("CURRENT SITUATION\n");
+		for(auto i=0u;i<tree.size();i++){
+			if(tree[i]==nullptr){
+				continue;
+			}
+			auto x = tree[i].get();
+			validate(x,x);
+			print_node(x);
+
+		}
+		printf("\n\n");
+}
 
 TreeIR linear_fuse(TreeIR tree){
 	//RunTimeValMap read_map;
 	bool changed=true;
-	while(changed){
-		changed=false;
 
+	printf("STARTING TREE:\n");
+	show(tree);
+
+	while(changed){
+		changed=false;		
+		
 		for(auto i=0u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;
@@ -260,25 +283,25 @@ TreeIR linear_fuse(TreeIR tree){
 				read_map
 				);
 		}
-		for(auto i=0u;i<tree.size();i++){
-			if(tree[i]==nullptr){
-				continue;
-			}
-			auto x = tree[i].get();
-			validate(x,x);
-			print_node(x);
-		}
 
+		printf("LINEAR FUSE PASS:\n");
+		show(tree);
+		
 		for(auto i=1u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;
 			}
 			auto x = tree[i].get();
 			validate(x,x);
-			print_node(x);
+			// print_node(x);
 			changed|=maybe_inline(tree[i]);
 		}
+
+		printf("INLINE PASS:\n");
+		show(tree);
 	}
+	
+
 	//prune null states
 	TreeIR ans={};
 	ans.reserve(tree.size());

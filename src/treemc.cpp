@@ -33,10 +33,11 @@ int main(int argc, char* argv[]){
 	CompileStepOne comp = first_compile_step(argv[1]);
 	//comp.ir=prone_ir(comp.ir,1);
 	TreeIR tree=make_inital_tree(comp.ir);
+	// warn_unreachble(tree,comp.ir);
+	
 	tree=basic_fuse(std::move(tree));
 	validate_tree(tree);
 
-	warn_unreachble(tree,comp.ir);
 	CompData data={&tree,comp.ir.names};
 
 	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,&data);
@@ -47,6 +48,6 @@ int main(int argc, char* argv[]){
 	free(comp.ir.states);
 	free(comp.text);
 	#endif
-	
+
 	return 0;
 }
