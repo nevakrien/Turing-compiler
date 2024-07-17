@@ -140,17 +140,22 @@ struct StateStart final: public CodeNode {
 
     void erase_outgoing(StateEnd* x) {
         // ASSERT(outgoing[x->next].erase(x)); //if x is null we have issues...
-        if(outgoing[x->owning_state].erase(x)==1){
+        if(outgoing[x->next].erase(x)==1){
+            return;
+        }
+        if(x->next==nullptr){
             return;
         }
         printf("ERROR non existing state to remove!!!\n");
-        printf("ordered (%p)[ID%d](next %p)\n",x,x->next->StateID,x->next);
+        // printf("ordered (%p)[ID%d](next %p)\n",x,x->next->StateID,x->next);
+        printf("ordered (%p)=>(%p)\n",x,x->next);
 
         for (const auto& pair : outgoing) {
             const std::unordered_set<StateEnd*>& set = pair.second;
             printf("found this(%p) :[",pair.first);
             for (StateEnd* x : set) {
-                printf("(%p)[ID%d],",x,x->next->StateID);
+                // printf("(%p)[ID%d],",x,x->next->StateID);
+                printf("(%p),",x);
             }
             printf("]\n");
         }
@@ -213,12 +218,25 @@ inline void StateEnd::move_owner_state(StateStart* new_owning_state) {
     ASSERT(new_owning_state!=nullptr);
 
     owning_state->erase_outgoing(this);
+
+    //update our key in next
+    if (next) {
+        next->erase_incoming(this);
+    }
+
     owning_state = new_owning_state;
+    
+    if (next) {
+        next->insert_incoming(this);
+    }
+
     owning_state->insert_outgoing(this);
     
 }
 
 inline void StateEnd::move_target_state(StateStart* new_next_state) {
+    owning_state->erase_outgoing(this);
+
     if (next) {
         next->erase_incoming(this);
     }
@@ -226,6 +244,8 @@ inline void StateEnd::move_target_state(StateStart* new_next_state) {
     if (next) {
         next->insert_incoming(this);
     }
+
+    owning_state->insert_outgoing(this);
 }
 
 

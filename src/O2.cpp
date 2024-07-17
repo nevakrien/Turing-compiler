@@ -135,13 +135,14 @@ static CodeTree::StateStart* get_state(unsigned int id,GlobalVars vars){
 		vars.maping[id]=maped_id;
 		vars.tree.push_back(make_state_start(id));
 		vars.todo.push_back(id);
-		//printf("adding state \"%s\" maped %d=>%d\n",vars.ir.names[id],id,maped_id);
+		// printf("adding state \"%s\" maped %d=>%d\n",vars.ir.names[id],id,maped_id);
 	}
 
 	return vars.tree[maped_id].get();
 }
 
 static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVars vars){
+
 	if(id_next==-1){
 		return std::make_unique<CodeTree::Exit>(
 				HALT,
@@ -150,11 +151,13 @@ static IRNode make_end(int id_cur,int id_next,CodeTree::CodeNode* owner,GlobalVa
 	}
 
 	ASSERT(0<=id_next);
-	return std::make_unique<CodeTree::StateEnd>(
+	IRNode ans = std::make_unique<CodeTree::StateEnd>(
 		get_state((unsigned int) id_cur,vars)
 		,owner,
 		get_state((unsigned int) id_next,vars)
 	);
+
+	return ans;
 }
 
 static IRNode make_trans_body(int state_id,TapeVal w, Dir m,CodeTree::CodeNode* owner,int next_id,GlobalVars vars){
@@ -196,7 +199,7 @@ static IRNode translate_trans(int state_id,TransIR trans,CodeTree::CodeNode* own
 }
 
 static void add_state_base(unsigned int add_id,GlobalVars vars){
-	//printf("state \"%s\" handled normaly\n",vars.ir.names[add_id] );
+	// printf("state \"%s\" handled normaly\n",vars.ir.names[add_id] );
 
 	StateIR state=vars.ir.states[add_id];
 	
@@ -217,7 +220,7 @@ static void add_state_base(unsigned int add_id,GlobalVars vars){
 }
 
 static void add_state_no_split(unsigned int add_id,GlobalVars vars){
-	//printf("state \"%s\" handled with no split\n",vars.ir.names[add_id] );
+	// printf("state \"%s\" handled with no split\n",vars.ir.names[add_id] );
 
 	StateIR state=vars.ir.states[add_id];
 	
@@ -265,23 +268,29 @@ TreeIR make_inital_tree(TuringIR ir){
 	GlobalVars vars=GlobalVars(ans,maping,next_todo,ir);
 
 	while(todo.size()){
-		//printf("run start:\n");
+		// printf("run start:\n");
 		while(todo.size()){
-			int cur=todo.back(); todo.pop_back();
-			//printf("resolving state \"%s\"\n",vars.ir.names[cur] );
-			add_state(cur,vars);
-			//printf("done with state \"%s\"\n",vars.ir.names[cur] );
+
 			
+			int cur=todo.back(); todo.pop_back();
+			// printf("resolving state \"%s\"\n",vars.ir.names[cur] );
+			add_state(cur,vars);
+			// printf("done with state \"%s\"\n",vars.ir.names[cur] );
+			
+			// validate_tree(ans);
 		}
-		//printf("run end: updating todo\n!!!!!!!!!!!!!\n\n");
+		// printf("run end: updating todo\n!!!!!!!!!!!!!\n\n");
 		todo=std::move(next_todo);
 		next_todo={};
 		vars.todo=next_todo;
 	}
+	
 
 	// for(auto i=0u;i<ans.size();i++){
 	// 	print_node(ans[i].get(),ir);
 	// }
+
+	validate_tree(ans);
 
 	ans.shrink_to_fit();
 	return ans;

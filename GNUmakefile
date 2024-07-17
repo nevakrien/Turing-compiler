@@ -3,7 +3,7 @@ CXX =$(shell which g++-14 || echo g++) #clang fails... but nicer error messages
 
 
 # Compiler flags
-BASE_FLAGS=-Wall -g2 -march=native -Iinclude
+BASE_FLAGS=-Wall -g1 -march=native -Iinclude
 CFLAGS = $(BASE_FLAGS) -std=gnu99
 CXXFLAGS= $(BASE_FLAGS) -std=c++17
 

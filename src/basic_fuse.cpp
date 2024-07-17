@@ -253,23 +253,34 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 
 	return false;
 }
+
+
 TreeIR basic_fuse(TreeIR tree){
+	validate_tree(tree);
+
 	bool changed=true;
 	while(changed){
 		changed=false;
+
 
 		for(auto i=0u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;
 			}
+			// printf("i=%d\n",i);
+			// validate_tree(tree);
+
 			tree[i]->next=fuse(changed,
 				RunTimeVal::Unknown,
 				std::move(tree[i]->next),
 				tree[i].get()
 			);
-			if(i!=0){
-				changed|=maybe_inline(tree[i]);
-			}
+
+			// validate_tree(tree);
+
+			// if(i!=0){
+			// 	changed|=maybe_inline(tree[i]);
+			// }
 		}
 	}
 	//prune null states

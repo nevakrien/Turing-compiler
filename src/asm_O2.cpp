@@ -14,7 +14,7 @@ void write_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::
         HANDLE_CASE(StateStart)
         HANDLE_CASE(StateEnd)
         HANDLE_CASE(Exit)
-        
+
         HANDLE_SCOPED_CASE(HistoryNode)
         HANDLE_SCOPED_CASE(LinearFuse)
         default:
