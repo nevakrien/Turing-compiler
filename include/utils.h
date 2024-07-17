@@ -36,7 +36,11 @@
 #endif
 
 #ifndef ASSERT
-#define ASSERT(x) if(!x){UNREACHABLE();}
+#include <stdbool.h>
+static inline void ASSERT(bool x){
+    if(!x){UNREACHABLE();}
+}
+// #define ASSERT(x) if(!x){UNREACHABLE();}
 #endif
 
 static inline void* null_check(void* p){

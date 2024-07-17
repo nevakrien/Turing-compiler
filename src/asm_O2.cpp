@@ -47,6 +47,8 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	store_tape_to_stack(file,reg);
 
 	fprintf(file,O0_assembly_end_template);
+	//for deubg
+	validate_tree(ir);
 }
 
 //assumes RAX RDI RCX are saved...

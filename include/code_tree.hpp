@@ -14,7 +14,7 @@ extern "C" {
 #include <unordered_map>
 #include <memory>
 
-
+#include <vector>
 
 enum class NodeTypes{
     Split = 0,
@@ -143,9 +143,13 @@ struct StateStart final: public CodeNode {
         if(outgoing[x->next].erase(x)==1){
             return;
         }
+        #ifndef CHECK_UNREACHABLE
         if(x->next==nullptr){
+            //this is fine because it means we are a dead state
+            //only really happens when we a full treeIR
             return;
         }
+        #endif
         printf("ERROR non existing state to remove!!!\n");
         // printf("ordered (%p)[ID%d](next %p)\n",x,x->next->StateID,x->next);
         printf("ordered (%p)=>(%p)\n",x,x->next);
@@ -188,12 +192,30 @@ struct StateStart final: public CodeNode {
         next=nullptr;
 
         //make sure other StateEnds that hold us dont cause UB
+        #ifndef CHECK_UNREACHABLE
         for (const auto& pair : incoming) {
             const std::unordered_set<StateEnd*>& set = pair.second;
             for (StateEnd* x : set) {
+                
                 x->next=nullptr;//hazard pointer
+               
             }
         }
+        #else //CHECK_UNREACHABLE
+        std::vector<StateEnd*> v={};
+        for (const auto& pair : incoming) {
+            const std::unordered_set<StateEnd*>& set = pair.second;
+            v={};
+            for (StateEnd* x : set) {
+                
+                v.push_back(x);
+            }
+            for (StateEnd* x : v){
+                //using the move so that we have a safety check
+                 x->move_target_state(nullptr);
+            }
+        }
+        #endif //CHECK_UNREACHABLE
     }
 };
 
