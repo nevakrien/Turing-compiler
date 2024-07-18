@@ -69,6 +69,17 @@ def time_treemc(task):
 
         return end_time_ns - start_time_ns, compile_proc
 
+def time_tmc2(task):
+        gc.disable()
+        start_time_ns = time_ns()
+
+        compile_proc = subprocess.run([join(task, 'tmc2.out'), join(task, 'input.tape'), '/dev/null'], text=True, capture_output=True)
+
+        end_time_ns = time_ns()
+        gc.enable()
+
+        return end_time_ns - start_time_ns, compile_proc
+
 
 def time_tmc1_bad_hop(task):
         gc.disable()
@@ -92,7 +103,7 @@ def main_timing(tasks):
     # timers={'tmc1_bad_hop':time_tmc1_bad_hop,'tmc1':time_tmc1}
     #{'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}
 
-    timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}#{'tmc1':time_tmc1,'treemc':time_treemc}
+    timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'tmc2':time_tmc2}#{'tmc1':time_tmc1,'treemc':time_treemc}
 
 
     jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(3_000)]
