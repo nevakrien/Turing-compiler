@@ -150,7 +150,7 @@ bool maybe_inline(std::unique_ptr<CodeTree::StateStart> &state){
 
 		auto set=state->incoming.begin()->second;
 		if(set.size()==1){
-			printf("inlining state %d\n",state->StateID);
+			// printf("inlining state %d\n",state->StateID);
 
 			StateEnd* caller_end=*set.begin();
 			CodeNode* caller=caller_end->owner;

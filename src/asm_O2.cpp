@@ -51,6 +51,7 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	validate_tree(ir);
 }
 
+//BUG something is off with inputs of more than 1 step...
 //assumes RAX RDI RCX are saved...
 void unsafe_bounds_check_asm(FILE *file, RegisterState &reg, Register address, int move) {
     if(move==0){
@@ -102,7 +103,7 @@ void unsafe_bounds_check_asm(FILE *file, RegisterState &reg, Register address, i
 
     // Easy case
     fprintf(file, "L%d_%d:;easy case no re-adjustment\n", reg.cur_state, easy_case);
-    fprintf(file, "%smov rcx,%d\n", _, extend);
+    fprintf(file, "%smov rcx,%d\n", _, extend/4);
     if (move < 0) {
         fprintf(file, "%smov rdi,%s\n", _, bounds.init.Quad());
     } else {

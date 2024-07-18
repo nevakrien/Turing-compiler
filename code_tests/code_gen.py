@@ -43,7 +43,14 @@ def main():
 		code=long_chain(lambda i: i%2,lambda i: 'R',300,'S','Y0')+long_chain(lambda i: i%2,lambda i: 'R',2000,'DEAD','halt')+long_chain(lambda i: i%2,lambda i: 'L',500,'Y','halt')
 		code=code[:2] + code[2::2] + code[3::2]
 		f.write('\n'.join(code))
-	make_tape('tasks/dead/input.tape',-1000,1000,-1000,1000)
+	make_tape('tasks/dead/input.tape',-1000,1000,-100,100)
+
+	os.makedirs("tasks/small_dead")
+	with open('tasks/small_dead/code.t','w') as f:
+		code=long_chain(lambda i: i%2,lambda i: 'R',5,'S','Y0')+long_chain(lambda i: i%2,lambda i: 'R',5,'DEAD','halt')+long_chain(lambda i: i%2,lambda i: 'L',10,'Y','halt')
+		code=code[:2] + code[2::2] + code[3::2]
+		f.write('\n'.join(code))
+	make_tape('tasks/small_dead/input.tape',-1000,1000,-3,3)
 		
 
 	os.makedirs("tasks/100")

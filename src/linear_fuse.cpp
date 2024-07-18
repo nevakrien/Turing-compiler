@@ -3,6 +3,7 @@
 #include "history_maps.hpp"
 
 
+// #define SHOW_DEBUG
 
 #define CaseStart(Name) \
 	case NodeTypes::Name: {\
@@ -26,27 +27,33 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 
 	while(1){
 	switch(input_node->type()){
-		// case NodeTypes::LinearFuse:
-		// {
-		// 	auto node =static_cast<LinearFuse*>(input_node.get());
-		// 	const TapeValMap& map=node->write_ops;
-		// 	for(int i=map.minKey();i<=map.maxKey();i++){
-		// 		read_map[i]=run_tapeval(read_map[i],map[i]);
-		// 		write_map[i]=combine_tapevals(write_map[i],map[i]);
-		// 	}
+		case NodeTypes::LinearFuse:
+		{
+			auto node =static_cast<LinearFuse*>(input_node.get());
+			const TapeValMap& map=node->write_ops.offset_copy(move);
+			for(int i=map.minKey();i<=map.maxKey();i++){
+				read_map[i]=run_tapeval(read_map[i],map[i]);
+				write_map[i]=combine_tapevals(write_map[i],map[i]);
+			}
 
-		// 	move+=node->move_offset;
+			move+=node->move_offset;
 
-		// 	input_node=std::move(node->next);
-		// 	continue;
-		// }
+			// return std::make_unique<LinearFuse>(write_map,move,
+			// 	make_linear_nodes(
+			// 		std::move(node->next),read_map.offset_copy(-move)
+			// 	)
+			// );
 
-		// case NodeTypes::HistoryNode:
-		// {
-		// 	auto node =static_cast<HistoryNode*>(input_node.get());
-		// 	input_node=std::move(node->next);
-		// 	continue;
-		// }
+			input_node=std::move(node->next);
+			continue;
+		}
+
+		case NodeTypes::HistoryNode:
+		{
+			auto node =static_cast<HistoryNode*>(input_node.get());
+			input_node=std::move(node->next);
+			continue;
+		}
 
 		CaseStart(StateEnd)
 			IRNode ans;
@@ -132,126 +139,79 @@ IRNode make_linear_nodes(IRNode input_node,RunTimeValMap read_map){
 }
 }
 
-// static void print_node(const CodeTree::CodeNode* node, const TuringIR ir, int depth = 0) {
-//     if (!node) return;
-
-//     const char* indent = "  ";
-//     for (int i = 0; i < depth; ++i) //printf("%s", indent);
-
-//     switch (node->type()) {
-//         case NodeTypes::Split:
-//             //printf("Split\n");
-//             for (int i = 0; i < 2; ++i) {
-//                 print_node(((const CodeTree::Split*)node)->sides[i].get(), ir, depth + 1);
-//             }
-//             break;
-//         case NodeTypes::Write:
-//             //printf("Write (val: %d)\n", ((int)((const CodeTree::Write*)node)->read_value()));
-//             print_node(((const CodeTree::Write*)node)->next.get(), ir, depth + 1);
-//             break;
-//         case NodeTypes::Move:
-//             //printf("Move (move_value: %d)\n", ((const CodeTree::Move*)node)->read_move());
-//             print_node(((const CodeTree::Move*)node)->next.get(), ir, depth + 1);
-//             break;
-//         case NodeTypes::StateStart:
-//             //printf("StateStart (%s)\n", ir.names[((const CodeTree::StateStart*)node)->StateID]);
-//             print_node(((const CodeTree::StateStart*)node)->next.get(), ir, depth + 1);
-//             break;
-//         case NodeTypes::StateEnd:
-//             //printf("StateEnd TO(%s)\n", ir.names[((const CodeTree::StateEnd*)node)->next->StateID]);
-//             break;
-//         case NodeTypes::Exit:
-//             //printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
-//             break;
-//         case NodeTypes::LinearFuse:
-//             //printf("LinearFuse (move_offset: %d)\n", ((const LinearFuse*)node)->move_offset);
-//             print_node(((const LinearFuse*)node)->next.get(), ir, depth + 1);
-//             break;
-//         case NodeTypes::HistoryNode:
-//             //printf("HistoryNode\n");
-//             print_node(((const HistoryNode*)node)->next.get(), ir, depth + 1);
-//             break;
-//         default:
-//             //printf("Unknown NodeType\n");
-//             break;
-//     }
-// }
-
+#ifdef SHOW_DEBUG
 static void print_node(const CodeTree::CodeNode* node, int depth = 0) {
     if (!node) return;
 
     const char* indent = "  ";
-    for (int i = 0; i < depth; ++i) //printf("%s", indent);
+    for (int i = 0; i < depth; ++i) printf("%s", indent);
 
     switch (node->type()) {
         case NodeTypes::Split:
-            //printf("Split\n");
+            printf("Split\n");
             for (int i = 0; i < 2; ++i) {
                 print_node(((const CodeTree::Split*)node)->sides[i].get(), depth + 1);
             }
             break;
         case NodeTypes::Write:
-            //printf("Write (val: %d)\n", ((int)((const CodeTree::Write*)node)->read_value()));
+            printf("Write (val: %s)\n", tape_val_to_string(((const CodeTree::Write*)node)->read_value()));
             print_node(((const CodeTree::Write*)node)->next.get(), depth + 1);
             break;
         case NodeTypes::Move:
-            //printf("Move (move_value: %d)\n", ((const CodeTree::Move*)node)->read_move());
+            printf("Move (move_value: %d)\n", ((const CodeTree::Move*)node)->read_move());
             print_node(((const CodeTree::Move*)node)->next.get(), depth + 1);
             break;
         case NodeTypes::StateStart:
         {
-        	auto n = static_cast<const CodeTree::StateStart*>(node);
-        	//printf("StateStart(%d) ",n->StateID);
-        	for (const auto& pair : n->incoming) {
-			        const std::unordered_set<CodeTree::StateEnd*>& set = pair.second;
-			        for (CodeTree::StateEnd* x : set) {
-			            //printf("reciving [%d] ", x->owning_state->StateID);
-			        }
-			    }
-			for (const auto& pair : n->outgoing) {
-			        const std::unordered_set<CodeTree::StateEnd*>& set = pair.second;
-			        for (CodeTree::StateEnd* x : set) {
-			            //printf("going [%d] ", x->next->StateID);
-			        }
-			    }
-			//printf("\n");
-		}
-            
+            auto n = static_cast<const CodeTree::StateStart*>(node);
+            printf("StateStart(%d) ", n->StateID);
+            for (const auto& pair : n->incoming) {
+                const std::unordered_set<CodeTree::StateEnd*>& set = pair.second;
+                for (CodeTree::StateEnd* x : set) {
+                    printf("receiving [%d] ", x->owning_state->StateID);
+                }
+            }
+            for (const auto& pair : n->outgoing) {
+                const std::unordered_set<CodeTree::StateEnd*>& set = pair.second;
+                for (CodeTree::StateEnd* x : set) {
+                    printf("going [%d] ", x->next->StateID);
+                }
+            }
+            printf("\n");
+        }
             print_node(((const CodeTree::StateStart*)node)->next.get(), depth + 1);
             break;
         case NodeTypes::StateEnd:
-        {	
-        	auto n = static_cast<const CodeTree::StateEnd*>(node);
-        	//printf("StateEnd TO(%d)\n",n->next->StateID);
+        {
+            auto n = static_cast<const CodeTree::StateEnd*>(node);
+            printf("StateEnd TO(%d)\n", n->next->StateID);
         }
             break;
-        
         case NodeTypes::Exit:
-            //printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
+            printf("Exit (code: %d)\n", ((const CodeTree::Exit*)node)->code);
             break;
         case NodeTypes::LinearFuse:
         {
-        	auto n = static_cast<const LinearFuse*>(node);
-            //printf("LinearFuse (move_offset: %d)", (n->move_offset));
+            auto n = static_cast<const LinearFuse*>(node);
+            printf("LinearFuse (move_offset: %d)", n->move_offset);
 
-            for(int i =n->write_ops.minKey();i<=n->write_ops.maxKey();i++){
-            	//printf("[(%d) %d]",i,(int)n->write_ops[i]);
+            for (int i = n->write_ops.minKey(); i <= n->write_ops.maxKey(); i++) {
+                printf("[(%d) %s]", i, tape_val_to_string(n->write_ops[i]));
             }
-           	//printf("\n");
+            printf("\n");
         }
-           
             print_node(((const LinearFuse*)node)->next.get(), depth + 1);
             break;
-        
         case NodeTypes::HistoryNode:
-            //printf("HistoryNode\n");
+            printf("HistoryNode\n");
             print_node(((const HistoryNode*)node)->next.get(), depth + 1);
             break;
         default:
-            //printf("Unknown NodeType\n");
+            printf("Unknown NodeType\n");
             break;
     }
 }
+
 
 static void validate(CodeTree::CodeNode* node,CodeTree::StateStart* start) {
     assert(node != nullptr);
@@ -281,7 +241,7 @@ static void validate(CodeTree::CodeNode* node,CodeTree::StateStart* start) {
 }
 
 static void show(TreeIR &tree){
-	//printf("CURRENT SITUATION\n");
+	printf("CURRENT SITUATION\n");
 		for(auto i=0u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;
@@ -291,15 +251,21 @@ static void show(TreeIR &tree){
 			print_node(x);
 
 		}
-		//printf("\n\n");
+		printf("\n\n");
 }
+
+#endif //SHOW_DEBUG
+
 
 TreeIR linear_fuse(TreeIR tree){
 	//RunTimeValMap read_map;
 	bool changed=true;
 
-	//printf("STARTING TREE:\n");
+	#ifdef SHOW_DEBUG
+	printf("STARTING TREE:\n");
 	show(tree);
+	#endif
+
 
 	while(changed){
 		changed=false;		
@@ -316,9 +282,11 @@ TreeIR linear_fuse(TreeIR tree){
 				);
 		}
 
-		//printf("LINEAR FUSE PASS:\n");
-		// show(tree);
-		
+		#ifdef SHOW_DEBUG
+		printf("LINEAR FUSE PASS:\n");
+		show(tree);
+		#endif
+
 		for(auto i=1u;i<tree.size();i++){
 			if(tree[i]==nullptr){
 				continue;
@@ -328,9 +296,10 @@ TreeIR linear_fuse(TreeIR tree){
 			// print_node(x);
 			changed|=maybe_inline(tree[i]);
 		}
-
-		//printf("INLINE PASS:\n");
-		// show(tree);
+		#ifdef SHOW_DEBUG
+		printf("INLINE PASS:\n");
+		show(tree);
+		#endif
 	}
 	
 

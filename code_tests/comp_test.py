@@ -2,7 +2,7 @@ import subprocess
 import os
 from os.path import join
 import json
-import filecmp
+#import filecmp
 import time
 
 from concurrent.futures import ProcessPoolExecutor
@@ -72,8 +72,19 @@ def compile_and_run_turing(task,compiler):
 
 
 def compare_tapes(file1, file2):
-    return filecmp.cmp(file1, file2, shallow=False)
+    #return filecmp.cmp(file1, file2, shallow=False)
+    result = subprocess.run([f'./../bin/tape_tool','cmp', file1, file2], text=True, capture_output=True)
+    if(result.returncode!=0):
+        raise Exception(f"tape_tool failed on files {file1} {file2}")
 
+    if(result.stdout.strip()=='yes'):
+        return True
+    if(result.stdout.strip()=='no'):
+        return False
+
+    raise Exception(f"tape_tool gave weird answer on files {file1} {file2}")
+
+    
 def run_and_compare(task,compiler):
     #run_turing(task)
     compile_and_run_turing(task,compiler)

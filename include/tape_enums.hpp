@@ -92,6 +92,16 @@ static inline RunTimeVal run_tapeval(RunTimeVal val, TapeVal tape){
     return RunTimeVal::Unknown;
 }
 
+[[maybe_unused]] static const char* tape_val_to_string(TapeVal val) {
+    switch (val) {
+        case TapeVal::Unchanged: return "Unchanged";
+        case TapeVal::Allways1: return "Always1";
+        case TapeVal::Allways0: return "Always0";
+        case TapeVal::Flip: return "Flip";
+        case TapeVal::Unknown: return "Unknown";
+        default: return "Invalid TapeVal";
+    }
+}
 
 
 #endif // TAPE_ENUMS_HPP

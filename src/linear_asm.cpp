@@ -18,6 +18,7 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
     int prev_tmp_count = reg.get_tmp_count(); // So we can return
 
     Register tmp = reg.add_tmp();
+    fprintf(file,"%s;using %s as temp\n",_,tmp.Quad());
 
 	bool do_left=x->write_ops.minKey()<0;
 	bool do_right=x->write_ops.maxKey()>0;
@@ -30,9 +31,11 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 	}
 
 	if(do_left){
+		fprintf(file,"%s;left bounds check\n",_);
 		Register address;
 
-		if(x->write_ops.minKey()==x->move_offset){
+		if(0){
+		// if(x->write_ops.minKey()==x->move_offset){
 			need_move=false;
 			address=reg.address;
 		}
@@ -41,15 +44,19 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 			fprintf(file,"%smov %s, %s\n",_,address.Quad(),reg.address.Quad());
 		}
 
-		fprintf(file,"%sadd %s, %d\n",_,address.Quad(),move);
-		unsafe_bounds_check_asm(file, reg,  address, move);
+		int bound_move = (x->write_ops.minKey()) * BIT_SIZE;
+
+		fprintf(file,"%sadd %s, %d\n",_,address.Quad(),bound_move);
+		unsafe_bounds_check_asm(file, reg,  address, bound_move);
 	}
 
 
 	if(do_right){
+		fprintf(file,"%s;right bounds check\n",_);
 		Register address;
 
-		if(x->write_ops.maxKey()==x->move_offset){
+		if(0){
+		// if(x->write_ops.maxKey()==x->move_offset){
 			need_move=false;
 			address=reg.address;
 		}
@@ -58,16 +65,18 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 			fprintf(file,"%smov %s, %s\n",_,address.Quad(),reg.address.Quad());
 		}
 
-		fprintf(file,"%sadd %s, %d\n",_,address.Quad(),move);
-		unsafe_bounds_check_asm(file, reg,  address, move);
+		int bound_move = (x->write_ops.maxKey()) * BIT_SIZE;
+
+		fprintf(file,"%sadd %s, %d\n",_,address.Quad(),bound_move);
+		unsafe_bounds_check_asm(file, reg,  address, bound_move);
 	}
 
-	if(need_move){
+	if(need_move && move!=0){
 		need_move=false;
 		fprintf(file, "%sadd %s, %d\n", _, reg.address.Quad(), move);
 	}
-	
-	
+
+
 	fprintf(file,"%s;write ops\n",_);
 	for(int i=x->write_ops.minKey();i<=x->write_ops.maxKey(); i++){
 		int relative = (i - x->move_offset)*BIT_SIZE;
