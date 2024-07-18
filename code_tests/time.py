@@ -103,8 +103,8 @@ def main_timing(tasks):
     # timers={'tmc1_bad_hop':time_tmc1_bad_hop,'tmc1':time_tmc1}
     #{'tmc0':time_tmc0,'tmc1':time_tmc1,'treemc':time_treemc}
 
-    timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'tmc2':time_tmc2}#{'tmc1':time_tmc1,'treemc':time_treemc}
-
+    # timers={'tmc0':time_tmc0,'tmc1':time_tmc1,'tmc2':time_tmc2}#{'tmc1':time_tmc1,'treemc':time_treemc}
+    timers={'tmc0':time_tmc0,'tmc2':time_tmc2}
 
     jobs=[{'task':t,'name':k,'program':p,'id':i} for t in tasks for k,p in timers.items() for i in range(3_000)]
     random.shuffle(jobs)
