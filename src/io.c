@@ -318,12 +318,10 @@ Tape *ReadTapeEx(const char *in_filename) {
     // Set the left and right boundary bits, the left and right uninitialized
     // sections, and unpack the buffer into the initialized section.
     *cur++ = Bit_Bound;
-    memset(cur, Bit_Uninit, metadata.left_index - metadata.left_limit);
-    cur += metadata.left_index - metadata.left_limit;
+    for (int i = 0; i < metadata.left_index - metadata.left_limit; i++) *cur++ = Bit_Uninit;
     unpack_bits(buffer, cur, metadata.right_index - metadata.left_index + 1);
     cur += metadata.right_index - metadata.left_index + 1;
-    memset(cur, Bit_Uninit, metadata.right_limit - metadata.right_index);
-    cur += metadata.right_limit - metadata.right_index;
+    for (int i = 0; i < metadata.right_limit - metadata.right_index; i++) *cur++ = Bit_Uninit;
     *cur = Bit_Bound;
     free(buffer);
 
