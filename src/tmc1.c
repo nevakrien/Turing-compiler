@@ -5,6 +5,7 @@
 #include <libgen.h>
 
 //#define FREE_FOR_DEBUG
+const char *casm = "nasm -g -f elf64 -o %s.o %s";
 
 void O1_code(FILE *file,void* data){
 	TuringIR* ir=(TuringIR*)data;
@@ -22,7 +23,7 @@ int main(int argc, char* argv[]){
 	//code=comp.ir; //can be used to test things
 
 
-	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,&code);
+	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,casm,".asm",&code);
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG

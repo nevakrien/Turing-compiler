@@ -4,6 +4,8 @@
 #include "compiler.h"
 #include <libgen.h>
 
+const char *casm = "nasm -g -f elf64 -o %s.o %s";
+
 //#define FREE_FOR_DEBUG
 
 void O0_code(FILE *file,void* data){
@@ -17,7 +19,7 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
-	assemble_and_link(argv[2],dirname(argv[0]),&O0_code,&comp.ir);
+	assemble_and_link(argv[2],dirname(argv[0]),&O0_code,casm,".asm",&comp.ir);
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG

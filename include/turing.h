@@ -13,6 +13,8 @@ typedef enum TuringDone{
 typedef enum  Bit{
 	Bit_0=0,
 	Bit_1=1,
+        Bit_Bound=2,
+        Bit_Uninit=4
 } Bit;
 
 typedef enum  Dir{
@@ -39,7 +41,8 @@ typedef struct TuringMachine{
 	State* states;
 }TuringMachine;
 
-typedef struct Tape{
+//typedef struct Tape __attribute__((packed)) {
+typedef struct Tape {
 	Bit* cur;
 	Bit* base;//base[min] =the actual base pointer to free
 	

@@ -8,6 +8,7 @@ extern "C"{
 	#include <libgen.h>
 }
 
+const char *casm = "nasm -g -f elf64 -o %s.o %s";
 
 //#define FREE_FOR_DEBUG
 
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]){
 
 	CompData data={&tree,comp.ir.names};
 
-	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,&data);
+	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,casm,".asm",&data);
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG
