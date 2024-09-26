@@ -14,7 +14,7 @@
 
 //nasm -g -f elf64 -o %s.o %s
 
-int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc, const char *casm, const char *ext, void* data) {
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc, const char *casm, const char *cld, const char *ext, void* data) {
     // Step 1: Generate the assembly code
     char* working_name=null_check(malloc(strlen(filename)+5));
     strcpy(working_name,filename);
@@ -58,11 +58,8 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
     printf("Assembly completed successfully.\n");
 
     // Step 3: Link the object file with io.o to create the final executable
-    const char* cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2\0";
-    
     char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)+strlen(dirname)));
     sprintf(ld,cld,filename,filename,dirname);
-    
     result = system(ld);
     free(working_name);
     free(nasm);
@@ -718,7 +715,7 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
           "\tmov\tr7, #0\n"
           "\tmov\tr8, #1\n"
           "\tcmp\tr0, #3\n"
-          "\tblx\texit_turing\n"
+          "\tbne\terror\n"
           "\tldr\tr0, [r1]\n"
           "\tblx\tReadTapeEx\n"
           "\tldr\tr4, [r0]\n\n",
@@ -732,7 +729,7 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
                 "\tcmp\tr5, #1\n"
                 "\tldreq\tpc, =L%d_1\n"
                 "\tmov\tr0, #2\n"
-                "\tblx\texit_turing\n", i, i, i);
+                "\tb\terror\n", i, i, i);
         for (int j = 0; j < 2; j++) {
             fprintf(file, "L%d_%d:\n"
                     "\tstr\t%s, [r4]\n",
@@ -744,6 +741,7 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
             case Right:
                 fputs("\tadd\tr4, #4\n", file);
             default:
+                ;
             }
             if (ir.states[i].trans[j].nextState != -1) {
                 fprintf(file, "\tb\tL%d\n\n", ir.states[i].trans[j].nextState);
@@ -759,6 +757,7 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
           "\tstr\tr1, [r1, #4]\n"
           "\tblx\tDumpTapeEx\n"
           "\tmov\tr0, #0\n"
+          "error:\n"
           "\tblx\texit_turing\n",
         file);
 }

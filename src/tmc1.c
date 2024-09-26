@@ -6,6 +6,7 @@
 
 //#define FREE_FOR_DEBUG
 const char *casm = "nasm -g -f elf64 -o %s.o %s";
+const char *cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2\0";
 
 void O1_code(FILE *file,void* data){
 	TuringIR* ir=(TuringIR*)data;
@@ -23,7 +24,7 @@ int main(int argc, char* argv[]){
 	//code=comp.ir; //can be used to test things
 
 
-	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,casm,".asm",&code);
+	assemble_and_link(argv[2],dirname(argv[0]),&O1_code,casm,cld,".asm",&code);
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG

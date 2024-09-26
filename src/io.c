@@ -26,7 +26,7 @@ void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
 	#endif
     {
         perror("Memory allocation failed [allocate_all_tape]\n");
-        printf("size=%ld\n",size);
+        printf("size=%zd\n",size);
         exit(EXIT_FAILURE);
     }
     return memory;

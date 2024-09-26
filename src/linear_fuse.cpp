@@ -291,7 +291,7 @@ TreeIR linear_fuse(TreeIR tree){
 			if(tree[i]==nullptr){
 				continue;
 			}
-			auto x = tree[i].get();
+			//auto x = tree[i].get();
 			// validate(x,x);
 			// print_node(x);
 			changed|=maybe_inline(tree[i]);

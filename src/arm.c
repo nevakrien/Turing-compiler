@@ -4,7 +4,8 @@
 #include "compiler.h"
 #include <libgen.h>
 
-const char* casm="gcc -g -c -o %s.o %s";
+const char *casm = "gcc -g -c -o %s.o %s";
+const char *cld = "gcc -o %s.out %s.o %s/io.o";
 
 void ARM_code(FILE *file, void *data) {
     TuringIR *ir = (TuringIR *) data;
@@ -17,6 +18,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     CompileStepOne comp = first_compile_step(argv[1]);
-    assemble_and_link(argv[2], dirname(argv[0]), ARM_code, casm, ".s", &comp.ir);
+    assemble_and_link(argv[2], dirname(argv[0]), ARM_code, casm, cld, ".s", &comp.ir);
     return EXIT_SUCCESS;
 }
