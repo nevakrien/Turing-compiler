@@ -714,9 +714,11 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
           "main:\n"
           "\tmov\tr7, #0\n"
           "\tmov\tr8, #1\n"
+          "\tmov\tr10, r1\n"
           "\tcmp\tr0, #3\n"
+          "\tmov\tr0, #3\n"
           "\tbne\terror\n"
-          "\tldr\tr0, [r1]\n"
+          "\tldr\tr0, [r10, #4]\n"
           "\tblx\tReadTapeEx\n"
           "\tldr\tr4, [r0]\n\n",
         file);
@@ -754,7 +756,7 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
     }
     fputs("done:\n"
           "\tstr\tr4, [r0]\n"
-          "\tstr\tr1, [r1, #4]\n"
+          "\tldr\tr1, [r10, #8]\n"
           "\tblx\tDumpTapeEx\n"
           "\tmov\tr0, #0\n"
           "error:\n"

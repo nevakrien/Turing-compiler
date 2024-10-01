@@ -260,7 +260,7 @@ void DumpTapeEx(Tape* tape, const char *out_filename) {
     }
     pack_bits(buffer, tape->base + tape->left_init, len);
 
-    FILE *out_file = fopen(out_filename, "wb");
+    FILE *out_file = fopen(out_filename, "w");
     if (!out_file) {
         fprintf(stderr, "Failed to open output file\n");
         exit(EXIT_FAILURE);
