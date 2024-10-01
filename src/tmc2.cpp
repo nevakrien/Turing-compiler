@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
 
 	CompData data={&tree,comp.ir.names};
 
-	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,casm,".asm",&data);
+	assemble_and_link(argv[2],dirname(argv[0]),&O2_code,&data,casm ,".asm");
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG

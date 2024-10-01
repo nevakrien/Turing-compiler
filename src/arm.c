@@ -17,6 +17,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     CompileStepOne comp = first_compile_step(argv[1]);
-    assemble_and_link(argv[2], dirname(argv[0]), ARM_code, casm, ".s", &comp.ir);
+    assemble_and_link(argv[2], dirname(argv[0]), ARM_code ,&comp.ir , casm, ".s");
     return EXIT_SUCCESS;
 }

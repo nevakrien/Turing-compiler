@@ -10,7 +10,7 @@ void code_func(FILE* f,void* data){
 
 
 int main(int argc,char* argv[]){
-    int code= assemble_and_link("generated",dirname(argv[0]),&code_func,casm,".asm",NULL);
+    int code= assemble_and_link("generated",dirname(argv[0]),&code_func,NULL,casm,".asm");
     system("rm generated.*");
     //system("rm a.out");
 

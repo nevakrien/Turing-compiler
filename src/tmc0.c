@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	CompileStepOne comp = first_compile_step(argv[1]);
-	assemble_and_link(argv[2],dirname(argv[0]),&O0_code,casm,".asm",&comp.ir);
+	assemble_and_link(argv[2],dirname(argv[0]),&O0_code,&comp.ir,casm,".asm");
 	
 	//no need to free anything.
 	#ifdef FREE_FOR_DEBUG

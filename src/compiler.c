@@ -14,7 +14,7 @@
 
 //nasm -g -f elf64 -o %s.o %s
 
-int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc, const char *casm, const char *ext, void* data) {
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc, void* data, const char *casm, const char *ext) {
     // Step 1: Generate the assembly code
     char* working_name=null_check(malloc(strlen(filename)+5));
     strcpy(working_name,filename);
