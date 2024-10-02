@@ -2,7 +2,7 @@ import subprocess
 import tempfile
 import os
 import time
-
+import sys
 
 def call_make(target):
     compile_proc = subprocess.run(['make', target], text=True, capture_output=True)
@@ -101,6 +101,8 @@ def run_test_code_tree():
 
 
 def run_comp_test():
+    pyargs = sys.argv[1:]
+
     call_make('all')
     print("full Compilation Done")
     # Save the current working directory
@@ -111,7 +113,7 @@ def run_comp_test():
         os.chdir('code_tests')
         
         # Run the comp_test.py script
-        test_proc=subprocess.run(['python3', 'comp_test.py'], stderr=subprocess.STDOUT, text=True)
+        test_proc=subprocess.run(['python3', 'comp_test.py'] +pyargs, stderr=subprocess.STDOUT, text=True)
         #print('tmc0 test done')
         #print(test_proc.stderr)
     except:
@@ -128,9 +130,13 @@ def run_comp_test():
     # else:
     #     print(f"\n!!!tmc0 comperison Test Failed with exit code {test_proc.returncode}:\n\n{test_proc.stdout} sterr:{test_proc.stderr}\n")
 
+
+
 if __name__ == '__main__':
     start_time = time.time()
     
+    # do_arm = 'do_arm' in sys.argv
+
     print("starting tests...\n")
 
     # run_test_io()

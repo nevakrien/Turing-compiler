@@ -4,6 +4,7 @@ from os.path import join
 import json
 #import filecmp
 import time
+import sys
 
 from concurrent.futures import ProcessPoolExecutor
 
@@ -31,8 +32,8 @@ def run_turing(task):
 
 
 
-def compile_and_run_turing(task,compiler):
-    # Step 1: Compile the code using tmc0
+def compile_and_run_turing(task, compiler):
+    # Step 1: Compile the code using the specified compiler
     start_compile_time = time.time()
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     compile_duration = time.time() - start_compile_time
@@ -41,9 +42,16 @@ def compile_and_run_turing(task,compiler):
     if compile_result.returncode != 0:
         raise Exception(f"{compiler} Compilation [{task}] Failed:\n{compile_result.stderr}")
 
-    # Step 2: Run the compiled output with the input and output tapes
+    # Step 2: Determine the run command (use QEMU for ARM if enabled)
+    if compiler == 'arm':
+        run_command = ['qemu-aarch64', join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')]
+        print('runing arm mode')
+    else:
+        run_command = [join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')]
+
+    # Step 3: Run the compiled output with the input and output tapes
     start_run_time = time.time()
-    run_result = subprocess.run([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')], text=True, capture_output=True)
+    run_result = subprocess.run(run_command, text=True, capture_output=True)
     run_duration = time.time() - start_run_time
 
     # Check the return code for the run step
@@ -63,11 +71,8 @@ def compile_and_run_turing(task,compiler):
     with open(result_file_path, 'w') as result_file:
         json.dump(result_info, result_file, indent=4)
 
-    # print(f"Results saved to {result_file_path}")
-    # print(f"Compilation Time: {compile_duration:.4f} seconds")
-    # print(f"Execution Time: {run_duration:.4f} seconds")
-    
     return 0
+
 
 
 
@@ -99,33 +104,41 @@ def run_and_compare(task,compiler):
     return f"[{task}] The tapes are different. FAIL"
 
 
-def test_no_halt(task,compiler):
-    # Step 1: Compile the code using tmc0
+def test_no_halt(task, compiler):
+    # Step 1: Compile the code using the specified compiler
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
+    
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"{compiler}  [{task}]Compilation Failed:\n{compile_result.stderr}")
+        raise Exception(f"{compiler}  [{task}] Compilation Failed:\n{compile_result.stderr}")
 
     try:
-        # Step 2: Run the compiled output with the input and output tapes
-        process = subprocess.Popen([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')])
+        # Step 2: Determine the run command (use QEMU for ARM if enabled)
+        if compiler == 'arm':
+            run_command = ['qemu-aarch64', join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')]
+            print('Running in ARM mode with QEMU')
+        else:
+            run_command = [join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')]
+
+        # Step 3: Run the compiled output with the input and output tapes
+        process = subprocess.Popen(run_command)
+
         time.sleep(0.15)
         if process.poll() is None:
             process.kill()
-            return f"[{task}] didnt halt. PASS"
-
-        
+            return f"[{task}] didn't halt. PASS"
 
         # Check the return code for the run step
-        if process.returncode == 1: #1 is TIME_OUT in turing.h
+        if process.returncode == 1:  # 1 is TIME_OUT in turing.h
             return f"[{task}] gave a TIME_OUT code PASS"
 
-        return f"[{task}] didnt halt gave a wrong return code FAIL"
+        return f"[{task}] didn't halt, gave a wrong return code. FAIL"
 
     except Exception as e:
         if process is not None and process.returncode is None:
             process.kill()
-        return f"[{task}] raised an Exception FAIL\n{e}"
+        return f"[{task}] raised an Exception. FAIL\n{e}"
+
 
 def test_out_of_tape(task,compiler):
     # Step 1: Compile the code using tmc0
@@ -154,6 +167,8 @@ if __name__=="__main__":
     import code_gen
 
     compilers=['tmc0','tmc1','treemc','tmc2']#['tmc1_bad_hop','tmc1']
+    if 'do_arm' in sys.argv:
+        compilers.extend(['arm'])
 
     code_gen.main()
 
@@ -169,6 +184,8 @@ if __name__=="__main__":
 
             tasks = [join('out_of_tape', d) for d in os.listdir('out_of_tape')]
             futures[compiler].extend([ex.submit(test_out_of_tape,task,compiler) for task in tasks])
+
+
 
 
     for compiler in compilers:

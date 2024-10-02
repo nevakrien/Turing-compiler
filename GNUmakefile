@@ -1,3 +1,6 @@
+PYTHON_FLAGS = "do_arm"
+# ARM_COMPILLER= "zig cc"
+
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
 CXX =$(shell which g++-14 || echo g++) #clang fails... but nicer error messages
 
@@ -27,6 +30,11 @@ all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/tes
 bin/io.o: src/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile source files to object files
+# bin/arm_io.o: src/io.c
+# 	@mkdir -p bin
+# 	$(ARM_COMPILLER) $(CFLAGS) -c $< -o $@
 
 
 bin/cli.o: src/cli.c  
@@ -144,7 +152,7 @@ check: clean
 
 test: clean
 	time make all -j
-	python3 test.py
+	python3 test.py $(PYTHON_FLAGS)
 
 bench: check
 	@cd code_tests/ && \

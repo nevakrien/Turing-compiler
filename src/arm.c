@@ -4,7 +4,7 @@
 #include "compiler.h"
 #include <libgen.h>
 
-const char* casm="gcc -g -c -o %s.o %s";
+const char* casm="arm-none-eabi-as -g -c -o %s.o %s";
 
 void ARM_code(FILE *file, void *data) {
     TuringIR *ir = (TuringIR *) data;
