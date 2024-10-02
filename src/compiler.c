@@ -720,7 +720,13 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
           "\tbne\terror\n"
           "\tldr\tr0, [r10, #4]\n"
           "\tblx\tReadTapeEx\n"
-          "\tldr\tr4, [r0]\n\n",
+          "\tldr\tr4, [r0]\n\n"
+          "\\t// r7 is 0, for writing 0 to the tape\n"
+          "\t// r8 is 1, for writing 1 to the tape\n"
+          "\t// r10 is argv\n"
+          "\t// r0 is &Tape\n"
+          "\t// r4 is Tape->cur\n"
+          "\t// r5 is *Tape->cur\n",
         file);
     for(int i = 0; i < ir.len; i++) {
         fprintf(file, "L%d:\n"
