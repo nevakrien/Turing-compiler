@@ -4,7 +4,7 @@
 #include "IR.h"
 
 typedef void (*printer_func_t)(FILE *file,void* data);
-int assemble_and_link(const char* filename,const char* dirname, printer_func_t code,void* data);
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t code,const char *casm,const char *cld,const char *ext,void* data);
 //this function checks for write errors by itself. 
 //this means that the interface calle can just ignore the possibilety
 
@@ -12,7 +12,9 @@ void O0_IR_to_ASM(FILE *file,TuringIR ir);
 //bad name but it basically a way to take IR down to assembly.
 //specifcly this is all the parts that are actually definble by the user
 
-void O1_IR_to_ASM(FILE *file,TuringIR ir); 
+void O1_IR_to_ASM(FILE *file,TuringIR ir);
+
+void ARM_IR_to_ASM(FILE *file, TuringIR ir);
 
 typedef struct {
     const char* address_register;

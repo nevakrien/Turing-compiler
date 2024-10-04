@@ -1,7 +1,7 @@
 #include "O2.hpp"
 
 void warn_unreachble(TreeIR &tree,TuringIR ir){
-	printf("total size dif %ld\n",ir.len-tree.size());
+	printf("total size dif %zd\n",ir.len-tree.size());
 
 	bool* seen = new bool[ir.len];
 	for(int i=0;i<ir.len;i++){

@@ -26,7 +26,7 @@ void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
 	#endif
     {
         perror("Memory allocation failed [allocate_all_tape]\n");
-        printf("size=%ld\n",size);
+        printf("size=%zd\n",size);
         exit(EXIT_FAILURE);
     }
     return memory;
@@ -231,5 +231,106 @@ Tape __attribute__((sysv_abi)) ReadTape(const char *in_filename) {
     tape.left_limit = metadata.left_limit;
     tape.right_limit = metadata.right_limit;
 
+    return tape;
+}
+
+void DumpTapeEx(Tape* tape, const char *out_filename) {
+    if (!tape || !tape->base) {
+        fprintf(stderr, "Invalid tape or base pointer\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int uninit_len;
+    Bit *cur = tape->base + tape->left_limit;
+    for (uninit_len = 0; *cur == Bit_Uninit; uninit_len++, cur++);
+    tape->left_init = tape->left_limit + uninit_len;
+    cur = tape->base + tape->right_limit;
+    for (uninit_len = 0; *cur == Bit_Uninit; uninit_len++, cur--);
+    tape->right_init = tape->right_limit - uninit_len;
+    
+    int index = tape->cur - tape->base;
+    MetaData metadata = { index, tape->left_init, tape->right_init,
+                          tape->left_limit,tape->right_limit };
+    int len = tape->right_init - tape->left_init + 1;
+
+    uint8_t *buffer = calloc((len + 7) / 8, sizeof(uint8_t));
+    if (!buffer) {
+        fprintf(stderr, "Failed to allocate memory for tape data\n");
+        exit(EXIT_FAILURE);
+    }
+    pack_bits(buffer, tape->base + tape->left_init, len);
+
+    FILE *out_file = fopen(out_filename, "w");
+    if (!out_file) {
+        fprintf(stderr, "Failed to open output file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (fwrite(&metadata, sizeof(metadata), 1, out_file) != 1 ||
+        fwrite(buffer, (len + 7) / 8, 1, out_file) != 1) {
+        fprintf(stderr, "Failed to write meta and tape data\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(out_file);
+    free(buffer);
+}
+
+Tape *ReadTapeEx(const char *in_filename) {
+
+    MetaData metadata;
+    Tape *tape = calloc(1, sizeof *tape);
+
+    if (!tape) {
+        fprintf(stderr, "Failed to allocate memory for tape\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    FILE *in_file = fopen(in_filename, "rb");
+    if (!in_file) {
+        fprintf(stderr, "Failed to open input file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (fread(&metadata, sizeof(metadata), 1, in_file) != 1) {
+        fprintf(stderr, "Failed to read full metadata\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int length = metadata.right_index - metadata.left_index + 1;
+    uint8_t *buffer = calloc((length + 7) / 8, sizeof(uint8_t));
+    if (!buffer) {
+        fprintf(stderr, "Failed to allocate memory for tape data\n");
+         exit(EXIT_FAILURE);
+    }
+
+    if (fread(buffer, (length + 7) / 8, 1, in_file) != 1) {
+        fprintf(stderr, "Failed to read tape data\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(in_file);
+
+    // Add two additional bits to bound the tape on the left and the right.
+    Bit *cur = allocate_all_tape(sizeof(Bit) * (metadata.right_limit - metadata.left_limit + 3));
+    Bit *base = cur + 1;
+
+    // Set the left and right boundary bits, the left and right uninitialized
+    // sections, and unpack the buffer into the initialized section.
+    *cur++ = Bit_Bound;
+    for (int i = 0; i < metadata.left_index - metadata.left_limit; i++) *cur++ = Bit_Uninit;
+    unpack_bits(buffer, cur, metadata.right_index - metadata.left_index + 1);
+    cur += metadata.right_index - metadata.left_index + 1;
+    for (int i = 0; i < metadata.right_limit - metadata.right_index; i++) *cur++ = Bit_Uninit;
+    *cur = Bit_Bound;
+    free(buffer);
+
+    tape->base = base - metadata.left_limit;
+    tape->cur = tape->base + metadata.cur_index;
+    tape->left_init = metadata.left_index;
+    tape->right_init = metadata.right_index;
+    tape->left_limit = metadata.left_limit;
+    tape->right_limit = metadata.right_limit;
+    
     return tape;
 }

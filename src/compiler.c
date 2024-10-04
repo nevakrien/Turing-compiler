@@ -12,12 +12,13 @@
 // right_init is at offset 28
 
 
+//nasm -g -f elf64 -o %s.o %s
 
-int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc,void* data) {
+int assemble_and_link(const char* filename,const char* dirname, printer_func_t codefunc, const char *casm, const char *cld, const char *ext, void* data) {
     // Step 1: Generate the assembly code
     char* working_name=null_check(malloc(strlen(filename)+5));
     strcpy(working_name,filename);
-    strcat(working_name,".asm");
+    strcat(working_name,ext);
 
     FILE *file = fopen(working_name, "w");
     if (file == NULL) {
@@ -43,9 +44,8 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
 
 
 
-    const char* cnasm="nasm -g -f elf64 -o %s.o %s";
-    char* nasm=null_check(malloc(strlen(cnasm)+strlen(working_name)+strlen(filename)));
-    sprintf(nasm,cnasm,filename,working_name);
+    char* nasm=null_check(malloc(strlen(casm)+strlen(working_name)+strlen(filename)));
+    sprintf(nasm,casm,filename,working_name);
 
     // Step 2: Assemble the generated assembly code
     int result = system(nasm);
@@ -58,11 +58,8 @@ int assemble_and_link(const char* filename,const char* dirname, printer_func_t c
     printf("Assembly completed successfully.\n");
 
     // Step 3: Link the object file with io.o to create the final executable
-    const char* cld="ld -o %s.out %s.o %s/io.o -lc -dynamic-linker /lib64/ld-linux-x86-64.so.2\0";
-    
     char* ld=null_check(malloc(strlen(cld)+2*strlen(filename)+strlen(dirname)));
     sprintf(ld,cld,filename,filename,dirname);
-    
     result = system(ld);
     free(working_name);
     free(nasm);
@@ -702,4 +699,73 @@ void O1_IR_to_ASM(FILE *file,TuringIR ir){
     fprintf(file, "%smov [rsp+24], dword %s \n", spaces, rd.small_left_init_register);//rd.tmp2_short);
 
     print_O1_assembly_end_template(file);
+}
+
+void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
+    const char *regs[] = {
+        "r7", "r8"
+    };
+    fputs(".text\n\n"
+          ".global main\n"
+          ".global ReadTapeEx\n"
+          ".global DumpTapeEx\n"
+          ".global exit_turing\n\n"
+          ".align 4\n"
+          "main:\n"
+          "\tmov\tr7, #0\n"
+          "\tmov\tr8, #1\n"
+          "\tmov\tr10, r1\n"
+          "\tcmp\tr0, #3\n"
+          "\tmov\tr0, #3\n"
+          "\tbne\terror\n"
+          "\tldr\tr0, [r10, #4]\n"
+          "\tblx\tReadTapeEx\n"
+          "\tldr\tr4, [r0]\n\n"
+          "\\t// r7 is 0, for writing 0 to the tape\n"
+          "\t// r8 is 1, for writing 1 to the tape\n"
+          "\t// r10 is argv\n"
+          "\t// r0 is &Tape\n"
+          "\t// r4 is Tape->cur\n"
+          "\t// r5 is *Tape->cur\n",
+        file);
+    for(int i = 0; i < ir.len; i++) {
+        fprintf(file, "L%d:\n"
+                "\tldr\tr5, [r4]\n"
+                "\tand\tr5, r5, #0x03\n"
+                "\tcmp\tr5, #0\n"
+                "\tldreq\tpc, =L%d_0\n"
+                "\tcmp\tr5, #1\n"
+                "\tldreq\tpc, =L%d_1\n"
+                "\tmov\tr0, #2\n"
+                "\tb\terror\n", i, i, i);
+        for (int j = 0; j < 2; j++) {
+            fprintf(file, "L%d_%d:\n"
+                    "\tstr\t%s, [r4]\n",
+                    i, j, regs[ir.states[i].trans[j].write]);
+            switch (ir.states[i].trans[j].move) {
+            case Left:
+                fputs("\tsub\tr4, #4\n", file);
+                break;
+            case Right:
+                fputs("\tadd\tr4, #4\n", file);
+            default:
+                ;
+            }
+            if (ir.states[i].trans[j].nextState != -1) {
+                fprintf(file, "\tb\tL%d\n\n", ir.states[i].trans[j].nextState);
+            }
+            else {
+                fputs("\tb\tdone\n\n", file);
+            }
+        }
+
+    }
+    fputs("done:\n"
+          "\tstr\tr4, [r0]\n"
+          "\tldr\tr1, [r10, #8]\n"
+          "\tblx\tDumpTapeEx\n"
+          "\tmov\tr0, #0\n"
+          "error:\n"
+          "\tblx\texit_turing\n",
+        file);
 }
