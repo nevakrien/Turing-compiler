@@ -4,12 +4,13 @@ an optimizing compiler to a binary turing machine.
 the syntax is fairly simplistic and we are stealing the perl lsp.
 this is still in early devlopment so any bugs caught would be very apreshated.
 
-currently for x64_linux
+currently for x64_linux and a small native Arm.
 however nothing is inherently linux based in the compiler itself.
 the build system just assumes bash instead of powershell. it should  be easy to fix if needed.
 if there is demand I would open a windows brench
 
-as for the assembly dialect it is theoretically possible to port at least for the O0 build (stosd would need to be handled). however I am not making stability promices on other parts of the code base. other than the very high level IR everything can be changed.
+The arm branch has slightly diffrent performance charcturistics and is tested less thoroughly.
+cross compilation testing is the new priority of the project.
 
 # usage
 syntax exmples can be found in code_tests/tasks and in tests/code_samples
@@ -117,7 +118,9 @@ this is mostly a C project but as a learning exprince I am adding C++ for O2 we 
 # TODO 
 
 ## compiler
-1. add a way to benchmark old+new version of the compiler to asses changes
+1. add cross compilation and a target flag.
+2. integrate the arm build into the existing tests and benchmarks
+3. add a way to benchmark old+new version of the compiler to asses changes
 
 ## general
 1. unify the cli tools
