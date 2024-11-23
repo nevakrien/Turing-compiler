@@ -5,7 +5,7 @@ CXX =$(shell which g++-14 || echo g++) #clang fails... but nicer error messages
 # Compiler flags
 BASE_FLAGS=-Wall -g2 -march=native -Iinclude -Wno-attributes
 CFLAGS = $(BASE_FLAGS) -std=gnu99
-CXXFLAGS= $(BASE_FLAGS) -std=c++17 
+CXXFLAGS= $(BASE_FLAGS) -Iinclude/cpp -std=c++17 
 
 
 TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
@@ -24,52 +24,48 @@ all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc bin/tmc2 bi
 all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files
-bin/io.o: src/io.c
+bin/io.o: src/core/io.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-bin/cli.o: src/cli.c  
+bin/cli.o: src/core/cli.c  
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/turing.o: src/turing.c
+bin/turing.o: src/core/turing.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/IR.o: src/IR.c
+bin/IR.o: src/core/IR.c
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/parser.o: src/parser.c #bin/turing.o
+bin/parser.o: src/core/parser.c #bin/turing.o
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-bin/compiler.o: src/compiler.c
+bin/compiler.o: src/core/compiler.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-#c++ O2
-pch/O2.hpp.gch: include/O2.hpp
-	$(CXX) $(CXXHEADERFLAGS) -fpermissive -x c++-header include/O2.hpp -o pch/O2.hpp.gch
-
-bin/O2.o: src/O2.cpp
+bin/O2.o: src/cpp/O2.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/asm_O2.o: src/asm_O2.cpp
+bin/asm_O2.o: src/cpp/asm_O2.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/tree_asm.o: src/tree_asm.cpp
+bin/tree_asm.o: src/cpp/tree_asm.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/linear_asm.o: src/linear_asm.cpp
+bin/linear_asm.o: src/cpp/linear_asm.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/basic_fuse.o: src/basic_fuse.cpp
+bin/basic_fuse.o: src/cpp/basic_fuse.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/linear_fuse.o: src/linear_fuse.cpp
+bin/linear_fuse.o: src/cpp/linear_fuse.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-bin/history_maps.o: src/history_maps.cpp
+bin/history_maps.o: src/cpp/history_maps.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 # Build test executables
@@ -100,26 +96,26 @@ bin/test_tree_parse: tests/test_tree_parse.cpp bin/O2.o bin/cli.o bin/IR.o bin/p
 
 
 #tools
-bin/treemc: src/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/history_maps.o
+bin/treemc: src/tools/treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/history_maps.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-bin/tmc2: src/tmc2.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/linear_fuse.o bin/history_maps.o
+bin/tmc2: src/tools/tmc2.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/asm_O2.o bin/tree_asm.o bin/linear_asm.o bin/basic_fuse.o bin/linear_fuse.o bin/history_maps.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-bin/arm: src/arm.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+bin/arm: src/tools/arm.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-bin/tmc0: src/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+bin/tmc0: src/tools/tmc0.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-bin/tmc1: src/tmc1.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
+bin/tmc1: src/tools/tmc1.c  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 
-bin/tape_tool: src/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
+bin/tape_tool: src/tools/tape_tool.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-bin/run_turing: src/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
+bin/run_turing: src/tools/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o bin/turing.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 
