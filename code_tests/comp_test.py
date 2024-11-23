@@ -13,7 +13,7 @@ def run_turing(task):
 
     # Check the return code
     if result.returncode != 0:
-        raise Exception(f"run_turing [{task}] Failed:\n{result.stderr}")
+        raise Exception(f"run_turing [{task}] \033[91mFailed\033[0m:\n{result.stderr}")
 
     # Prepare the result information
     result_info = {
@@ -39,7 +39,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"{compiler} Compilation [{task}] Failed:\n{compile_result.stderr}")
+        raise Exception(f"{compiler} Compilation [{task}] \033[91mFailed\033[0m:\n{compile_result.stderr}")
 
     # Step 2: Run the compiled output with the input and output tapes
     start_run_time = time.time()
@@ -48,7 +48,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the run step
     if run_result.returncode != 0:
-        raise Exception(f"{compiler}.out [{task}] Execution Failed:\n{run_result.stderr}")
+        raise Exception(f"{compiler}.out [{task}] Execution \033[91mFailed\033[0m:\n{run_result.stderr}")
 
     # Prepare the result information
     result_info = {
@@ -75,7 +75,7 @@ def compare_tapes(file1, file2):
     #return filecmp.cmp(file1, file2, shallow=False)
     result = subprocess.run([f'./../bin/tape_tool','cmp', file1, file2], text=True, capture_output=True)
     if(result.returncode!=0):
-        raise Exception(f"tape_tool failed on files {file1} {file2}")
+        raise Exception(f"tape_tool \033[91mFailed\033[0m on files {file1} {file2}")
 
     if(result.stdout.strip()=='yes'):
         return True
@@ -94,9 +94,9 @@ def run_and_compare(task,compiler):
     tape2 = join(task, f'{compiler}_run.tape')
 
     if compare_tapes(tape1, tape2):
-        return f"[{task}] the tapes are identical. PASS"
+        return f"[{task}] the tapes are identical. \033[92mPASS\033[0m"
     
-    return f"[{task}] The tapes are different. FAIL"
+    return f"[{task}] The tapes are different. \033[91mFAIL\033[0m"
 
 
 def test_no_halt(task,compiler):
@@ -104,7 +104,7 @@ def test_no_halt(task,compiler):
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"{compiler}  [{task}]Compilation Failed:\n{compile_result.stderr}")
+        raise Exception(f"{compiler}  [{task}]Compilation \033[91mFailed\033[0m:\n{compile_result.stderr}")
 
     try:
         # Step 2: Run the compiled output with the input and output tapes
@@ -112,27 +112,27 @@ def test_no_halt(task,compiler):
         time.sleep(0.15)
         if process.poll() is None:
             process.kill()
-            return f"[{task}] didnt halt. PASS"
+            return f"[{task}] didnt halt. \033[92mPASS\033[0m"
 
         
 
         # Check the return code for the run step
         if process.returncode == 1: #1 is TIME_OUT in turing.h
-            return f"[{task}] gave a TIME_OUT code PASS"
+            return f"[{task}] gave a TIME_OUT code \033[92mPASS\033[0m"
 
-        return f"[{task}] didnt halt gave a wrong return code FAIL"
+        return f"[{task}] didnt halt gave a wrong return code \033[91mFAIL\033[0m"
 
     except Exception as e:
         if process is not None and process.returncode is None:
             process.kill()
-        return f"[{task}] raised an Exception FAIL\n{e}"
+        return f"[{task}] raised an Exception \033[91mFAIL\033[0m\n{e}"
 
 def test_out_of_tape(task,compiler):
     # Step 1: Compile the code using tmc0
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        return f"{compiler} Compilation Failed:\n{compile_result.stderr}"
+        return f"{compiler} Compilation \033[91mFailed\033[0m:\n{compile_result.stderr}"
          
 
     try:
@@ -141,14 +141,14 @@ def test_out_of_tape(task,compiler):
         
         # Check the return code for the run step
         if run_result.returncode == 2: #2 is OUT_OF_TAPE in turing.h
-            return f"[{task}] gave an OUT_OF_TAPE code PASS"
+            return f"[{task}] gave an OUT_OF_TAPE code \033[92mPASS\033[0m"
             
 
-        return f"[{task}] gave a wrong return code FAIL"
+        return f"[{task}] gave a wrong return code \033[91mFAIL\033[0m"
         
 
     except Exception as e:
-        return f"[{task}] raised an Exception FAIL\n{e}"
+        return f"[{task}] raised an Exception \033[91mFAIL\033[0m\n{e}"
 
 if __name__=="__main__":
     import code_gen

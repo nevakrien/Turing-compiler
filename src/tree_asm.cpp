@@ -30,7 +30,7 @@ void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::StateS
 		fprintf(file," ;%s",names[reg.cur_state]);
 	}
 	fprintf(file,"\n");
-	write_genral(file,reg,names,x->next.get());
+	write_asm_genral(file,reg,names,x->next.get());
 }
 
 void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Write* x){
@@ -53,7 +53,7 @@ void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Write*
 		default:
 			UNREACHABLE();
 	}
-	write_genral(file,reg,names,x->next.get());
+	write_asm_genral(file,reg,names,x->next.get());
 }
 
 void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::StateEnd* x){
@@ -69,10 +69,10 @@ void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Split*
 	int ret_spot=++reg.cur_split;
 
 	fprintf(file,"%sjnz L%d_%d\n\n",_,reg.cur_state,ret_spot); 
-	write_genral(file,reg,names,x->sides[0].get());
+	write_asm_genral(file,reg,names,x->sides[0].get());
 	
 	fprintf(file,"L%d_%d:\n",reg.cur_state,ret_spot);
-	write_genral(file,reg,names,x->sides[1].get());
+	write_asm_genral(file,reg,names,x->sides[1].get());
 
 }
 
@@ -81,7 +81,7 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::Mov
     int move = (x->move_value) * BIT_SIZE;
 
     if (move == 0) {
-        write_genral(file, reg, names, x->next.get());
+        write_asm_genral(file, reg, names, x->next.get());
         return;
     }
 
@@ -103,5 +103,5 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::Mov
     restore_registers(file, registers_to_save, temp_registers);
 
     reg.tmp_back_to(prev_tmp_count);
-    write_genral(file, reg, names, x->next.get());
+    write_asm_genral(file, reg, names, x->next.get());
 }

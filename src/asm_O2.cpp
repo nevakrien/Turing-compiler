@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-void write_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x) {
+void write_asm_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x) {
     switch(x->type()) {
         HANDLE_CASE(Split)
         HANDLE_CASE(Write)
@@ -51,7 +51,6 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	validate_tree(ir);
 }
 
-//BUG something is off with inputs of more than 1 step...
 //assumes RAX RDI RCX are saved...
 void unsafe_bounds_check_asm(FILE *file, RegisterState &reg, Register address, int move) {
     if(move==0){

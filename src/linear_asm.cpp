@@ -5,7 +5,7 @@
 #include <vector>
 
 void write_asm(FILE *file, RegisterState &reg, const char** names, HistoryNode* x){
-	write_genral(file,reg,names,x->next.get());
+	write_asm_genral(file,reg,names,x->next.get());
 }
 
 void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x){	
@@ -35,7 +35,7 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 		Register address;
 
 		if(0){
-		// if(x->write_ops.minKey()==x->move_offset){
+		// if(x->move_offset==0){
 			need_move=false;
 			address=reg.address;
 		}
@@ -111,5 +111,5 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 	
 
     reg.tmp_back_to(prev_tmp_count);
-    write_genral(file, reg, names, x->next.get());
+    write_asm_genral(file, reg, names, x->next.get());
 }
