@@ -62,7 +62,7 @@ def maybe_qemu_popen(command, use_qemu=False, **kwargs):
         command = ['qemu-arm'] + command
     return subprocess.Popen(command, **kwargs)
 
-def compile_and_run_turing(task,compiler,arm=False):
+def compile_and_run_turing(task,compiler):
     # Step 1: Compile the code using compiler
     start_compile_time = time.time()
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)

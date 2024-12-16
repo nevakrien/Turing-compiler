@@ -729,6 +729,11 @@ void ARM_IR_to_ASM(FILE *file, TuringIR ir) {
           "\t// r5 is *Tape->cur\n",
         file);
     for(int i = 0; i < ir.len; i++) {
+         //since we do random jumps we need to add meta data so the assembler can work
+        if (i % 10 == 9) {  // Add .ltorg after every 100 states
+            fputs(".ltorg\n", file);
+        }
+
         fprintf(file, "L%d:\n"
                 "\tldr\tr5, [r4]\n"
                 "\tand\tr5, r5, #0x03\n"
