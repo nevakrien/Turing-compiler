@@ -132,6 +132,20 @@ bin/run_turing: src/tools/interpreter.c bin/io.o bin/cli.o bin/IR.o bin/parser.o
 bin/tmc1_bad_hop: old_versions/tmc1_bad_jump
 	cp old_versions/tmc1_bad_jump bin/tmc1_bad_hop
 
+#arm specific
+bin/arm_O2.o: src/arm_cpp/arm_O2.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
+bin/linear_arm.o: src/arm_cpp/linear_arm.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
+bin/tree_arm.o: src/arm_cpp/tree_arm.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
+bin/arm_treemc: src/tools/arm_treemc.cpp  bin/cli.o bin/IR.o bin/parser.o bin/compiler.o bin/O2.o bin/arm_O2.o bin/tree_arm.o bin/linear_arm.o bin/basic_fuse.o bin/history_maps.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+
 # Cleanup
 clean:
 	rm -rf bin/*

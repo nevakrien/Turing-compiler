@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-void write_asm_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x) {
+void write_asm_general(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x) {
     switch(x->type()) {
         HANDLE_CASE(Split)
         HANDLE_CASE(Write)

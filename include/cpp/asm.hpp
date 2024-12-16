@@ -180,7 +180,7 @@ public:
 //this function should be defined in the translation unit used.
 //exmple can be find in tree_asm.cpp. 
 //the core idea is to not check for non existing cases
-void write_asm_genral(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x);
+void write_asm_general(FILE *file, RegisterState &reg, const char** names, CodeTree::CodeNode* x);
 
 //every node type has its own translation, we declare them ahead of time here
 

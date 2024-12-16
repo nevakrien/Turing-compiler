@@ -5,7 +5,7 @@
 #include <vector>
 
 void write_asm(FILE *file, RegisterState &reg, const char** names, HistoryNode* x){
-	write_asm_genral(file,reg,names,x->next.get());
+	write_asm_general(file,reg,names,x->next.get());
 }
 
 void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x){	
@@ -111,5 +111,5 @@ void write_asm(FILE *file, RegisterState &reg, const char** names, LinearFuse* x
 	
 
     reg.tmp_back_to(prev_tmp_count);
-    write_asm_genral(file, reg, names, x->next.get());
+    write_asm_general(file, reg, names, x->next.get());
 }

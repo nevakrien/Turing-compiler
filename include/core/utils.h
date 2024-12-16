@@ -43,6 +43,8 @@ static inline void ASSERT(bool x){
 // #define ASSERT(x) if(!x){UNREACHABLE();}
 #endif
 
+#define TODO ASSERT(0 && "TODO");
+
 static inline void* null_check(void* p){
 	if(p==NULL){
 		perror("went oom\n");

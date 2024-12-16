@@ -7,6 +7,16 @@
 #include <vector>
 #include <cstdio>
 
+
+//_ char, used a lot without a real meaning so I am making it this way
+[[maybe_unused]]static const char* _="    ";
+
+
+static const int BIT_SIZE=4;
+static const int EXTEND_STEPS=256;
+static const int EXTEND_SIZE=EXTEND_STEPS*BIT_SIZE;
+
+
 namespace ARM {
 
 // Define ARM General-Purpose Registers
