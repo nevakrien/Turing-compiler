@@ -30,9 +30,40 @@ def run_turing(task):
     return 0
 
 
+def maybe_qemu(command, use_qemu=False, **kwargs):
+    """
+    Execute a command, optionally using qemu-arm.
+    
+    Args:
+        command (list): The command to execute.
+        use_qemu (bool): Whether to prepend qemu-arm to the command.
+        kwargs: Additional keyword arguments for subprocess functions.
+        
+    Returns:
+        CompletedProcess: The result of the subprocess.run call.
+    """
+    if use_qemu:
+        command = ['qemu-arm'] + command
+    return subprocess.run(command, **kwargs)
 
-def compile_and_run_turing(task,compiler):
-    # Step 1: Compile the code using tmc0
+def maybe_qemu_popen(command, use_qemu=False, **kwargs):
+    """
+    Execute a command with Popen, optionally using qemu-arm.
+    
+    Args:
+        command (list): The command to execute.
+        use_qemu (bool): Whether to prepend qemu-arm to the command.
+        kwargs: Additional keyword arguments for subprocess functions.
+        
+    Returns:
+        Popen: The Popen process object.
+    """
+    if use_qemu:
+        command = ['qemu-arm'] + command
+    return subprocess.Popen(command, **kwargs)
+
+def compile_and_run_turing(task,compiler,arm=False):
+    # Step 1: Compile the code using compiler
     start_compile_time = time.time()
     compile_result = subprocess.run([f'./../bin/{compiler}', join(task, 'code.t'), join(task, compiler)], text=True, capture_output=True)
     compile_duration = time.time() - start_compile_time
@@ -41,9 +72,11 @@ def compile_and_run_turing(task,compiler):
     if compile_result.returncode != 0:
         raise Exception(f"{compiler} Compilation [{task}] \033[91mFailed\033[0m:\n{compile_result.stderr}")
 
+    use_qemu = 'arm' in compiler
+
     # Step 2: Run the compiled output with the input and output tapes
     start_run_time = time.time()
-    run_result = subprocess.run([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')], text=True, capture_output=True)
+    run_result = maybe_qemu([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')],use_qemu=use_qemu, text=True, capture_output=True)
     run_duration = time.time() - start_run_time
 
     # Check the return code for the run step
@@ -107,8 +140,9 @@ def test_no_halt(task,compiler):
         raise Exception(f"{compiler}  [{task}]Compilation \033[91mFailed\033[0m:\n{compile_result.stderr}")
 
     try:
+        use_qemu = 'arm' in compiler
         # Step 2: Run the compiled output with the input and output tapes
-        process = subprocess.Popen([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')])
+        process = maybe_qemu_popen([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')],use_qemu)
         time.sleep(0.15)
         if process.poll() is None:
             process.kill()
@@ -136,8 +170,10 @@ def test_out_of_tape(task,compiler):
          
 
     try:
+        use_qemu = 'arm' in compiler
+
         # Step 2: Run the compiled output with the input and output tapes
-        run_result = subprocess.run([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')],capture_output=True)
+        run_result = maybe_qemu([join(task, f'{compiler}.out'), join(task, 'input.tape'), join(task, f'{compiler}_run.tape')],use_qemu=use_qemu,capture_output=True)
         
         # Check the return code for the run step
         if run_result.returncode == 2: #2 is OUT_OF_TAPE in turing.h
@@ -153,7 +189,7 @@ def test_out_of_tape(task,compiler):
 if __name__=="__main__":
     import code_gen
 
-    compilers=['tmc0','tmc1','treemc','tmc2']#['tmc1_bad_hop','tmc1']
+    compilers=['tmc0','tmc1','treemc','tmc2','arm']#['tmc1_bad_hop','tmc1']
 
     code_gen.main()
 

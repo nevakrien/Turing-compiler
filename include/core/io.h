@@ -18,12 +18,20 @@ typedef struct  __attribute__((packed)) {
     int right_limit;
 } MetaData;
 
-void* allocate_all_tape(size_t size) __attribute__((sysv_abi));
-void exit_turing(TuringDone code) __attribute__((sysv_abi));
+#if defined(__x86_64__) || defined(_M_X64)
+    #define ABI_ATTRIBUTE __attribute__((sysv_abi))
+#elif defined(__arm__) || defined(__aarch64__)
+    #define ABI_ATTRIBUTE /* Add ARM-specific attributes if needed */
+#else
+    #define ABI_ATTRIBUTE
+#endif
 
-void DumpTape(const Tape* tape, const char *out_filename)__attribute__((sysv_abi));
-Tape ReadTape(const char *out_filename)__attribute__((sysv_abi));
+void* allocate_all_tape(size_t size) ABI_ATTRIBUTE;
+void exit_turing(TuringDone code) ABI_ATTRIBUTE;
 
-void free_all_tape(void* memory, size_t size)  __attribute__((sysv_abi));
+void DumpTape(const Tape* tape, const char *out_filename) ABI_ATTRIBUTE;
+Tape ReadTape(const char *out_filename) ABI_ATTRIBUTE;
+
+void free_all_tape(void* memory, size_t size) ABI_ATTRIBUTE;
 
 #endif //IO_H

@@ -1,11 +1,16 @@
 CC = $(shell which gcc-14 || echo gcc) #this is to get the best preformance
 CXX =$(shell which g++-14 || echo g++) #clang fails... but nicer error messages
 
+ARM_CC = arm-linux-gnueabihf-gcc -march=armv7-a #note that this is assumed to exist by the compiler later
+
 
 # Compiler flags
-BASE_FLAGS=-Wall -g2 -march=native -Iinclude/core -Wno-attributes
+BASE_FLAGS= -march=native -Wall -g2 -Iinclude/core -Wno-attributes
 CFLAGS = $(BASE_FLAGS) -std=gnu99
 CXXFLAGS= $(BASE_FLAGS) -Iinclude/cpp -std=c++17 
+
+ARM_FLAGS = -Iinclude/core -std=gnu99 -Wno-attributes
+
 
 
 TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
@@ -17,21 +22,26 @@ TEST_FLAGS= #-fsanitize=address -fsanitize=undefined
 #bin
 
 # Default target
-all: all_tools all_tests bin/compiler.o bin/O2.o  #bin/tmc1_bad_hop#bin/libio.so
+all: all_tools all_tests all_io bin/compiler.o bin/O2.o  #bin/tmc1_bad_hop#bin/libio.so
 	@echo "Compiler used: $(CC)"
 
+all_io: bin/io.o bin/arm_io.o
 all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc bin/tmc2 bin/arm
 all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files
 bin/io.o: src/core/io.c
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -static -c $< -o $@
 
+# Compile source files to object files
+bin/arm_io.o: src/core/io.c
+	@mkdir -p bin
+	arm-linux-gnueabihf-gcc -static -c -o $@ $< $(ARM_FLAGS)
 
 bin/cli.o: src/core/cli.c  
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $<  -c -o $@
 
 bin/turing.o: src/core/turing.c
 	@mkdir -p bin

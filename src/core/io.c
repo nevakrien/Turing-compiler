@@ -14,7 +14,8 @@
 #include <stdlib.h>
 
 
-void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
+
+void* ABI_ATTRIBUTE allocate_all_tape(size_t size) {
 	#ifdef _WIN32
 	    // Windows-specific memory allocation using VirtualAlloc
 	    void* memory = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -34,7 +35,7 @@ void* __attribute__((sysv_abi)) allocate_all_tape(size_t size) {
 
 
 
-void __attribute__((sysv_abi)) free_all_tape(void* memory, size_t size) {
+void ABI_ATTRIBUTE free_all_tape(void* memory, size_t size) {
     #ifdef _WIN32
         // Windows-specific memory deallocation using VirtualFree
         if (!VirtualFree(memory, 0, MEM_RELEASE)) {
@@ -51,7 +52,7 @@ void __attribute__((sysv_abi)) free_all_tape(void* memory, size_t size) {
 }
 
 
-void __attribute__((sysv_abi)) exit_turing(TuringDone code){
+void ABI_ATTRIBUTE exit_turing(TuringDone code){
 	if(code==HALT){
 		printf("halted\n");
 		exit(code);
@@ -119,7 +120,7 @@ static void DEBUG_METADATA_READ(MetaData x){
 #define DEBUG_METADATA_WRITE(m)
 #endif
 
-void __attribute__((sysv_abi)) DumpTape(const Tape* tape, const char *out_filename) {
+void ABI_ATTRIBUTE DumpTape(const Tape* tape, const char *out_filename) {
     if (!tape || !tape->base) {
         fprintf(stderr, "Invalid tape or base pointer\n");
         exit(EXIT_FAILURE);
@@ -159,7 +160,7 @@ void __attribute__((sysv_abi)) DumpTape(const Tape* tape, const char *out_filena
     free(buffer);
 }
 
-Tape __attribute__((sysv_abi)) ReadTape(const char *in_filename) {
+Tape ABI_ATTRIBUTE ReadTape(const char *in_filename) {
     Tape tape;
     memset(&tape, 0, sizeof(tape));
     MetaData metadata;

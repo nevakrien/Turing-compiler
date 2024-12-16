@@ -4,8 +4,15 @@
 #include "compiler.h"
 #include <libgen.h>
 
-const char *casm = "gcc -g -c -o %s.o %s";
-const char *cld = "gcc -o %s.out %s.o %s/io.o";
+// const char *casm = "gcc -g -c -o %s.o %s";
+// const char *cld = "gcc -o %s.out %s.o %s/io.o";
+#if defined(__arm__)
+    const char *casm = "gcc -g -c -o %s.o %s";
+    const char *cld = "gcc -o %s.out %s.o %s/io.o";
+#else
+    const char *casm = "arm-linux-gnueabihf-gcc -march=armv7-a -c -o %s.o %s -static";
+    const char *cld = "arm-linux-gnueabihf-gcc -march=armv7-a -o %s.out %s.o %s/arm_io.o -static";
+#endif
 
 void ARM_code(FILE *file, void *data) {
     TuringIR *ir = (TuringIR *) data;
