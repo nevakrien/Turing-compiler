@@ -20,8 +20,8 @@ typedef struct  __attribute__((packed)) {
 
 #if defined(__x86_64__) || defined(_M_X64)
     #define ABI_ATTRIBUTE __attribute__((sysv_abi))
-#elif defined(__arm__) || defined(__aarch64__)
-    #define ABI_ATTRIBUTE /* Add ARM-specific attributes if needed */
+#elif defined(__arm__)
+    #define ABI_ATTRIBUTE __attribute__((aapcs_abi)) // Enforce 32-bit ARM Linux calling convention
 #else
     #define ABI_ATTRIBUTE
 #endif

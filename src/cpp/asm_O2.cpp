@@ -37,8 +37,6 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	load_tape_from_stack(file,reg);
 	ASSERT(reg.tmp.size()==1);
 
-	//TODO: add missing global functions
-
 	for(auto i=0u;i<ir.size();i++){
 		write_asm(file,reg,names,ir[i].get());
 	}

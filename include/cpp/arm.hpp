@@ -2,6 +2,7 @@
 #define ARM_HPP
 
 #include "O2.hpp"
+#include "arm_templates.h"
 #include "linear_fuse.hpp"
 #include <stdexcept>
 #include <vector>
@@ -133,7 +134,7 @@ void restore_registers(FILE* file, const std::vector<Register>& registers_to_sav
 void load_tape_from_stack(FILE* file, RegisterState reg);
 void store_tape_to_stack(FILE* file, RegisterState reg);
 
-void unsafe_bounds_check_asm(FILE* file, RegisterState& reg, Register address, int move);
+void bounds_check_asm(FILE* file, RegisterState& reg, Register address, int move);
 
 } // namespace ARM
 
