@@ -148,7 +148,7 @@ public:
     }
 
     Register add_tmp() {
-        for (int i = 15; i >= 6; i--) {
+        for (int i = 15; i >= 0; i--) {
             Register reg = Register((GeneralRegister)i);
             if (!contains(reg.name)) {
                 tmp.push_back(reg);

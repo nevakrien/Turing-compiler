@@ -111,6 +111,11 @@ tests is where unit/integration tests can be found.
 
 it is recommended to add a small calling script into test.py for every test added.
 
+## calling convention
+if you notice our register use does not care to restore regiters at all. this is because we are using \_start and not main.
+so there is actually no one to return to and thus no point preserving registers.
+
+also note that rsp is not treated as a special case in the C++ classes... this means that we allow using it as a temporery register. probably not the most ideal setup but it does make sense if for some reason we ever want to move to a no stack setup. 
 
 # Coding Style
 this is mostly a C project but as a learning exprince I am adding C++ for O2 we will see how it goes. 
