@@ -142,6 +142,7 @@ void restore_registers(FILE *file, const std::vector<Register> &registers_to_sav
 
 void load_tape_from_stack(FILE *file,RegisterState reg){
 	ASSERT(reg.contains(RSP));
+    int checkpoint = reg.get_tmp_count();
 	Register tmp=reg.add_tmp();
 	Register base=reg.add_tmp();
 
@@ -163,6 +164,7 @@ void load_tape_from_stack(FILE *file,RegisterState reg){
     // left_init
     fprintf(file, "%smovsxd %s, dword [rsp+28]\n", _,tmp.Quad()); 
     fprintf(file, "%slea %s, [%s + 4*%s] ;right initilized\n", _, reg.right.init.Quad(), base.Quad(),tmp.Quad());
+    reg.tmp_back_to(checkpoint);  // Reset temporary register state to avoid collisions
 }
 
 void store_tape_to_stack(FILE *file,RegisterState reg){
