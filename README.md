@@ -10,7 +10,8 @@ the build system just assumes bash instead of powershell. it should  be easy to 
 if there is demand I would open a windows brench
 
 The arm branch has slightly diffrent performance charcturistics and is tested less thoroughly.
-cross compilation testing shows that it does fail in some cases and thus needs to be fixed
+cross compilation testing shows that it does fail in some cases and thus needs to be fixed.
+currently we are using a crude method which should usually work (although i am not sure about the performance implications)
 
 # usage
 syntax exmples can be found in code_tests/tasks and in tests/code_samples
