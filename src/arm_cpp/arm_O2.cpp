@@ -93,5 +93,12 @@ void restore_registers(FILE *file, const std::vector<Register> &registers_to_sav
     }
 }
 
+void load_tape_from_stack(FILE *file,RegisterState reg){
+    TODO
+}
+
+void store_tape_to_stack(FILE *file,RegisterState reg){
+    TODO
+}
 
 } // namespace ARM

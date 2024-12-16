@@ -49,7 +49,6 @@ void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Split*
 
 }
 
-
 void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::Move* x) {
     TODO
 }

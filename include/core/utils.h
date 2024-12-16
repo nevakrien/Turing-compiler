@@ -9,15 +9,15 @@
 //user optional definitions
 #define CHECK_UNREACHABLE //puts an assert instead of ub 
 
-#define MUTATEBLE 
-
-#if defined(CHECK_UNREACHABLE)
+// #define MUTATEBLE 
 
 #ifndef __cplusplus
 #include <assert.h>
 #else
 #include <cassert>
 #endif //__cplusplus
+
+#if defined(CHECK_UNREACHABLE)
 
 #define UNREACHABLE() assert(0 && "Unreachable code reached")
 
@@ -43,7 +43,7 @@ static inline void ASSERT(bool x){
 // #define ASSERT(x) if(!x){UNREACHABLE();}
 #endif
 
-#define TODO ASSERT(0 && "TODO");
+#define TODO assert(0 && "TODO");
 
 static inline void* null_check(void* p){
 	if(p==NULL){

@@ -30,7 +30,7 @@ void print_machine(TuringMachine machine, int indent);
 
 //keeps refrences to raw_text and mutates it. 
 //raw_text should only be freed once we finished working with names directly
-TuringMachineEncoding parse_text_with_prints(MUTATEBLE char* raw_text);
+TuringMachineEncoding parse_text_with_prints(char* raw_text);
 
 // Print a TransitionEncoding struct
 static inline void print_trans_enc(const TransitionEncoding *te) {
