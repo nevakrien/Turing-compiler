@@ -70,7 +70,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the compilation step
     if compile_result.returncode != 0:
-        raise Exception(f"{compiler} Compilation [{task}] \033[91mFailed\033[0m:\n{compile_result.stderr}")
+        return Exception(f"{compiler} Compilation [{task}] \033[91mFailed\033[0m:\n{compile_result.stderr}")
 
     use_qemu = 'arm' in compiler
 
@@ -81,7 +81,7 @@ def compile_and_run_turing(task,compiler):
 
     # Check the return code for the run step
     if run_result.returncode != 0:
-        raise Exception(f"{compiler}.out [{task}] Execution \033[91mFailed\033[0m:\n{run_result.stderr}")
+        raise Exception(f"{compiler}.out [{task}] Execution \033[91mFailed\033[0m:\n{run_result.stderr}\nwith code {run_result.returncode}")
 
     # Prepare the result information
     result_info = {
@@ -189,7 +189,7 @@ def test_out_of_tape(task,compiler):
 if __name__=="__main__":
     import code_gen
 
-    compilers=['tmc0','tmc1','treemc','tmc2','arm']#['tmc1_bad_hop','tmc1']
+    compilers=['tmc0','tmc1','treemc','tmc2','arm',"arm_treemc"]#['tmc1_bad_hop','tmc1']
 
     code_gen.main()
 

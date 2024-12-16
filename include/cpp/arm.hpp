@@ -70,7 +70,7 @@ public:
     }
 
     Register add_tmp() {
-        for (int i = R0; i >= R14; i--) {  // Exclude R13 (SP), R14 (LR), R15 (PC)
+        for (int i = R0; i <= R14; i++) {  // Exclude R13 (SP), R14 (LR), R15 (PC)
             Register reg = static_cast<Register>(i);
             if (!contains(reg)) {
                 tmp.push_back(reg);

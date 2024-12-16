@@ -26,7 +26,7 @@ all: all_tools all_tests all_io bin/compiler.o bin/O2.o  #bin/tmc1_bad_hop#bin/l
 	@echo "Compiler used: $(CC)"
 
 all_io: bin/io.o bin/arm_io.o
-all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc bin/tmc2 bin/arm
+all_tools: bin/tape_tool bin/run_turing bin/tmc1 bin/tmc0 bin/treemc bin/tmc2 bin/arm bin/arm_treemc
 all_tests: bin/test_io bin/test_turing bin/test_parser bin/test_compiler bin/test_code_tree bin/test_tree_parse
 
 # Compile source files to object files

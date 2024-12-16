@@ -38,10 +38,11 @@ void Tree_IR_to_ASM(FILE *file,TreeIR ir,const char** names){
 	
     fprintf(file,arm_start_template);
 
-    fprintf(file,"%smov #0, r%d\n",_,reg.zero);
-    fprintf(file,"%smov #1, r%d\n",_,reg.one);
 	load_tape_from_stack(file,reg);
 	ASSERT(reg.tmp.size()==1);
+
+    fprintf(file,"%smov r%d, #0\n",_,reg.zero);
+    fprintf(file,"%smov r%d, #1\n",_,reg.one);
 
 	for(auto i=0u;i<ir.size();i++){
 		write_asm(file,reg,names,ir[i].get());

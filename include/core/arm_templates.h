@@ -3,7 +3,7 @@
 
 [[maybe_unused]] static const char *arm_start_template = 
 ".section .text\n"
-".global _start\n"
+".global main\n"
 ".extern ReadTape\n"
 ".extern DumpTape\n"
 ".extern exit_turing\n"
@@ -12,7 +12,7 @@
 "    mov r0, #2              // r0 = 2 (exit code)\n"
 "    bl exit_turing          // Call exit_turing function\n"
 "\n"
-"_start:\n"
+"main:\n"
 "    // Initial boilerplate\n"
 "    // Ensure there are at least 2 arguments (argc >= 3)\n"
 "    ldr r0, [sp]            // Load argc into r0\n"

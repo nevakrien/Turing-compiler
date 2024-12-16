@@ -81,13 +81,52 @@ void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::StateE
 	fprintf(file,"%sb L%d\n",_,next_id);
 }
 
-void write_asm(FILE *file,RegisterState &reg,const char** names,CodeTree::Split* x){
-	TODO
+void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::Split* x) {
+    fprintf(file, "ldr r%d, [r%d]\n", reg.read, reg.address);
+    fprintf(file, "ands r%d, r%d, r%d\n", reg.read, reg.read, reg.read);
 
+    // Labels
+    int part1_label = ++reg.cur_split;
+    int part2_label = ++reg.cur_split;
+    int end_label = ++reg.cur_split;
+
+    //split
+    fprintf(file, "bne L%d_%d\n", reg.cur_state, part2_label);
+
+    //jump because we dont want to limit our jump length
+    fprintf(file, "b L%d_%d\n", reg.cur_state, part1_label);
+
+    // Part2
+    fprintf(file, "L%d_%d:\n", reg.cur_state, part2_label);
+    write_asm_general(file, reg, names, x->sides[1].get());
+    fprintf(file, "b L%d_%d\n", reg.cur_state, end_label);
+
+    // Part1
+    fprintf(file, "L%d_%d:\n", reg.cur_state, part1_label);
+    write_asm_general(file, reg, names, x->sides[0].get());
+
+    // End
+    fprintf(file, "L%d_%d:\n", reg.cur_state, end_label);
 }
+
 
 void write_asm(FILE *file, RegisterState &reg, const char** names, CodeTree::Move* x) {
-    TODO
+    int move = (x->move_value) * BIT_SIZE;
+
+    if (move == 0) {
+        write_asm_general(file, reg, names, x->next.get());
+        return;
+    }
+
+    // Update the address register
+    fprintf(file, "add r%d, r%d, #%d\n", reg.address, reg.address, move);
+
+    // Call the bounds checking function
+    bounds_check_asm(file, reg, reg.address, move);
+
+    // Handle the next part of the code tree
+    write_asm_general(file, reg, names, x->next.get());
 }
+
 
 } //ARM

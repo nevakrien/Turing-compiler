@@ -120,13 +120,15 @@ also note that rsp is not treated as a special case in the C++ classes... this m
 # Coding Style
 this is mostly a C project but as a learning exprince I am adding C++ for O2 we will see how it goes. 
 
+# Arm notes
+
+linking the arm tool chain properly is extremly complicated... we are kind of forced into using gcc as the linker with main instead of start.
+now this may be a result of virtualization but i am suspecting that its deeper
 
 # TODO 
 
 ## compiler
-1. add cross compilation and a target flag.
-2. integrate the arm build into the existing tests and benchmarks
-3. add a way to benchmark old+new version of the compiler to asses changes
+1. add a way to benchmark old+new version of the compiler to asses changes
 
 ## general
 1. unify the cli tools
